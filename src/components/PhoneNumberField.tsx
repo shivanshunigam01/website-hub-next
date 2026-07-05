@@ -36,6 +36,8 @@ type PhoneNumberFieldProps = {
   autoDetectCountry?: boolean;
   /** Skip auto-detect when the account already has a stored phone */
   userHasSavedPhone?: boolean;
+  /** WhatsApp-verified number — user cannot change country or digits */
+  locked?: boolean;
 };
 
 export function PhoneNumberField({
@@ -50,10 +52,11 @@ export function PhoneNumberField({
   className,
   autoDetectCountry = true,
   userHasSavedPhone = false,
+  locked = false,
 }: PhoneNumberFieldProps) {
   const manualPickRef = useRef(false);
   const [codeOpen, setCodeOpen] = useState(false);
-  const shouldDetect = autoDetectCountry && !userHasSavedPhone;
+  const shouldDetect = autoDetectCountry && !userHasSavedPhone && !locked;
   const { phoneCountryCode: detectedCode } = useDetectedPhoneCountryCode(shouldDetect);
 
   const selected = findPhoneCountryByCode(countryCode);
@@ -77,6 +80,7 @@ export function PhoneNumberField({
               role="combobox"
               aria-expanded={codeOpen}
               aria-label="Search country code"
+              disabled={locked}
               className="h-10 w-[min(100%,11rem)] shrink-0 justify-between px-2.5 font-normal sm:w-[11rem]"
             >
               <span className="truncate text-left text-sm">
@@ -123,6 +127,8 @@ export function PhoneNumberField({
           required={required}
           placeholder={placeholder}
           value={phoneNumber}
+          readOnly={locked}
+          disabled={locked}
           onChange={(e) => onPhoneNumberChange(e.target.value.replace(/[^\d\s-]/g, ""))}
           className="flex-1"
         />

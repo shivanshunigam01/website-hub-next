@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { api, apiPublic } from "@/lib/api";
 import type { AuthRole, AuthSession, AuthUser, ProfileUpdateResult } from "@/lib/auth-types";
+import { clearWhatsappVerifiedPhone, persistWhatsappVerifiedPhone } from "@/lib/whatsapp-verified-phone";
 
 type Theme = "light" | "dark";
 
@@ -217,8 +218,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const setWhatsappSession = async (data: AuthSession) => {
+    if (data.user.phone?.trim() || data.user.phoneCountryCode) {
+      const e164 = `${(data.user.phoneCountryCode || "+91").replace(/\D/g, "")}${data.user.phone?.replace(/\D/g, "") || ""}`;
+      if (e164.length >= 8) persistWhatsappVerifiedPhone(e164);
+    }
     const session: AuthSession = {
-      user: data.user,
+      user: { ...data.user, provider: data.user.provider ?? "whatsapp" },
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
       profileComplete: data.profileComplete ?? false,
@@ -313,6 +318,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    clearWhatsappVerifiedPhone();
     clearSession();
     setUser(null);
     setRole(null);

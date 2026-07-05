@@ -52,6 +52,7 @@ function extractUser(layers: Record<string, unknown>[]): AuthUser | null {
       avatarUrl: (layer.avatarUrl as string | null | undefined) ?? null,
       phone: layer.phone as string | undefined,
       phoneCountryCode: layer.phoneCountryCode as string | undefined,
+      provider: layer.provider as AuthUser["provider"],
       theme: layer.theme as "light" | "dark" | undefined,
       locale: layer.locale as string | undefined,
       profileComplete: Boolean(layer.profileComplete),

@@ -232,3 +232,29 @@ export function formatStoredPhone(countryCode: string, number: string) {
   const digits = number.replace(/\D/g, "");
   return digits ? `${countryCode}${digits}` : "";
 }
+
+/** Parse E.164 digits (with or without +) into country code + local number. */
+export function parseE164Digits(input: string) {
+  const digits = String(input ?? "").replace(/\D/g, "");
+  if (!digits) {
+    return { countryCode: "+91", number: "", e164: "" };
+  }
+
+  const sorted = [...PHONE_COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length);
+  for (const entry of sorted) {
+    const ccDigits = entry.code.replace(/\D/g, "");
+    if (digits.startsWith(ccDigits)) {
+      return {
+        countryCode: entry.code,
+        number: digits.slice(ccDigits.length),
+        e164: digits,
+      };
+    }
+  }
+
+  return {
+    countryCode: "+91",
+    number: digits,
+    e164: digits,
+  };
+}

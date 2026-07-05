@@ -107,6 +107,7 @@ export interface AuthUser {
   avatarUrl?: string | null;
   phone?: string;
   phoneCountryCode?: string;
+  provider?: "local" | "google" | "whatsapp";
   theme?: "light" | "dark";
   locale?: string;
   profileComplete?: boolean;

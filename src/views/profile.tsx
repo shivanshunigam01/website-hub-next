@@ -9,9 +9,7 @@ import { ProfileAvatarUpload } from "@/components/ProfileAvatarUpload";
 import { useApp } from "@/hooks/use-app";
 import { useCurrency } from "@/hooks/use-currency";
 import { afterAuthPath, TEACHER_ONBOARDING_PATH } from "@/lib/auth-redirect";
-import { useDetectedPhoneCountryCode } from "@/hooks/use-detected-phone-country-code";
-import { DEFAULT_PHONE_COUNTRY_CODE } from "@/lib/phone-from-country";
-import { formatStoredPhone, parseStoredPhone } from "@/lib/phone-codes";
+import { useProfilePhone } from "@/hooks/use-profile-phone";
 import { CURRENCIES, getCurrencySymbol } from "@/lib/currencies";
 import type { TeacherType, TeachingSubject } from "@/lib/auth-types";
 import {
@@ -32,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SelectWithOther } from "@/components/ui/SelectWithOther";
 import { TEACHER_TYPE_OPTIONS } from "@/lib/teacher-profile-utils";
 import { PhoneNumberField } from "@/components/PhoneNumberField";
+import { WhatsappPhoneNotice } from "@/components/auth/WhatsappPhoneNotice";
 import { formatApiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -56,10 +55,16 @@ function ProfileSetup() {
   const [teacherTypeOther, setTeacherTypeOther] = useState(user?.teacherProfile?.teacherTypeOther || "");
   const [gender, setGender] = useState<TeacherGender | "">("");
   const [genderOther, setGenderOther] = useState(user?.teacherProfile?.genderOther || "");
-  const [phoneCountryCode, setPhoneCountryCode] = useState(DEFAULT_PHONE_COUNTRY_CODE);
-  const hasSavedPhone = Boolean(user?.phone?.trim() || user?.phoneCountryCode);
-  const { phoneCountryCode: detectedDial } = useDetectedPhoneCountryCode(!hasSavedPhone);
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const {
+    phoneCountryCode,
+    setPhoneCountryCode,
+    phoneNumber,
+    setPhoneNumber,
+    locked: phoneLocked,
+    isWhatsappVerified,
+    userHasSavedPhone,
+    getSubmitPhone,
+  } = useProfilePhone(user);
   const [teachingSubjects, setTeachingSubjects] = useState<TeachingSubject[]>([]);
   const [subjectDraft, setSubjectDraft] = useState("");
   const [fromLevel, setFromLevel] = useState("");
@@ -127,11 +132,6 @@ function ProfileSetup() {
     }
     if (user) {
       setAvatarUrl(user.avatarUrl || "");
-      if (user.phone?.trim() || user.phoneCountryCode) {
-        const parsed = parseStoredPhone(user.phone, user.phoneCountryCode);
-        setPhoneCountryCode(parsed.countryCode);
-        setPhoneNumber(parsed.number);
-      }
     }
   }, [
     user?.teacherProfile?.teacherType,
@@ -139,15 +139,8 @@ function ProfileSetup() {
     user?.teacherProfile?.teachingSubjects,
     user?.teacherProfile?.subjects,
     user?.teacherProfile,
-    user?.phone,
-    user?.phoneCountryCode,
     user,
   ]);
-
-  useEffect(() => {
-    if (hasSavedPhone || !detectedDial) return;
-    setPhoneCountryCode(detectedDial);
-  }, [hasSavedPhone, detectedDial]);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -182,7 +175,7 @@ function ProfileSetup() {
     try {
       let result;
       if (role === "student") {
-        const phone = formatStoredPhone(phoneCountryCode, phoneNumber);
+        const { phone, phoneCountryCode: submitCc } = getSubmitPhone();
         if (!phone) {
           toast.error("Please enter your phone number");
           setSaving(false);
@@ -192,7 +185,7 @@ function ProfileSetup() {
           name: String(fd.get("name") || user.name),
           avatarUrl,
           phone,
-          phoneCountryCode,
+          phoneCountryCode: submitCc,
           studentProfile: {
             grade: grade.trim(),
             goals: String(fd.get("goals") || ""),
@@ -225,7 +218,7 @@ function ProfileSetup() {
           setSaving(false);
           return;
         }
-        const phone = formatStoredPhone(phoneCountryCode, phoneNumber);
+        const { phone, phoneCountryCode: submitCc } = getSubmitPhone();
         if (!phone) {
           toast.error("Please enter your phone number");
           setSaving(false);
@@ -252,7 +245,7 @@ function ProfileSetup() {
           name: String(fd.get("name") || user.name),
           avatarUrl,
           phone,
-          phoneCountryCode,
+          phoneCountryCode: submitCc,
           teacherProfile: {
             teacherType,
             teacherTypeOther: teacherType === "other" ? teacherTypeOther.trim() : undefined,
@@ -422,13 +415,17 @@ function ProfileSetup() {
           }
         />
         {role === "student" && (
-          <PhoneNumberField
-            countryCode={phoneCountryCode}
-            onCountryCodeChange={setPhoneCountryCode}
-            phoneNumber={phoneNumber}
-            onPhoneNumberChange={setPhoneNumber}
-            userHasSavedPhone={Boolean(user?.phone?.trim() || user?.phoneCountryCode)}
-          />
+          <>
+            {isWhatsappVerified ? <WhatsappPhoneNotice /> : null}
+            <PhoneNumberField
+              countryCode={phoneCountryCode}
+              onCountryCodeChange={setPhoneCountryCode}
+              phoneNumber={phoneNumber}
+              onPhoneNumberChange={setPhoneNumber}
+              userHasSavedPhone={userHasSavedPhone}
+              locked={phoneLocked}
+            />
+          </>
         )}
 
         {role === "student" ? (
@@ -547,6 +544,7 @@ function ProfileSetup() {
 
             <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
               <h2 className="font-semibold text-sm text-foreground">Phone Numbers</h2>
+              {isWhatsappVerified ? <WhatsappPhoneNotice /> : null}
               <PhoneNumberField
                 id="phoneNumber"
                 label="Add Phone"
@@ -554,7 +552,8 @@ function ProfileSetup() {
                 onCountryCodeChange={setPhoneCountryCode}
                 phoneNumber={phoneNumber}
                 onPhoneNumberChange={setPhoneNumber}
-                userHasSavedPhone={Boolean(user?.phone?.trim() || user?.phoneCountryCode)}
+                userHasSavedPhone={userHasSavedPhone}
+                locked={phoneLocked}
               />
             </div>
 

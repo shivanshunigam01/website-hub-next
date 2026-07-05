@@ -20,6 +20,8 @@ import { findPhoneCountryByCode } from "@/lib/phone-codes";
 import { useApp } from "@/hooks/use-app";
 import { afterAuthPath } from "@/lib/auth-redirect";
 import { formatApiErrorMessage } from "@/lib/api";
+import { parseE164Digits } from "@/lib/phone-codes";
+import { persistWhatsappVerifiedPhone } from "@/lib/whatsapp-verified-phone";
 import {
   formatPhoneForApi,
   loginWithWhatsapp,
@@ -129,6 +131,25 @@ export function WhatsAppAuthModal({
   };
 
   const completeAuth = async () => {
+    persistWhatsappVerifiedPhone(phoneE164);
+    const waParsed = parseE164Digits(phoneE164);
+
+    const withWhatsappPhone = (session: {
+      user: { phone?: string; phoneCountryCode?: string; provider?: string };
+      accessToken?: string;
+      refreshToken?: string;
+      profileComplete?: boolean;
+      requiresEmailVerification?: boolean;
+    }) => ({
+      ...session,
+      user: {
+        ...session.user,
+        provider: "whatsapp" as const,
+        phone: session.user.phone?.trim() ? session.user.phone : waParsed.number,
+        phoneCountryCode: session.user.phoneCountryCode || waParsed.countryCode,
+      },
+    });
+
     if (mode === "login") {
       const result = await loginWithWhatsapp(phoneE164);
       if ("newUser" in result && result.newUser) {
@@ -141,7 +162,7 @@ export function WhatsAppAuthModal({
         toast.error("Login failed. Please try again.");
         return;
       }
-      const session = await setWhatsappSession(result);
+      const session = await setWhatsappSession(withWhatsappPhone(result) as typeof result);
       toast.success(`Welcome back, ${session.user.name}!`);
       const destination =
         redirect ||
@@ -152,7 +173,9 @@ export function WhatsAppAuthModal({
     }
 
     const session = await setWhatsappSession(
-      await signupWithWhatsapp({ name: name.trim(), phone: phoneE164, role }),
+      withWhatsappPhone(
+        await signupWithWhatsapp({ name: name.trim(), phone: phoneE164, role }),
+      ) as Awaited<ReturnType<typeof signupWithWhatsapp>>,
     );
     toast.success(`Welcome, ${session.user.name}!`);
     onOpenChange(false);

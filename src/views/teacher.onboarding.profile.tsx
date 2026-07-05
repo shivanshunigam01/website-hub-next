@@ -25,9 +25,8 @@ import { afterAuthPath } from "@/lib/auth-redirect";
 import type { EducationEntry, ExperienceEntry, TeacherType, TeachingSubject } from "@/lib/auth-types";
 import { formatApiErrorMessage } from "@/lib/api";
 import { CURRENCIES, getCurrencySymbol } from "@/lib/currencies";
-import { DEFAULT_PHONE_COUNTRY_CODE } from "@/lib/phone-from-country";
-import { formatStoredPhone, parseStoredPhone } from "@/lib/phone-codes";
-import { useDetectedPhoneCountryCode } from "@/hooks/use-detected-phone-country-code";
+import { WhatsappPhoneNotice } from "@/components/auth/WhatsappPhoneNotice";
+import { useProfilePhone } from "@/hooks/use-profile-phone";
 import {
   BIO_MAX,
   BIO_MIN_WORDS,
@@ -73,10 +72,17 @@ function TeacherOnboardingProfile() {
   const [city, setCity] = useState("");
   const [locality, setLocality] = useState("");
   const [publicLocation, setPublicLocation] = useState("");
-  const [phoneCountryCode, setPhoneCountryCode] = useState(DEFAULT_PHONE_COUNTRY_CODE);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const hasSavedPhone = Boolean(user?.phone?.trim() || user?.phoneCountryCode);
-  const { phoneCountryCode: detectedDial } = useDetectedPhoneCountryCode(!hasSavedPhone);
+  const {
+    phoneCountryCode,
+    setPhoneCountryCode,
+    phoneNumber,
+    setPhoneNumber,
+    locked: phoneLocked,
+    isWhatsappVerified,
+    userHasSavedPhone,
+    getSubmitPhone,
+    formattedPhone,
+  } = useProfilePhone(user);
   const [teachingSubjects, setTeachingSubjects] = useState<TeachingSubject[]>([]);
   const [subjectDraft, setSubjectDraft] = useState("");
   const [fromLevel, setFromLevel] = useState("");
@@ -127,17 +133,7 @@ function TeacherOnboardingProfile() {
     setExperienceEntries(
       p.experiences?.length ? p.experiences : p.experienceEntries?.length ? p.experienceEntries : [],
     );
-    const parsed = parseStoredPhone(user.phone, user.phoneCountryCode);
-    if (user.phone?.trim() || user.phoneCountryCode) {
-      setPhoneCountryCode(parsed.countryCode);
-      setPhoneNumber(parsed.number);
-    }
   }, [user]);
-
-  useEffect(() => {
-    if (hasSavedPhone || !detectedDial) return;
-    setPhoneCountryCode(detectedDial);
-  }, [hasSavedPhone, detectedDial]);
 
   useEffect(() => {
     if (currencyTouched) return;
@@ -285,7 +281,7 @@ function TeacherOnboardingProfile() {
       toast.error("Country and city are required");
       return false;
     }
-    if (!formatStoredPhone(phoneCountryCode, phoneNumber)) {
+    if (!formattedPhone()) {
       toast.error("Please enter a valid phone number");
       return false;
     }
@@ -317,12 +313,12 @@ function TeacherOnboardingProfile() {
 
     setSaving(true);
     try {
-      const phone = formatStoredPhone(phoneCountryCode, phoneNumber);
+      const { phone, phoneCountryCode: submitCc } = getSubmitPhone();
       const payload = {
         name: name.trim(),
         avatarUrl,
         phone: phone || undefined,
-        phoneCountryCode,
+        phoneCountryCode: submitCc,
         teacherProfile: {
           profilePhoto: avatarUrl,
           teacherType,
@@ -528,12 +524,14 @@ function TeacherOnboardingProfile() {
                 />
               </div>
             </div>
+            {isWhatsappVerified ? <WhatsappPhoneNotice /> : null}
             <PhoneNumberField
               countryCode={phoneCountryCode}
               onCountryCodeChange={setPhoneCountryCode}
               phoneNumber={phoneNumber}
               onPhoneNumberChange={setPhoneNumber}
-              userHasSavedPhone={Boolean(user?.phone?.trim() || user?.phoneCountryCode)}
+              userHasSavedPhone={userHasSavedPhone}
+              locked={phoneLocked}
             />
           </section>
 
