@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Private dashboards — keep out of search results
+Disallow: /admin
+Disallow: /student
+Disallow: /teacher
+Disallow: /parent
+Disallow: /lms
+Disallow: /payments
+Disallow: /messages
+Disallow: /role-select
+
+# Search-engine sitemap
+Sitemap: https://www.teacherpoint.org/sitemap.xml

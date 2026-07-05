@@ -1,0 +1,35 @@
+{
+  "id": "https://www.teacherpoint.org/",
+  "name": "TeacherPoint — Find the best tutors and courses",
+  "short_name": "TeacherPoint",
+  "description": "TeacherPoint connects students, parents and verified tutors worldwide. Discover expert-led courses, live tutoring, and earn certificates.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
+  "categories": ["education", "productivity", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Find tutors", "url": "/tutors", "description": "Browse verified tutors near you" },
+    { "name": "Courses", "url": "/courses", "description": "Explore live and self-paced courses" },
+    { "name": "Student Exchange", "url": "/marketplace", "description": "Buy & sell study materials" },
+    { "name": "Support", "url": "/support", "description": "Open a support ticket" }
+  ]
+}
