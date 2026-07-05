@@ -1,5 +1,6 @@
 "use client";
 
+import { AppImage } from "@/components/AppImage";
 import { cn } from "@/lib/utils";
 
 const SIZE_CLASS = {
@@ -7,6 +8,13 @@ const SIZE_CLASS = {
   md: "h-10 w-10 text-sm",
   lg: "h-16 w-16 text-xl",
   xl: "h-24 w-24 text-3xl",
+} as const;
+
+const SIZE_PX = {
+  sm: 32,
+  md: 40,
+  lg: 64,
+  xl: 96,
 } as const;
 
 type UserAvatarProps = {
@@ -26,12 +34,16 @@ export function UserAvatar({
 }: UserAvatarProps) {
   const sizeClass = SIZE_CLASS[size];
   const roundClass = rounded === "2xl" ? "rounded-2xl" : "rounded-full";
+  const px = SIZE_PX[size];
 
   if (avatarUrl?.trim()) {
     return (
-      <img
+      <AppImage
         src={avatarUrl}
         alt={name}
+        width={px}
+        height={px}
+        sizes={`${px}px`}
         className={cn("shrink-0 object-cover object-top", roundClass, sizeClass, className)}
       />
     );

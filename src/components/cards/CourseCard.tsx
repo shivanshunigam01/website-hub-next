@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/hooks/use-currency";
 import type { Course } from "@/types/catalog";
 import { courseImage } from "@/data/images";
+import { AppImage } from "@/components/AppImage";
 
 export function CourseCard({ course }: { course: Course }) {
   const { formatLocalizedPrice } = useCurrency();
@@ -17,7 +18,13 @@ export function CourseCard({ course }: { course: Course }) {
           className={`aspect-video relative overflow-hidden ${course.gradient.startsWith("from-") ? `bg-gradient-to-br ${course.gradient}` : ""}`}
           style={course.gradient.startsWith("from-") ? undefined : { background: course.gradient }}
         >
-          <img src={img} alt={course.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <AppImage
+            src={img}
+            alt={course.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="group-hover:scale-105 transition-transform duration-500"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
           <div className="absolute top-3 left-3 flex gap-2">
             {course.bestseller && <Badge className="bg-amber-400 text-amber-950 hover:bg-amber-400">Bestseller</Badge>}

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/hooks/use-currency";
 import type { Tutor } from "@/types/catalog";
 import { tutorImage } from "@/data/images";
+import { AppImage } from "@/components/AppImage";
 
 export function TutorCard({ tutor }: { tutor: Tutor }) {
   const { formatLocalizedPrice } = useCurrency();
@@ -38,12 +39,13 @@ export function TutorCard({ tutor }: { tutor: Tutor }) {
           )}
         </div>
         <div className="relative z-10 -mt-12 px-4">
-          <div className="h-24 w-24 overflow-hidden rounded-2xl border-4 border-card bg-card shadow-md">
-            <img
+          <div className="relative h-24 w-24 overflow-hidden rounded-2xl border-4 border-card bg-card shadow-md">
+            <AppImage
               src={img}
               alt={tutor.name}
-              loading="lazy"
-              className="h-full w-full object-cover object-top"
+              fill
+              sizes="96px"
+              className="object-top"
             />
           </div>
         </div>

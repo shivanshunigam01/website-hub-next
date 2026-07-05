@@ -2,7 +2,6 @@
 
 import { Link } from "@/lib/navigation";
 import { GraduationCap, Briefcase, ArrowUpRight } from "lucide-react";
-import { motion } from "framer-motion";
 
 type Item = { label: string; to: string };
 
@@ -49,14 +48,8 @@ function Group({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {items.map((it, i) => (
-          <motion.div
-            key={it.label}
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.35, delay: i * 0.04 }}
-          >
+        {items.map((it) => (
+          <div key={it.label}>
             <Link
               to={it.to as string}
               className="group relative flex items-center justify-between overflow-hidden rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md"
@@ -68,7 +61,7 @@ function Group({
               <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               <span className={`pointer-events-none absolute inset-x-0 -bottom-px h-px bg-gradient-to-r ${ring}`} />
             </Link>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

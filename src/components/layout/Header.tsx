@@ -215,7 +215,7 @@ export function Header() {
       >
         <div className="container relative mx-auto flex h-16 min-h-16 items-center px-4 sm:px-6">
           <Link to="/" className="relative z-10 flex shrink-0 items-center" aria-label="TeacherPoint home">
-            <BrandLogo size="header" />
+            <BrandLogo size="header" priority />
           </Link>
 
           <nav

@@ -30,6 +30,8 @@ import { useTranslation } from "react-i18next";
 import { HeroBackground } from "@/components/home/HeroBackground";
 import careerBanner from "@/assets/career-banner.jpg";
 import { courseImage, tutorImage } from "@/data/images";
+import { AppImage } from "@/components/AppImage";
+import Image from "next/image";
 
 const ICONS: Record<string, any> = {
   Sparkles, Code, Brain, BarChart3, Palette, Briefcase: Bcase, Megaphone, Languages, GraduationCap,
@@ -226,7 +228,7 @@ export function LearnAI() {
           {COURSES.slice(0, 4).map((c) => (
             <div key={c.id} className="bg-white/10 backdrop-blur rounded-2xl p-3 hover:bg-white/20 transition overflow-hidden">
               <div className="h-24 rounded-lg mb-3 overflow-hidden relative" style={{ background: c.gradient }}>
-                <img src={courseImage(c.id)} alt={c.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                <AppImage src={courseImage(c.id)} alt={c.title} fill sizes="160px" />
               </div>
               <div className="text-sm font-semibold line-clamp-2">{c.title}</div>
               <div className="text-xs opacity-80 mt-1">⭐ {c.rating} · {c.duration}</div>
@@ -259,7 +261,15 @@ export function FeaturedTutors() {
 export function CareerBanner() {
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
-      <div className="relative rounded-3xl overflow-hidden p-10 md:p-16 text-white" style={{ backgroundImage: `url(${careerBanner})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+      <div className="relative rounded-3xl overflow-hidden p-10 md:p-16 text-white min-h-[320px]">
+        <Image
+          src={careerBanner}
+          alt=""
+          fill
+          sizes="100vw"
+          loading="lazy"
+          className="object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-purple opacity-90" />
         <div className="relative max-w-2xl">
           <Badge className="bg-white/20 border-0 mb-4">Career growth</Badge>
@@ -289,15 +299,20 @@ export function IndustryExperts() {
           {COURSES.slice(2, 5).map((c) => (
             <article key={c.id} className="bg-card border rounded-2xl overflow-hidden hover:shadow-card transition">
               <div className="aspect-[16/10] relative overflow-hidden" style={{ background: c.gradient }}>
-                <img src={courseImage(c.id)} alt={c.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                <AppImage src={courseImage(c.id)} alt={c.title} fill sizes="(max-width: 768px) 100vw, 33vw" />
               </div>
               <div className="p-5">
                 <Badge variant="secondary" className="mb-3">{c.category}</Badge>
                 <h3 className="font-display font-bold text-lg leading-snug">{c.title}</h3>
                 <p className="text-sm text-muted-foreground mt-2">{c.description}</p>
                 <div className="mt-4 flex items-center gap-3 pt-4 border-t">
-                  <div className="h-9 w-9 rounded-full overflow-hidden bg-gradient-primary">
-                    <img src={tutorImage("t" + ((parseInt(c.id.slice(1)) % 12) + 1))} alt={c.instructor} className="h-full w-full object-cover" loading="lazy" />
+                  <div className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-primary">
+                    <AppImage
+                      src={tutorImage("t" + ((parseInt(c.id.slice(1)) % 12) + 1))}
+                      alt={c.instructor}
+                      fill
+                      sizes="36px"
+                    />
                   </div>
                   <div>
                     <div className="text-sm font-semibold">{c.instructor}</div>
@@ -464,8 +479,13 @@ export function Testimonials() {
             <Quote className="h-7 w-7 text-primary/30" />
             <p className="text-sm mt-3 leading-relaxed">"{t.text}"</p>
             <div className="mt-4 flex items-center gap-3 pt-4 border-t">
-              <div className="h-10 w-10 rounded-full overflow-hidden bg-gradient-primary">
-                <img src={tutorImage("t" + ((parseInt(t.id.slice(1)) % 12) + 1))} alt={t.name} loading="lazy" className="h-full w-full object-cover" />
+              <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gradient-primary">
+                <AppImage
+                  src={tutorImage("t" + ((parseInt(t.id.slice(1)) % 12) + 1))}
+                  alt={t.name}
+                  fill
+                  sizes="40px"
+                />
               </div>
               <div className="flex-1">
                 <div className="text-sm font-semibold">{t.name}</div>

@@ -3,6 +3,7 @@
 import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, PlayCircle, Star, BadgeCheck, MessageCircleQuestion, Briefcase } from "lucide-react";
+import { AppImage } from "@/components/AppImage";
 
 export function LevelUpSection() {
   return (
@@ -83,21 +84,21 @@ export function LevelUpSection() {
 
           {/* photo 1 */}
           <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] border-2 border-border bg-sky-100 sm:ml-auto sm:mt-0 sm:w-56">
-            <img
+            <AppImage
               src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=500&auto=format&fit=crop"
               alt="Student"
-              className="h-full w-full object-cover"
-              loading="lazy"
+              fill
+              sizes="(max-width: 640px) 50vw, 224px"
             />
           </div>
 
           {/* photo 2 */}
           <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] border-2 border-border bg-amber-100 sm:mt-12 sm:w-56">
-            <img
+            <AppImage
               src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=500&auto=format&fit=crop"
               alt="Student"
-              className="h-full w-full object-cover"
-              loading="lazy"
+              fill
+              sizes="(max-width: 640px) 50vw, 224px"
             />
           </div>
 

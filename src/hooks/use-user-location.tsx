@@ -88,11 +88,24 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    runDetect().then(() => {
-      if (cancelled) return;
-    });
+    const start = () => {
+      runDetect().then(() => {
+        if (cancelled) return;
+      });
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(() => start(), { timeout: 3000 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback(idleId);
+      };
+    }
+
+    const timer = window.setTimeout(start, 2000);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [attempt, runDetect]);
 

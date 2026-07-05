@@ -10,6 +10,7 @@ import type { RegionalAd, RegionalAdPlacement } from "@/hooks/use-admin-store";
 import { useRegionalAds } from "@/hooks/use-regional-ads";
 import { useLocationContext } from "@/hooks/use-user-location";
 import { filterRegionalAds } from "@/lib/regional-ads";
+import { AppImage } from "@/components/AppImage";
 
 function Media({ ad }: { ad: RegionalAd }) {
   if (ad.mediaType === "video" && ad.videoUrl) {
@@ -20,7 +21,7 @@ function Media({ ad }: { ad: RegionalAd }) {
         muted
         loop
         playsInline
-        preload="auto"
+        preload="none"
         className="absolute inset-0 h-full w-full object-cover"
         aria-hidden
       />
@@ -28,11 +29,11 @@ function Media({ ad }: { ad: RegionalAd }) {
   }
   if (ad.mediaType === "image" && ad.imageUrl) {
     return (
-      <img
+      <AppImage
         src={ad.imageUrl}
         alt=""
-        loading="lazy"
-        className="absolute inset-0 h-full w-full object-cover"
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
       />
     );
   }
