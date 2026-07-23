@@ -40,7 +40,7 @@ export type WhatsAppAuthModalProps = {
   onOpenChange: (open: boolean) => void;
   mode: "login" | "signup";
   /** Signup role from /register?role= */
-  defaultRole?: "student" | "teacher";
+  defaultRole?: "student" | "teacher" | "parent";
   redirect?: string;
 };
 
@@ -58,7 +58,7 @@ export function WhatsAppAuthModal({
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneLocal, setPhoneLocal] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<"student" | "teacher">(defaultRole);
+  const [role, setRole] = useState<"student" | "teacher" | "parent">(defaultRole);
   const [otp, setOtp] = useState("");
   const [phoneE164, setPhoneE164] = useState("");
   const [sending, setSending] = useState(false);
@@ -246,12 +246,18 @@ export function WhatsAppAuthModal({
                   </div>
                   <div>
                     <Label>Role</Label>
-                    <div className="mt-2 flex gap-3">
-                      {(["student", "teacher"] as const).map((r) => (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {(
+                        [
+                          { id: "student" as const, label: "Student" },
+                          { id: "teacher" as const, label: "Tutor" },
+                          { id: "parent" as const, label: "Parent" },
+                        ] as const
+                      ).map((r) => (
                         <label
-                          key={r}
-                          className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                            role === r
+                          key={r.id}
+                          className={`flex min-w-[5.5rem] flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                            role === r.id
                               ? "border-primary bg-primary/10 text-primary"
                               : "border-border hover:bg-muted/50"
                           }`}
@@ -260,10 +266,10 @@ export function WhatsAppAuthModal({
                             type="radio"
                             name="wa-role"
                             className="sr-only"
-                            checked={role === r}
-                            onChange={() => setRole(r)}
+                            checked={role === r.id}
+                            onChange={() => setRole(r.id)}
                           />
-                          {r === "teacher" ? "Tutor" : "Student"}
+                          {r.label}
                         </label>
                       ))}
                     </div>

@@ -11,7 +11,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { afterAuthPath, TEACHER_ONBOARDING_PATH } from "@/lib/auth-redirect";
 import { useProfilePhone } from "@/hooks/use-profile-phone";
 import { CURRENCIES, getCurrencySymbol } from "@/lib/currencies";
-import type { TeacherType, TeachingSubject } from "@/lib/auth-types";
+import type { ParentChild, TeacherType, TeachingSubject } from "@/lib/auth-types";
 import {
   TEACHING_LEVELS,
   formatTeachingSubjectLabel,
@@ -51,6 +51,15 @@ function ProfileSetup() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
   const [grade, setGrade] = useState(user?.studentProfile?.grade || "");
+  const [children, setChildren] = useState<ParentChild[]>(
+    user?.parentProfile?.children?.length
+      ? user.parentProfile.children.map((c) => ({
+          name: c.name || "",
+          age: c.age,
+          grade: c.grade || "",
+        }))
+      : [{ name: "", age: undefined, grade: "" }],
+  );
   const [teacherType, setTeacherType] = useState<TeacherType | "">("");
   const [teacherTypeOther, setTeacherTypeOther] = useState(user?.teacherProfile?.teacherTypeOther || "");
   const [gender, setGender] = useState<TeacherGender | "">("");
@@ -117,6 +126,15 @@ function ProfileSetup() {
     if (user?.studentProfile?.grade) {
       setGrade(user.studentProfile.grade);
     }
+    if (user?.parentProfile?.children?.length) {
+      setChildren(
+        user.parentProfile.children.map((c) => ({
+          name: c.name || "",
+          age: c.age,
+          grade: c.grade || "",
+        })),
+      );
+    }
     if (user?.teacherProfile?.teacherType) {
       setTeacherType(user.teacherProfile.teacherType);
     }
@@ -144,7 +162,12 @@ function ProfileSetup() {
 
   useEffect(() => {
     if (loading || !user) return;
-    if ((user.role === "teacher" || user.role === "student") && !user.isVerified) {
+    if (
+      (user.role === "teacher" || user.role === "student" || user.role === "parent") &&
+      !user.isVerified &&
+      user.provider !== "whatsapp" &&
+      user.email
+    ) {
       nav({ to: "/verify-email" });
       return;
     }
@@ -157,10 +180,10 @@ function ProfileSetup() {
     return <div className="container py-20 text-center text-muted-foreground">Loading…</div>;
   }
 
-  if (!user || !role || (role !== "student" && role !== "teacher")) {
+  if (!user || !role || (role !== "student" && role !== "teacher" && role !== "parent")) {
     return (
       <div className="container py-20 text-center">
-        <p className="text-muted-foreground">Sign in as a student or tutor to complete your profile.</p>
+        <p className="text-muted-foreground">Sign in as a student, tutor, or parent to complete your profile.</p>
         <Button className="mt-4" onClick={() => nav({ to: "/role-select" })}>
           Get started
         </Button>
@@ -190,6 +213,31 @@ function ProfileSetup() {
             grade: grade.trim(),
             goals: String(fd.get("goals") || ""),
           },
+        });
+      } else if (role === "parent") {
+        const { phone, phoneCountryCode: submitCc } = getSubmitPhone();
+        const cleanedChildren = children
+          .map((c) => ({
+            name: c.name.trim(),
+            age: c.age != null && !Number.isNaN(Number(c.age)) ? Number(c.age) : undefined,
+            grade: c.grade?.trim() || undefined,
+          }))
+          .filter((c) => c.name);
+        if (!phone && cleanedChildren.length === 0) {
+          toast.error("Add a phone number or at least one child with a name");
+          setSaving(false);
+          return;
+        }
+        if (cleanedChildren.some((c) => c.age == null && !c.grade)) {
+          toast.error("Each child needs an age or grade");
+          setSaving(false);
+          return;
+        }
+        result = await updateProfile({
+          name: String(fd.get("name") || user.name),
+          avatarUrl,
+          ...(phone ? { phone, phoneCountryCode: submitCc } : {}),
+          parentProfile: { children: cleanedChildren },
         });
       } else {
         if (!teacherType) {
@@ -334,17 +382,21 @@ function ProfileSetup() {
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
               <Sparkles className="h-3.5 w-3.5" />
-              {role === "teacher" ? "Tutor onboarding" : "Welcome aboard"}
+              {role === "teacher" ? "Tutor onboarding" : role === "parent" ? "Parent setup" : "Welcome aboard"}
             </div>
             <h2 className="mt-6 font-display text-4xl font-bold leading-tight">
               {role === "teacher"
                 ? "Build a profile students trust."
-                : "Your learning journey, personalised."}
+                : role === "parent"
+                  ? "Set up learning for your child."
+                  : "Your learning journey, personalised."}
             </h2>
             <p className="mt-3 max-w-md text-sm text-white/85">
               {role === "teacher"
                 ? "A complete profile unlocks discovery — show off your subjects, levels and style."
-                : "Tell us a little about you so we can match the right tutors, classes and resources."}
+                : role === "parent"
+                  ? "Add your child's details so we can help you find the right tutors and courses."
+                  : "Tell us a little about you so we can match the right tutors, classes and resources."}
             </p>
           </div>
 
@@ -389,7 +441,9 @@ function ProfileSetup() {
             <p className="mt-2 text-sm text-muted-foreground">
               {role === "teacher"
                 ? "Tutors need a public profile before students can find you."
-                : "Help us personalize your learning experience."}
+                : role === "parent"
+                  ? "Add a phone number or your child's details to finish setup."
+                  : "Help us personalize your learning experience."}
             </p>
           </div>
 
@@ -411,10 +465,12 @@ function ProfileSetup() {
           hint={
             role === "teacher"
               ? "Shown on the tutor directory and your public tutor profile."
-              : "Shown on your student profile and when you message tutors."
+              : role === "parent"
+                ? "Shown when you message tutors and manage learning for your child."
+                : "Shown on your student profile and when you message tutors."
           }
         />
-        {role === "student" && (
+        {(role === "student" || role === "parent") && (
           <>
             {isWhatsappVerified ? <WhatsappPhoneNotice /> : null}
             <PhoneNumberField
@@ -448,6 +504,88 @@ function ProfileSetup() {
               <Textarea id="goals" name="goals" className="mt-1" defaultValue={user.studentProfile?.goals || ""} />
             </div>
           </>
+        ) : role === "parent" ? (
+          <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-semibold text-sm text-foreground">Children</h2>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setChildren((prev) => [...prev, { name: "", age: undefined, grade: "" }])}
+              >
+                Add child
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Add at least one child with a name plus age or grade — or just a phone number above.
+            </p>
+            {children.map((child, index) => (
+              <div key={index} className="grid gap-3 sm:grid-cols-3">
+                <div className="sm:col-span-1">
+                  <Label htmlFor={`child-name-${index}`}>Name</Label>
+                  <Input
+                    id={`child-name-${index}`}
+                    className="mt-1"
+                    value={child.name}
+                    onChange={(e) =>
+                      setChildren((prev) =>
+                        prev.map((c, i) => (i === index ? { ...c, name: e.target.value } : c)),
+                      )
+                    }
+                    placeholder="Child's name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor={`child-age-${index}`}>Age</Label>
+                  <Input
+                    id={`child-age-${index}`}
+                    type="number"
+                    min={1}
+                    max={25}
+                    className="mt-1"
+                    value={child.age ?? ""}
+                    onChange={(e) =>
+                      setChildren((prev) =>
+                        prev.map((c, i) =>
+                          i === index
+                            ? { ...c, age: e.target.value ? Number(e.target.value) : undefined }
+                            : c,
+                        ),
+                      )
+                    }
+                    placeholder="Age"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor={`child-grade-${index}`}>Grade</Label>
+                  <Input
+                    id={`child-grade-${index}`}
+                    className="mt-1"
+                    value={child.grade || ""}
+                    onChange={(e) =>
+                      setChildren((prev) =>
+                        prev.map((c, i) => (i === index ? { ...c, grade: e.target.value } : c)),
+                      )
+                    }
+                    placeholder="e.g. Grade 8"
+                  />
+                </div>
+                {children.length > 1 ? (
+                  <div className="sm:col-span-3">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setChildren((prev) => prev.filter((_, i) => i !== index))}
+                    >
+                      Remove child
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
         ) : (
           <>
             <div>

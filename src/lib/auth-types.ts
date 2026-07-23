@@ -97,6 +97,16 @@ export interface StudentProfile {
   goals?: string;
 }
 
+export interface ParentChild {
+  name: string;
+  age?: number;
+  grade?: string;
+}
+
+export interface ParentProfile {
+  children?: ParentChild[];
+}
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -108,6 +118,7 @@ export interface AuthUser {
   phone?: string;
   phoneCountryCode?: string;
   provider?: "local" | "google" | "whatsapp";
+  hasPassword?: boolean;
   theme?: "light" | "dark";
   locale?: string;
   profileComplete?: boolean;
@@ -120,6 +131,7 @@ export interface AuthUser {
   ipAdminNote?: string;
   teacherProfile?: TeacherProfile;
   studentProfile?: StudentProfile;
+  parentProfile?: ParentProfile;
 }
 
 export interface AuthSession {

@@ -20,14 +20,30 @@ import { toast } from "sonner";
 function Register() {
   const { registerWithPassword } = useApp();
   const nav = useNavigate();
-  const { role } = useSearch<{ role?: "student" | "teacher" }>();
+  const { role: roleParam } = useSearch<{ role?: "student" | "teacher" | "parent" }>();
+  const role =
+    roleParam === "student" || roleParam === "teacher" || roleParam === "parent" ? roleParam : undefined;
   const { googleLoading, googleError, handleGoogleSuccess, handleGoogleError } = useGoogleAuth({
     role,
   });
   const [submitting, setSubmitting] = useState(false);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const showGoogle = isGoogleAuthConfigured();
-  const roleLabel = role === "teacher" ? "tutor" : role;
+  const roleLabel =
+    role === "teacher" ? "tutor" : role === "parent" ? "parent" : role === "student" ? "student" : "member";
+
+  if (!role) {
+    return (
+      <section className="container mx-auto max-w-lg px-4 py-16 text-center">
+        <BrandLogo size="login" className="mx-auto mb-6" />
+        <h1 className="font-display text-2xl font-bold">Choose how you will use TeacherPoint</h1>
+        <p className="mt-2 text-muted-foreground">Pick student, tutor, or parent to continue.</p>
+        <Button className="mt-6" asChild>
+          <Link to="/role-select">Select role</Link>
+        </Button>
+      </section>
+    );
+  }
 
   return (
     <section className="container mx-auto grid max-w-6xl items-center gap-8 px-4 py-6 lg:grid-cols-2 lg:gap-12 lg:py-8">
@@ -42,7 +58,9 @@ function Register() {
         <p className="mt-4 max-w-md rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
           {role === "teacher"
             ? "Tutors verify with a one-time code, complete their profile, then receive a welcome email with courses."
-            : "Students verify with a one-time code, then get a welcome email with popular courses to explore."}
+            : role === "parent"
+              ? "Parents verify with a one-time code, then add child details so you can find the right tutors."
+              : "Students verify with a one-time code, then get a welcome email with popular courses to explore."}
         </p>
       </div>
 
@@ -101,7 +119,7 @@ function Register() {
                   name: String(fd.get("name")),
                   email,
                   password: String(fd.get("password")),
-                  role: role ?? "student",
+                  role: role,
                 });
                 toast.success("Account created — you are now signed in!");
 
@@ -199,7 +217,7 @@ function Register() {
                 <Link to="/terms" className="font-semibold text-primary hover:underline">
                   Terms and Conditions
                 </Link>{" "}
-                for {role === "teacher" ? "tutors" : "students"}.
+                for {role === "teacher" ? "tutors" : role === "parent" ? "parents" : "students"}.
               </span>
             </label>
 

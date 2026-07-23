@@ -28,7 +28,7 @@ function ForgotPassword() {
           Reset your <span className="text-gradient-primary">TeacherPoint</span> password
         </h1>
         <p className="mt-4 max-w-md text-muted-foreground">
-          Students and tutors can request a secure password reset link using the email on their account.
+          Students, tutors, and parents can request a secure password reset link using the email on their account.
         </p>
       </div>
 

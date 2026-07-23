@@ -20,5 +20,5 @@ export type WhatsappLoginResponse =
 export type WhatsappSignupPayload = {
   name: string;
   phone: string;
-  role: "student" | "teacher";
+  role: "student" | "teacher" | "parent";
 };

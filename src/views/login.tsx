@@ -39,8 +39,8 @@ function Login() {
           Welcome back to <span className="text-gradient-primary">TeacherPoint</span>
         </h1>
         <p className="mt-4 text-muted-foreground max-w-md">
-          Sign in with Google for one-tap access, or use your email and password. Students and tutors
-          use the same login page.
+          Sign in with Google for one-tap access, or use your email and password. Students, tutors,
+          and parents use the same login page.
         </p>
       </div>
 

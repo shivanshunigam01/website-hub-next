@@ -10,7 +10,7 @@ import { formatApiErrorMessage } from "@/lib/api";
 import { GOOGLE_SIGNIN_CONFIG_ERROR, isGoogleAuthConfigured } from "@/config/google-oauth";
 
 type UseGoogleAuthOptions = {
-  role?: "student" | "teacher";
+  role?: "student" | "teacher" | "parent";
   /** After sign-in, go here instead of the default dashboard path */
   redirect?: string;
 };

@@ -10,18 +10,22 @@ import { useApp } from "@/hooks/use-app";
 import { afterAuthPath } from "@/lib/auth-redirect";
 import { formatApiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
-import type { AuthRole } from "@/lib/auth-types";
 
-const COPY: Record<"teacher" | "student", { badge: string; blurb: string; success: string }> = {
+const COPY: Record<"teacher" | "student" | "parent", { badge: string; continueBlurb: string; success: string }> = {
   teacher: {
     badge: "Tutor verification",
-    blurb: "continue to your tutor profile setup",
+    continueBlurb: " continue to your tutor profile setup.",
     success: "Email verified! Complete your tutor profile next.",
   },
   student: {
     badge: "Student verification",
-    blurb: "start exploring courses and tutors",
+    continueBlurb: " start exploring courses and tutors.",
     success: "Email verified! You can complete your profile next.",
+  },
+  parent: {
+    badge: "Parent verification",
+    continueBlurb: " continue setting up your parent profile.",
+    success: "Email verified! Add your child's details next.",
   },
 };
 
@@ -32,7 +36,8 @@ function VerifyEmail() {
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
 
-  const role = user?.role === "teacher" || user?.role === "student" ? user.role : null;
+  const role =
+    user?.role === "teacher" || user?.role === "student" || user?.role === "parent" ? user.role : null;
   const copy = role ? COPY[role] : COPY.student;
 
   useEffect(() => {
@@ -41,7 +46,7 @@ function VerifyEmail() {
       nav({ to: "/login" });
       return;
     }
-    if (user.role !== "teacher" && user.role !== "student") {
+    if (user.role !== "teacher" && user.role !== "student" && user.role !== "parent") {
       nav({ to: afterAuthPath(user.role, user.profileComplete ?? false, true) });
       return;
     }
@@ -62,11 +67,7 @@ function VerifyEmail() {
     setSubmitting(true);
     try {
       const session = await verifyEmail(otp);
-      toast.success(
-        user.role === "teacher"
-          ? "Email verified! Complete your tutor profile next."
-          : "Email verified! Welcome to TeacherPoint.",
-      );
+      toast.success(copy.success);
       nav({
         to: afterAuthPath(user.role, session.profileComplete, true),
       });
@@ -97,15 +98,13 @@ function VerifyEmail() {
         </div>
         <div className="flex items-center gap-2 text-primary mb-2">
           <ShieldCheck className="h-5 w-5" />
-          <span className="text-sm font-semibold uppercase tracking-wide">
-            {user.role === "teacher" ? "Tutor verification" : "Email verification"}
-          </span>
+          <span className="text-sm font-semibold uppercase tracking-wide">{copy.badge}</span>
         </div>
         <h1 className="font-display font-bold text-2xl">Verify your email</h1>
         <p className="text-sm text-muted-foreground mt-2">
           We sent a 6-digit code to{" "}
           <span className="font-medium text-foreground">{user.email}</span>. Enter it below to
-          {user.role === "teacher" ? " continue to your tutor profile setup." : " activate your account."}
+          {copy.continueBlurb}
         </p>
 
         <div className="mt-8 flex flex-col items-center gap-4">

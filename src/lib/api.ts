@@ -84,9 +84,12 @@ async function refreshAccessToken(): Promise<string | null> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
     });
-    const json = (await res.json()) as ApiEnvelope<{ accessToken: string }>;
+    const json = (await res.json()) as ApiEnvelope<{ accessToken: string; refreshToken?: string }>;
     if (!res.ok || !json.success || !json.data?.accessToken) return null;
     localStorage.setItem(ACCESS_KEY, json.data.accessToken);
+    if (json.data.refreshToken) {
+      localStorage.setItem(REFRESH_KEY, json.data.refreshToken);
+    }
     return json.data.accessToken;
   } catch {
     return null;

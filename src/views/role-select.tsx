@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
-import { GraduationCap, BookOpen } from "lucide-react";
+import { GraduationCap, BookOpen, Users } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 
 const ROLES = [
@@ -19,11 +19,18 @@ const ROLES = [
     icon: BookOpen,
     color: "from-purple-400 to-fuchsia-600",
   },
+  {
+    id: "parent" as const,
+    title: "I'm a Parent",
+    desc: "Find tutors for your child and track their learning.",
+    icon: Users,
+    color: "from-emerald-400 to-teal-600",
+  },
 ];
 
 function RoleSelect() {
   return (
-    <section className="container mx-auto px-4 py-16 max-w-3xl">
+    <section className="container mx-auto px-4 py-16 max-w-4xl">
       <div className="mb-8 flex justify-center">
         <BrandLogo size="login" />
       </div>
@@ -38,7 +45,7 @@ function RoleSelect() {
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-5">
+      <div className="grid sm:grid-cols-3 gap-5">
         {ROLES.map((r) => (
           <Link
             key={r.id}

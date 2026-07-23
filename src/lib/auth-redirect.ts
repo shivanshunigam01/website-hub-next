@@ -5,13 +5,16 @@ export function afterAuthPath(
   profileComplete: boolean,
   isVerified = true,
 ) {
-  if ((role === "teacher" || role === "student") && !isVerified) {
+  if ((role === "teacher" || role === "student" || role === "parent") && !isVerified) {
     return "/verify-email";
   }
   if (role === "teacher" && !profileComplete) {
     return "/teacher/onboarding/profile";
   }
   if (role === "student" && !profileComplete) {
+    return "/profile";
+  }
+  if (role === "parent" && !profileComplete) {
     return "/profile";
   }
   if (role === "teacher") return "/teacher";

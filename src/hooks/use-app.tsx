@@ -14,13 +14,13 @@ interface AppState {
   loading: boolean;
   profileComplete: boolean;
   loginWithPassword: (email: string, password: string) => Promise<AuthSession>;
-  loginWithGoogle: (credential: string, role?: "student" | "teacher") => Promise<AuthSession>;
+  loginWithGoogle: (credential: string, role?: "student" | "teacher" | "parent") => Promise<AuthSession>;
   setWhatsappSession: (data: AuthSession) => Promise<AuthSession>;
   registerWithPassword: (data: {
     name: string;
     email: string;
     password: string;
-    role: "student" | "teacher";
+    role: "student" | "teacher" | "parent";
   }) => Promise<AuthSession>;
   requestPasswordReset: (email: string) => Promise<{
     sent?: boolean;
@@ -34,7 +34,7 @@ interface AppState {
   resendVerificationEmail: () => Promise<{ sent?: boolean; devOtp?: string }>;
   refreshUser: () => Promise<AuthUser | null>;
   updateProfile: (body: Record<string, unknown>) => Promise<ProfileUpdateResult>;
-  logout: () => void;
+  logout: () => Promise<void>;
   toggleTheme: () => void;
 }
 
@@ -197,7 +197,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return session;
   };
 
-  const loginWithGoogle = async (credential: string, role?: "student" | "teacher") => {
+  const loginWithGoogle = async (credential: string, role?: "student" | "teacher" | "parent") => {
     const data = await apiPublic<AuthSession>("/auth/google-login", {
       method: "POST",
       body: JSON.stringify({
@@ -237,9 +237,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     name: string;
     email: string;
     password: string;
-    role: "student" | "teacher";
+    role: "student" | "teacher" | "parent";
   }) => {
-    const data = await api<AuthSession>("/auth/register", {
+    const data = await apiPublic<AuthSession>("/auth/register", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -317,7 +317,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return updated;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const refreshToken =
+      typeof window !== "undefined" ? localStorage.getItem(REFRESH_KEY) : null;
+    try {
+      await api("/auth/logout", {
+        method: "POST",
+        body: JSON.stringify(refreshToken ? { refreshToken } : {}),
+      });
+    } catch {
+      // Still clear local session if the server call fails (expired token, offline, etc.)
+    }
     clearWhatsappVerifiedPhone();
     clearSession();
     setUser(null);

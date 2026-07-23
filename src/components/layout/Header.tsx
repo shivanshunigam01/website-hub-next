@@ -265,7 +265,7 @@ export function Header() {
                   <DropdownMenuItem asChild>
                     <Link to={`/${role}` as any}>{t("nav.dashboard")}</Link>
                   </DropdownMenuItem>
-                  {(role === "student" || role === "teacher") && (
+                  {(role === "student" || role === "teacher" || role === "parent") && (
                     <DropdownMenuItem asChild>
                       <Link to="/profile">Edit profile</Link>
                     </DropdownMenuItem>

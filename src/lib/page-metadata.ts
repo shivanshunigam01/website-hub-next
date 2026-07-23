@@ -68,7 +68,7 @@ export const ROUTE_METADATA: Record<string, RouteMetaEntry> = {
   },
   "/forgot-password": {
     title: "Forgot password · TeacherPoint",
-    description: "Reset your TeacherPoint student or tutor account password.",
+    description: "Reset your TeacherPoint student, tutor, or parent account password.",
   },
   "/home-teaching": {
     title: "Home Teaching Jobs · TeacherPoint",

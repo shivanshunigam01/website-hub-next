@@ -11,7 +11,7 @@ import { formatApiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 
 type AccountProfilePanelProps = {
-  role: "student" | "teacher";
+  role: "student" | "teacher" | "parent";
 };
 
 export function AccountProfilePanel({ role }: AccountProfilePanelProps) {
@@ -39,7 +39,12 @@ export function AccountProfilePanel({ role }: AccountProfilePanelProps) {
   const roleHint =
     role === "teacher"
       ? "Shown on the tutor directory, your public profile, and job applications."
-      : "Shown on your student profile and when you message tutors.";
+      : role === "parent"
+        ? "Shown when you message tutors and manage your child's learning."
+        : "Shown on your student profile and when you message tutors.";
+
+  const editProfileTo =
+    role === "teacher" ? TEACHER_ONBOARDING_PATH : "/profile";
 
   if (!user) return null;
 
@@ -71,9 +76,7 @@ export function AccountProfilePanel({ role }: AccountProfilePanelProps) {
 
       <div className="flex flex-wrap gap-2 border-t pt-4">
         <Button variant="outline" size="sm" asChild>
-          <Link to={role === "teacher" ? TEACHER_ONBOARDING_PATH : "/profile"}>
-            Edit full profile
-          </Link>
+          <Link to={editProfileTo}>Edit full profile</Link>
         </Button>
       </div>
     </div>

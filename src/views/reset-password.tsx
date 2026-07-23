@@ -41,7 +41,7 @@ function ResetPassword() {
         </Link>
         <h2 className="font-display text-2xl font-bold">Reset password</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Enter and confirm your new student or tutor account password.
+          Enter and confirm your new account password.
         </p>
 
         {missingToken ? (
