@@ -4,15 +4,18 @@ import { Link, useNavigate } from "@/lib/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useApp } from "@/hooks/use-app";
 import type { AuthRole } from "@/lib/auth-types";
+import { afterAuthPath } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 
 type Props = {
   children: ReactNode;
   roles?: AuthRole[];
+  /** When true (default), incomplete profiles are redirected to setup */
+  requireProfileComplete?: boolean;
 };
 
-export function RequireAuth({ children, roles }: Props) {
-  const { user, role, loading } = useApp();
+export function RequireAuth({ children, roles, requireProfileComplete = true }: Props) {
+  const { user, role, loading, profileComplete } = useApp();
   const nav = useNavigate();
 
   useEffect(() => {
@@ -23,8 +26,20 @@ export function RequireAuth({ children, roles }: Props) {
     }
     if (roles?.length && role && !roles.includes(role)) {
       nav({ to: `/${role}` as "/student" | "/teacher" | "/admin" | "/parent" });
+      return;
     }
-  }, [loading, user, role, roles, nav]);
+    if (
+      requireProfileComplete &&
+      role &&
+      (role === "student" || role === "teacher" || role === "parent")
+    ) {
+      const verified =
+        user.provider === "whatsapp" || !user.email ? true : user.isVerified !== false;
+      if (!verified || !profileComplete) {
+        nav({ to: afterAuthPath(role, profileComplete, verified) });
+      }
+    }
+  }, [loading, user, role, roles, requireProfileComplete, profileComplete, nav]);
 
   if (loading) {
     return (
@@ -49,6 +64,22 @@ export function RequireAuth({ children, roles }: Props) {
         You do not have access to this page.
       </div>
     );
+  }
+
+  if (
+    requireProfileComplete &&
+    role &&
+    (role === "student" || role === "teacher" || role === "parent")
+  ) {
+    const verified =
+      user.provider === "whatsapp" || !user.email ? true : user.isVerified !== false;
+    if (!verified || !profileComplete) {
+      return (
+        <div className="container py-20 text-center text-muted-foreground">
+          Complete your profile to access this area…
+        </div>
+      );
+    }
   }
 
   return <>{children}</>;

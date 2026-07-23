@@ -139,7 +139,7 @@ export function DashboardShell({
     <SidebarProvider className="flex h-[100dvh] w-full flex-col overflow-hidden">
 
       {/* Header */}
-      <header className="relative z-50 flex h-16 shrink-0 items-center gap-3 border-b bg-background px-3 sm:px-4">
+      <header className="relative z-50 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-2 sm:h-16 sm:gap-3 sm:px-4">
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-[3px]"
           style={{ background: accent.gradient }}
@@ -148,10 +148,11 @@ export function DashboardShell({
         <SidebarTrigger className="shrink-0" />
         <Link
           to={`/${role ?? ""}` as "/"}
-          className="flex shrink-0 items-center"
+          className="flex min-w-0 shrink items-center overflow-hidden"
           aria-label="Dashboard home"
         >
-          <BrandLogo size="header" />
+          <BrandLogo size="sidebar" className="sm:hidden" />
+          <BrandLogo size="header" className="hidden sm:block" />
         </Link>
         <div className="hidden items-center gap-2 sm:flex">
           <span className="text-sm font-semibold">{title}</span>
@@ -195,7 +196,7 @@ export function DashboardShell({
         {/* Sidebar */}
         <Sidebar
           collapsible="icon"
-          className="!top-16 !bottom-0 !h-[calc(100dvh-4rem)] border-r"
+          className="!top-14 !bottom-0 !h-[calc(100dvh-3.5rem)] border-r sm:!top-16 sm:!h-[calc(100dvh-4rem)]"
         >
           <SidebarContent className="py-3">
             <SidebarGroup>

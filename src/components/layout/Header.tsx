@@ -282,10 +282,10 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <>
-                <Button asChild variant="ghost" size="sm" className="hidden h-9 shrink-0 px-2 text-xs xl:inline-flex">
+                <Button asChild variant="ghost" size="sm" className="hidden h-9 shrink-0 px-2 text-xs lg:inline-flex">
                   <Link to="/login">{t("nav.login")}</Link>
                 </Button>
-                <Button asChild size="sm" variant="gradient" className="hidden h-9 shrink-0 px-2.5 text-xs xl:inline-flex">
+                <Button asChild size="sm" variant="gradient" className="hidden h-9 shrink-0 px-2.5 text-xs lg:inline-flex">
                   <Link to="/role-select">{t("nav.signup")}</Link>
                 </Button>
               </>

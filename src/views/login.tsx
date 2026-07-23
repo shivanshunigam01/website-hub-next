@@ -44,7 +44,7 @@ function Login() {
         </p>
       </div>
 
-      <div className="bg-card border rounded-2xl p-8 shadow-soft max-w-md w-full mx-auto">
+      <div className="bg-card border rounded-2xl p-5 shadow-soft max-w-md w-full mx-auto sm:p-6">
         <div className="mb-6 lg:hidden">
           <BrandLogo size="login" className="mb-4" />
         </div>

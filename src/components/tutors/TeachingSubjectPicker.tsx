@@ -6,16 +6,22 @@ import { usePopularSubjects } from "@/hooks/use-subject-catalog";
 import { Label } from "@/components/ui/label";
 
 const FALLBACK_POPULAR = [
-  "Mathematics",
+  "Academic Writing",
+  "Maths",
   "Physics",
-  "Python",
-  "NEET",
-  "Spoken English",
   "Chemistry",
   "Biology",
   "English",
   "Computer Science",
+  "Python",
+  "JAVA",
   "IELTS",
+  "Accountancy",
+  "Economics",
+  "DBMS",
+  "C/C++",
+  "HTML",
+  "Psychology",
 ];
 
 type Props = {
@@ -35,7 +41,7 @@ export function TeachingSubjectPicker({
   label = "Subject (one at a time)",
   placeholder = "e.g. Mathematics, Python, NEET",
 }: Props) {
-  const { data: popularCatalog = [] } = usePopularSubjects(16);
+  const { data: popularCatalog = [] } = usePopularSubjects(24);
 
   const quickPicks = useMemo(() => {
     const names = popularCatalog.length

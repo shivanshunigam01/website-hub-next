@@ -31,6 +31,7 @@ import { useTutor } from "@/hooks/use-catalog";
 import { useTutorSearch } from "@/hooks/use-tutor-search";
 import { useTutorReviews } from "@/hooks/use-learning";
 import { useApp } from "@/hooks/use-app";
+import { afterAuthPath } from "@/lib/auth-redirect";
 import { RatingStars } from "@/components/lms/RatingStars";
 import { formatApiErrorMessage } from "@/lib/api";
 import { useCurrency } from "@/hooks/use-currency";
@@ -111,12 +112,19 @@ function TutorDetail() {
 
   const requireStudent = (action: () => void) => {
     if (!user) {
-      toast.info("Please sign in as a student to continue.");
+      toast.info("Please sign in as a student or parent to continue.");
       void navigate({ to: "/login", search: { redirect: `/tutors/${id}` } });
       return;
     }
     if (user.role !== "student" && user.role !== "parent") {
-      toast.info("Only students can contact tutors from this page.");
+      toast.info("Only students and parents can contact tutors from this page.");
+      return;
+    }
+    if (!user.profileComplete) {
+      toast.info("Complete your profile registration before contacting tutors.");
+      void navigate({
+        to: afterAuthPath(user.role, false, user.isVerified !== false),
+      });
       return;
     }
     action();

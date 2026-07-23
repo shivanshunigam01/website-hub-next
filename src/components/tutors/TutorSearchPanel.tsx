@@ -61,12 +61,18 @@ type Props = {
 const DEFAULT_FILTERS = DEFAULT_TUTOR_FILTERS;
 
 const FALLBACK_POPULAR_SUBJECTS = [
-  "Mathematics",
+  "Maths",
   "Physics",
-  "Python",
-  "NEET",
-  "Spoken English",
   "Chemistry",
+  "Biology",
+  "English",
+  "Computer Science",
+  "Python",
+  "JAVA",
+  "IELTS",
+  "Accountancy",
+  "DBMS",
+  "Academic Writing",
 ];
 
 export function TutorSearchPanel({

@@ -332,7 +332,7 @@ export function SkillsGrid() {
   return (
     <section className="container mx-auto px-4 py-16 md:py-20">
       <SectionHeading eyebrow="Hot skills" title="Master the tools that matter" subtitle="Job-ready training on the platforms employers actually use." />
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {SKILLS.map((s) => {
           const Icon = ICONS[s.icon] || Sparkles;
           return (

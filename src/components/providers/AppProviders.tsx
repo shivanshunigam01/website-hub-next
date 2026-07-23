@@ -84,7 +84,7 @@ function SiteChrome({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh w-full max-w-full flex-col bg-background text-foreground">
       {showSiteHeader && <Header />}
-      <main className={`flex-1 ${isDashboard ? "" : "pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0"}`}>
+      <main className={`flex-1 ${isDashboard ? "" : "pb-[calc(3.5rem+max(1rem,env(safe-area-inset-bottom)))] lg:pb-0"}`}>
         <Suspense fallback={null}>{children}</Suspense>
       </main>
       {!isDashboard && <Footer />}

@@ -319,7 +319,7 @@ function ProfileSetup() {
       toast.success("Personal details updated");
       if (result?.welcomeEmailSent) {
         toast.success(
-          `Welcome email with courses sent to ${user.email}. Check your inbox!`,
+          `Welcome email sent to ${user.email}. Check your inbox!`,
           { duration: 8000 },
         );
       }
@@ -782,10 +782,10 @@ function ProfileSetup() {
                 defaultValue={user.teacherProfile?.bio || ""}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="hourlyRate">Hourly rate ({currency})</Label>
-                <div className="mt-1 flex gap-2">
+                <div className="mt-1 flex flex-col gap-2 sm:flex-row">
                   <Select
                     value={currency}
                     onValueChange={(v) => {
@@ -794,7 +794,7 @@ function ProfileSetup() {
                       setPreferredCurrency(v);
                     }}
                   >
-                    <SelectTrigger className="w-28 shrink-0" aria-label="Currency">
+                    <SelectTrigger className="w-full shrink-0 sm:w-28" aria-label="Currency">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">

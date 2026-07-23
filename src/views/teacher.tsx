@@ -40,10 +40,10 @@ function Teacher() {
 
   useEffect(() => {
     if (!user) return;
-    if (user.role === "teacher" && progress.percent < 100) {
+    if (user.role === "teacher" && !user.profileComplete) {
       nav({ to: TEACHER_ONBOARDING_PATH });
     }
-  }, [user, nav, progress.percent]);
+  }, [user, nav]);
 
   return (
     <RequireAuth roles={["teacher"]}>

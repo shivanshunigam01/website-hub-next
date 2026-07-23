@@ -33,9 +33,15 @@ const LMS_NAV = [
 ];
 
 function LMS() {
-  const { role } = useApp();
+  const { role, user, profileComplete, loading } = useApp();
   const [tab, setTab] = useState("builder");
+  if (loading) {
+    return <div className="container py-20 text-center text-muted-foreground">Loading…</div>;
+  }
   if (role !== "teacher") return <Navigate to="/role-select" />;
+  if (!profileComplete || (user?.email && user.provider !== "whatsapp" && !user.isVerified)) {
+    return <Navigate to="/teacher/onboarding/profile" />;
+  }
 
   return (
     <DashboardShell items={LMS_NAV} title="LMS" activeSection={tab} onSectionChange={setTab}>

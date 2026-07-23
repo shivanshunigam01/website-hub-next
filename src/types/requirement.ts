@@ -1,3 +1,5 @@
+export type RequirementPosterRole = "student" | "parent";
+
 export type RequirementStatus = "pending" | "approved" | "rejected" | "fulfilled";
 
 export type RequirementJobType = "tutoring" | "assignment";
@@ -8,6 +10,13 @@ export type Requirement = {
   id: string;
   studentId: string;
   studentName: string;
+  /** Display name of the poster (alias of studentName). */
+  posterName?: string;
+  /** Who posted: student or parent. */
+  posterRole?: RequirementPosterRole;
+  /** Email/phone verified poster when available. */
+  posterVerified?: boolean;
+  /** Only present for owner/admin responses — never on public jobs. */
   studentEmail?: string;
   title: string;
   subject: string;

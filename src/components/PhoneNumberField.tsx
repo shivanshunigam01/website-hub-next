@@ -71,7 +71,7 @@ export function PhoneNumberField({
   return (
     <div className={className}>
       <Label htmlFor={id}>{label}</Label>
-      <div className="mt-1 flex gap-2">
+      <div className="mt-1 flex flex-col gap-2 sm:flex-row">
         <Popover open={codeOpen} onOpenChange={setCodeOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -81,7 +81,7 @@ export function PhoneNumberField({
               aria-expanded={codeOpen}
               aria-label="Search country code"
               disabled={locked}
-              className="h-10 w-[min(100%,11rem)] shrink-0 justify-between px-2.5 font-normal sm:w-[11rem]"
+              className="h-10 w-full shrink-0 justify-between px-2.5 font-normal sm:w-[11rem]"
             >
               <span className="truncate text-left text-sm">
                 {selected ? formatPhoneCountryOption(selected) : countryCode}

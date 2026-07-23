@@ -29,7 +29,7 @@ const ITEMS = [
 ];
 
 function Parent() {
-  const { user, profileComplete } = useApp();
+  const { user } = useApp();
   const { data: tutors = [] } = useTutors();
   const firstName = user?.name?.split(" ")[0] || "there";
   const children = user?.parentProfile?.children ?? [];
@@ -48,22 +48,11 @@ function Parent() {
             avatarUrl={user?.avatarUrl}
             roleLabel="Parent account"
           />
-          {!profileComplete ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 p-4 text-sm">
-              <p className="font-medium">Complete your parent profile</p>
-              <p className="text-muted-foreground mt-1">
-                Add a phone number or at least one child (name plus age or grade) to finish setup.
-              </p>
-              <Button asChild size="sm" className="mt-3">
-                <Link to="/profile">Complete profile</Link>
-              </Button>
-            </div>
-          ) : null}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard label="Children on profile" value={String(children.length)} icon={BookOpen} />
             <StatCard
               label="Profile"
-              value={profileComplete ? "Complete" : "Incomplete"}
+              value="Complete"
               icon={User}
               color="from-emerald-400 to-teal-600"
             />

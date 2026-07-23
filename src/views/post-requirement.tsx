@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/lib/navigation";
+import { Link, useNavigate } from "@/lib/navigation";
 import { canonicalUrl } from "@/lib/site-config";
 import {
   ArrowRight,
@@ -23,6 +23,7 @@ import {
   LogIn,
   Loader2,
   WifiOff,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,26 +39,17 @@ import {
 } from "@/components/ui/select";
 import { SelectWithOther } from "@/components/ui/SelectWithOther";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useApp } from "@/hooks/use-app";
 import { useCreateRequirement, useMyRequirements } from "@/hooks/use-requirements-api";
 import { useCurrency } from "@/hooks/use-currency";
 import { formatApiErrorMessage } from "@/lib/api";
+import { afterAuthPath } from "@/lib/auth-redirect";
 import { requirementStatusClass, requirementStatusLabel } from "@/lib/tutor-jobs-utils";
 import { TutorPageBannerBackground } from "@/components/tutors/TutorPageBannerBackground";
+import { SubjectAutocomplete } from "@/components/tutors/SubjectAutocomplete";
+import { normalizeSubjectName } from "@/lib/subject-name";
 import { cn } from "@/lib/utils";
-
-const SUBJECTS = [
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "English",
-  "Computer Science",
-  "Data Science",
-  "Languages",
-  "Test Prep (SAT/ACT)",
-  "Business & Finance",
-];
 
 const LEVEL_OPTIONS = [
   { value: "elem", label: "Elementary" },
@@ -112,7 +104,7 @@ const PERKS = [
 type FormState = {
   title: string;
   subject: string;
-  skills: string;
+  skills: string[];
   level: string;
   levelOther: string;
   jobType: "tutoring" | "assignment";
@@ -129,7 +121,7 @@ type FormState = {
 const INITIAL_FORM: FormState = {
   title: "",
   subject: "Mathematics",
-  skills: "",
+  skills: [],
   level: "high",
   levelOther: "",
   jobType: "tutoring",
@@ -144,25 +136,62 @@ const INITIAL_FORM: FormState = {
 };
 
 function Post() {
-  const { user, role, loading: authLoading } = useApp();
+  const { user, role, loading: authLoading, profileComplete } = useApp();
   const createMut = useCreateRequirement();
   const { data: myPosts = [], refetch: refetchMine } = useMyRequirements(
-    !!user && (role === "student" || role === "parent"),
+    !!user && (role === "student" || role === "parent") && profileComplete,
   );
   const { currency, symbol } = useCurrency();
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [skillDraft, setSkillDraft] = useState("");
+  const nav = useNavigate();
 
   const canPost = role === "student" || role === "parent";
+
+  useEffect(() => {
+    if (authLoading || !user || !canPost) return;
+    const verified =
+      user.provider === "whatsapp" || !user.email ? true : user.isVerified !== false;
+    if (!verified || !profileComplete) {
+      void nav({ to: afterAuthPath(role!, profileComplete, verified) });
+    }
+  }, [authLoading, user, canPost, profileComplete, role, nav]);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const addSkill = (raw: string) => {
+    const name = normalizeSubjectName(raw);
+    if (!name) return;
+    setForm((prev) => {
+      if (prev.skills.some((s) => s.toLowerCase() === name.toLowerCase())) return prev;
+      return { ...prev, skills: [...prev.skills, name] };
+    });
+    setSkillDraft("");
+  };
+
+  const removeSkill = (name: string) => {
+    setForm((prev) => ({
+      ...prev,
+      skills: prev.skills.filter((s) => s.toLowerCase() !== name.toLowerCase()),
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !canPost) {
-      toast.error("Please sign in as a student to post a requirement.");
+      toast.error("Please sign in as a student or parent to post a requirement.");
+      return;
+    }
+    if (!profileComplete) {
+      toast.error("Complete your profile registration before posting a requirement.");
+      void nav({ to: afterAuthPath(role!, false, true) });
+      return;
+    }
+    if (!form.subject.trim()) {
+      toast.error("Please choose a subject.");
       return;
     }
     if (!form.title.trim() || !form.details.trim()) {
@@ -182,14 +211,10 @@ function Post() {
       return;
     }
     try {
-      const skills = form.skills
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
       await createMut.mutateAsync({
         title: form.title.trim(),
-        subject: form.subject,
-        skills: skills.length ? skills : undefined,
+        subject: form.subject.trim(),
+        skills: form.skills.length ? form.skills : undefined,
         level: form.level,
         levelOther: form.level === "other" ? form.levelOther.trim() : undefined,
         jobType: form.jobType,
@@ -205,6 +230,7 @@ function Post() {
       });
       setSubmitted(true);
       setForm(INITIAL_FORM);
+      setSkillDraft("");
       refetchMine();
       toast.success("Requirement submitted! Pending admin approval.");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -530,12 +556,11 @@ function Post() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <Label>Subject</Label>
-                      <SelectWithOther
+                      <SubjectAutocomplete
                         className="mt-1.5"
-                        options={SUBJECTS}
                         value={form.subject}
-                        onValueChange={(v) => update("subject", v)}
-                        otherPlaceholder="Enter subject"
+                        onChange={(v) => update("subject", v)}
+                        placeholder="Search or add a subject (e.g. Maths, Python)"
                       />
                     </div>
                     <div>
@@ -553,14 +578,44 @@ function Post() {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="req-skills">Skills (comma-separated)</Label>
-                    <Input
-                      id="req-skills"
-                      value={form.skills}
-                      onChange={(e) => update("skills", e.target.value)}
-                      placeholder="e.g. Algebra, Geometry, CBSE board"
-                      className="mt-1.5"
-                    />
+                    <Label>Skills (optional)</Label>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Add skills from the master list, or type a new one to grow the catalog.
+                    </p>
+                    <div className="mt-1.5 flex gap-2">
+                      <SubjectAutocomplete
+                        className="flex-1"
+                        showIcon={false}
+                        value={skillDraft}
+                        onChange={setSkillDraft}
+                        placeholder="e.g. Algebra, DBMS, IELTS"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => addSkill(skillDraft)}
+                        disabled={!skillDraft.trim()}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {form.skills.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {form.skills.map((skill) => (
+                          <Badge key={skill} variant="secondary" className="gap-1 pr-1 font-normal">
+                            {skill}
+                            <button
+                              type="button"
+                              className="rounded-full p-0.5 hover:bg-muted"
+                              onClick={() => removeSkill(skill)}
+                              aria-label={`Remove ${skill}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </fieldset>
 

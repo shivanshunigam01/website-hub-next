@@ -39,6 +39,7 @@ import {
 } from "@/hooks/use-marketplace";
 import { useCurrency } from "@/hooks/use-currency";
 import { useApp } from "@/hooks/use-app";
+import { afterAuthPath } from "@/lib/auth-redirect";
 import { PostExchangeListingDialog } from "@/components/marketplace/PostExchangeListingDialog";
 import { cn } from "@/lib/utils";
 
@@ -86,6 +87,11 @@ function Market() {
     if (role !== "student" || !user) {
       toast.info("Log in with your student account to post on Student Exchange");
       navigate({ to: "/login" });
+      return;
+    }
+    if (!user.profileComplete) {
+      toast.info("Complete your profile registration before posting.");
+      navigate({ to: afterAuthPath("student", false, user.isVerified !== false) });
       return;
     }
     setPostOpen(true);

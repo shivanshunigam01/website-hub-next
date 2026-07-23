@@ -1,10 +1,14 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
-import { MapPin, BookOpen, Wifi, Home, ClipboardList } from "lucide-react";
+import { MapPin, BookOpen, Wifi, Home, ClipboardList, ShieldCheck, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Requirement } from "@/types/requirement";
-import { jobTypeLabel, requirementModeLabel } from "@/lib/tutor-jobs-utils";
+import {
+  jobTypeLabel,
+  postedByLine,
+  requirementModeLabel,
+} from "@/lib/tutor-jobs-utils";
 import { useCurrency } from "@/hooks/use-currency";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +20,7 @@ export function TutorJobCard({ job, className }: { job: Requirement; className?:
     <Link
       to="/tutor-jobs/$id"
       params={{ id: job.id }}
+      hash="apply"
       className={cn(
         "group block rounded-2xl border bg-card p-5 transition-shadow hover:shadow-md",
         className,
@@ -70,14 +75,27 @@ export function TutorJobCard({ job, className }: { job: Requirement; className?:
         </span>
       </div>
 
-      <p className="mt-3 text-xs text-muted-foreground">
-        {jobTypeLabel(job.jobType)} · Posted by {job.studentName} ·{" "}
-        {new Date(job.createdAt).toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })}
-      </p>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          {jobTypeLabel(job.jobType)} · {postedByLine(job)}
+          {job.posterVerified ? (
+            <span className="ms-1 inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="h-3 w-3" />
+              Verified
+            </span>
+          ) : null}
+          {" · "}
+          {new Date(job.createdAt).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </p>
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+          <Send className="h-3 w-3" />
+          Apply
+        </span>
+      </div>
     </Link>
   );
 }

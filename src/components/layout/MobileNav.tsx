@@ -1,7 +1,7 @@
 "use client";
 
 import { Link, useRouterState } from "@/lib/navigation";
-import { Home, BookOpen, Users, MessageCircle, User, Briefcase } from "lucide-react";
+import { Home, Users, User, Briefcase, LayoutDashboard } from "lucide-react";
 import { useApp } from "@/hooks/use-app";
 import { useTranslation } from "react-i18next";
 
@@ -9,14 +9,18 @@ export function MobileNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { role } = useApp();
   const { t } = useTranslation("common");
-  const profileTo = role ? (`/${role}` as const) : "/login";
+  const profileTo = role ? ("/profile" as const) : "/login";
+  const dashboardTo = role ? (`/${role}` as const) : "/login";
 
   const items = [
     { to: "/", label: t("nav.home"), icon: Home },
-    { to: "/courses", label: t("nav.courses"), icon: BookOpen },
-    { to: "/tutors", label: t("nav.tutors"), icon: Users },
     { to: "/tutor-jobs", label: t("nav.jobs"), icon: Briefcase },
-    { to: "/messages", label: t("nav.messages"), icon: MessageCircle },
+    { to: "/tutors", label: t("nav.tutors"), icon: Users },
+    {
+      to: dashboardTo,
+      label: t("nav.dashboard"),
+      icon: LayoutDashboard,
+    },
   ] as const;
 
   const isDashboard =
@@ -33,14 +37,14 @@ export function MobileNav() {
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-background safe-bottom lg:hidden"
       aria-label="Mobile navigation"
     >
-      <div className="grid grid-cols-6">
+      <div className="grid grid-cols-5">
         {items.map((i) => {
           const active = path === i.to || (i.to !== "/" && path.startsWith(i.to));
           return (
             <Link
-              key={i.to}
+              key={`${i.to}-${i.label}`}
               to={i.to}
-              className={`flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-medium sm:text-xs ${
+              className={`flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium sm:text-xs ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
             >
@@ -51,7 +55,7 @@ export function MobileNav() {
         })}
         <Link
           to={profileTo}
-          className={`flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-medium sm:text-xs ${
+          className={`flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium sm:text-xs ${
             path === profileTo || (profileTo !== "/login" && path.startsWith(profileTo))
               ? "text-primary"
               : "text-muted-foreground"

@@ -90,6 +90,10 @@ function CourseDetail() {
       toast.info("Switch to a student account to enrol in courses.");
       return;
     }
+    if (!user.profileComplete) {
+      toast.info("Complete your profile registration before enrolling.");
+      return;
+    }
     const en = await enroll();
     if (en) toast.success(`Enrolled in ${c.title}`);
   };

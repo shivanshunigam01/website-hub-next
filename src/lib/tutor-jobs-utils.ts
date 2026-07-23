@@ -49,6 +49,23 @@ export function jobTypeLabel(jobType: Requirement["jobType"]): string {
   return "Tutoring";
 }
 
+/** TeacherOn-style poster role label. */
+export function posterRoleLabel(role?: Requirement["posterRole"]): string {
+  if (role === "parent") return "Parent/Guardian";
+  return "Student";
+}
+
+export function posterDisplayName(job: Pick<Requirement, "posterName" | "studentName" | "posterRole">): string {
+  const name = (job.posterName || job.studentName || "").trim();
+  if (name) return name;
+  return job.posterRole === "parent" ? "Parent" : "Student";
+}
+
+/** e.g. "Posted by Sanchita Das (Parent/Guardian)" */
+export function postedByLine(job: Pick<Requirement, "posterName" | "studentName" | "posterRole">): string {
+  return `Posted by ${posterDisplayName(job)} (${posterRoleLabel(job.posterRole)})`;
+}
+
 export function requirementStatusLabel(status: Requirement["status"]): string {
   if (status === "pending") return "Pending review";
   if (status === "approved") return "Live on tutor jobs";

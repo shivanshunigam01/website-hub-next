@@ -23,7 +23,7 @@ function Page() {
         { title: "Direct chat", description: "Clarify scope with students upfront to avoid scope creep." },
         { title: "Bonus on excellence", description: "Top-rated experts receive priority access to premium briefs." },
       ]}
-      primaryCta={{ label: "Browse assignments", to: "/post-requirement" }}
+      primaryCta={{ label: "Browse assignments", to: "/tutor-jobs?jobType=assignment" }}
       secondaryCta={{ label: "Become an expert", to: "/register" }}
     />
   );

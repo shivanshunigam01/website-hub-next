@@ -239,8 +239,7 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* iOS safe areas */
-    padding-bottom: env(safe-area-inset-bottom);
+    /* iOS safe areas handled by .safe-bottom on MobileNav */
   }
   /* Fluid media — never break layout */
   img, video, canvas, svg, picture {

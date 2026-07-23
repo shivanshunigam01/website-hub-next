@@ -57,10 +57,10 @@ function Register() {
         </p>
         <p className="mt-4 max-w-md rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
           {role === "teacher"
-            ? "Tutors verify with a one-time code, complete their profile, then receive a welcome email with courses."
+            ? "Tutors verify email, complete their profile, then receive a welcome email with courses."
             : role === "parent"
-              ? "Parents verify with a one-time code, then add child details so you can find the right tutors."
-              : "Students verify with a one-time code, then get a welcome email with popular courses to explore."}
+              ? "Parents verify email, complete their profile (phone or child details), then receive a welcome email."
+              : "Students verify email, complete their profile, then receive a welcome email with popular courses."}
         </p>
       </div>
 
@@ -132,13 +132,6 @@ function Register() {
                     session.verificationEmailError ||
                       "Could not send verification email. Use Resend on the next screen.",
                     { duration: 8000 },
-                  );
-                }
-
-                if (role !== "teacher" && session.welcomeEmailSent) {
-                  toast.success(
-                    `Welcome email with available courses sent to ${email}. Check your inbox.`,
-                    { duration: 7000 },
                   );
                 }
 
