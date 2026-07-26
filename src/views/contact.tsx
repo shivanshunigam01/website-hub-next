@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,9 +8,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { WHATSAPP_NUMBER_DISPLAY, whatsappLinkWithMessage } from "@/lib/contact-info";
+import { formatApiErrorMessage } from "@/lib/api";
+import { submitContactForm } from "@/services/contact-api";
 
 function Contact() {
   const { t } = useTranslation("common");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    try {
+      await submitContactForm({ name, email, subject, message });
+      toast.success(t("contact.toastSent"));
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+    } catch (err) {
+      toast.error(formatApiErrorMessage(err, t("contact.toastFailed", "Could not send message. Please try again.")));
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <section className="container mx-auto px-4 py-16 max-w-5xl grid md:grid-cols-2 gap-10">
       <div>
@@ -32,12 +58,31 @@ function Contact() {
           <li className="flex items-center gap-3"><MapPin className="h-5 w-5 text-primary" />{t("contact.locations")}</li>
         </ul>
       </div>
-      <form className="bg-card border rounded-2xl p-6 space-y-4" onSubmit={(e) => { e.preventDefault(); toast.success(t("contact.toastSent")); }}>
-        <div><Label>{t("contact.name")}</Label><Input required className="mt-1" /></div>
-        <div><Label>{t("contact.email")}</Label><Input required type="email" className="mt-1" /></div>
-        <div><Label>{t("contact.subject")}</Label><Input required className="mt-1" /></div>
-        <div><Label>{t("contact.message")}</Label><textarea required className="w-full border rounded-lg p-3 text-sm min-h-[140px] mt-1" /></div>
-        <Button type="submit" size="lg" variant="gradient" className="w-full">{t("contact.send")}</Button>
+      <form className="bg-card border rounded-2xl p-6 space-y-4" onSubmit={onSubmit}>
+        <div>
+          <Label>{t("contact.name")}</Label>
+          <Input required className="mt-1" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div>
+          <Label>{t("contact.email")}</Label>
+          <Input required type="email" className="mt-1" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        <div>
+          <Label>{t("contact.subject")}</Label>
+          <Input required className="mt-1" value={subject} onChange={(e) => setSubject(e.target.value)} />
+        </div>
+        <div>
+          <Label>{t("contact.message")}</Label>
+          <textarea
+            required
+            className="w-full border rounded-lg p-3 text-sm min-h-[140px] mt-1"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+        </div>
+        <Button type="submit" size="lg" variant="gradient" className="w-full" disabled={sending}>
+          {sending ? t("contact.sending", "Sending…") : t("contact.send")}
+        </Button>
       </form>
     </section>
   );

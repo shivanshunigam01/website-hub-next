@@ -68,8 +68,15 @@ function SiteChrome({ children }: { children: ReactNode }) {
   const prevPath = useRef(pathname);
   const { role } = useApp();
 
+  // Always land at the top when opening a new page (skip hash-only jumps).
   useEffect(() => {
+    if (prevPath.current === pathname) return;
     prevPath.current = pathname;
+    if (typeof window === "undefined") return;
+    if (window.location.hash) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }, [pathname]);
 
   const isDashboard =

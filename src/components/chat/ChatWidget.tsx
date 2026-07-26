@@ -2,29 +2,56 @@
 
 import { useState } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
+import { useNavigate } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const QUICK = ["Find a tutor", "Course pricing", "Refund policy", "Teach on the platform"];
+const QUICK: { label: string; reply: string; href?: string }[] = [
+  {
+    label: "Find a tutor",
+    reply: "Great — browse verified tutors by subject, city, and rating.",
+    href: "/tutors",
+  },
+  {
+    label: "Course pricing",
+    reply: "See Free, Pro, and Premium plans on our pricing page.",
+    href: "/pricing",
+  },
+  {
+    label: "Refund policy",
+    reply: "You can read our full refund and cancellation policy here.",
+    href: "/refund",
+  },
+  {
+    label: "Teach on the platform",
+    reply: "Create a tutor account to start teaching and earning on TeacherPoint.",
+    href: "/role-select",
+  },
+];
 
 export function ChatWidget() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<{ from: "bot" | "user"; text: string }[]>([
     { from: "bot", text: "Hi - how can we help you today? Ask about tutors, courses, or getting started." },
   ]);
   const [input, setInput] = useState("");
 
-  const send = (text: string) => {
+  const send = (text: string, href?: string) => {
     if (!text.trim()) return;
-    setMsgs((m) => [
-      ...m,
-      { from: "user", text },
-      {
-        from: "bot",
-        text: "Thanks for your message. Browse tutors and courses on the site, or contact support if you need a hand.",
-      },
-    ]);
+    const quick = QUICK.find((q) => q.label === text);
+    const reply =
+      quick?.reply ??
+      "Thanks for your message. Browse tutors and courses on the site, or visit Support / Contact if you need a hand.";
+    setMsgs((m) => [...m, { from: "user", text }, { from: "bot", text: reply }]);
     setInput("");
+    const go = href ?? quick?.href;
+    if (go) {
+      setTimeout(() => {
+        setOpen(false);
+        navigate({ to: go });
+      }, 400);
+    }
   };
 
   return (
@@ -59,12 +86,12 @@ export function ChatWidget() {
             <div className="flex flex-wrap gap-1.5 pt-1">
               {QUICK.map((q) => (
                 <button
-                  key={q}
+                  key={q.label}
                   type="button"
-                  onClick={() => send(q)}
+                  onClick={() => send(q.label, q.href)}
                   className="rounded-full border px-2.5 py-1 text-xs hover:bg-muted"
                 >
-                  {q}
+                  {q.label}
                 </button>
               ))}
             </div>

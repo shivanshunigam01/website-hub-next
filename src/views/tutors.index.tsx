@@ -111,7 +111,7 @@ function TutorsPage() {
             <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/90">
               <span className="inline-flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
-                {t("tutorsPage.tutorsCount", { count: (facets?.totalTutors ?? 0).toLocaleString() })}
+                {t("tutorsPage.tutorsCount", { value: (facets?.totalTutors ?? 0).toLocaleString() })}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <GraduationCap className="h-4 w-4" />

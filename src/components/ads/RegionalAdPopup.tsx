@@ -17,6 +17,8 @@ import { useRegionalAds } from "@/hooks/use-regional-ads";
 import { useLocationContext } from "@/hooks/use-user-location";
 import { pickRegionalPopupAd } from "@/lib/regional-ads";
 import { REGIONAL_POPUP_DELAY_MS, REGIONAL_POPUP_ENABLED } from "@/lib/popup-sequence";
+import { AppImage } from "@/components/AppImage";
+import { DeferredBackgroundVideo } from "@/components/DeferredBackgroundVideo";
 
 /** Once per browser session — popup shows again on the next visit. */
 const SEEN_KEY = "tp_regional_popup_seen";
@@ -121,20 +123,24 @@ export function RegionalAdPopup() {
           </DialogHeader>
 
           {ad?.mediaType === "video" && ad.videoUrl ? (
-            <video
-              src={ad.videoUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="relative mt-4 max-h-36 w-full rounded-xl border border-white/20 object-cover"
-            />
+            <div className="relative mt-4 h-36 w-full overflow-hidden rounded-xl border border-white/20">
+              <DeferredBackgroundVideo
+                src={ad.videoUrl}
+                poster={ad.imageUrl || undefined}
+                desktopDelayMs={800}
+                mobileDelayMs={2000}
+              />
+            </div>
           ) : ad?.imageUrl ? (
-            <img
-              src={ad.imageUrl}
-              alt=""
-              className="relative mt-4 max-h-36 w-full rounded-xl border border-white/20 object-cover"
-            />
+            <div className="relative mt-4 h-36 w-full overflow-hidden rounded-xl border border-white/20">
+              <AppImage
+                src={ad.imageUrl}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 90vw, 420px"
+                className="object-cover"
+              />
+            </div>
           ) : null}
         </div>
 

@@ -74,6 +74,18 @@ const FALLBACK_POPULAR_SUBJECTS = [
   "Accountancy",
   "DBMS",
   "Academic Writing",
+  "Economics",
+  "NEET",
+  "JEE Main",
+  "Spoken English",
+  "Machine Learning",
+  "Data Science",
+  "React",
+  "Mechanical Engineering",
+  "Electrical Engineering",
+  "Civil Engineering",
+  "Psychology",
+  "Digital Marketing",
 ];
 
 export function TutorSearchPanel({

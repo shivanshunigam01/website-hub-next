@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/hooks/use-currency";
 import type { Workshop } from "@/types/workshop";
+import { AppImage } from "@/components/AppImage";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString(undefined, {
@@ -24,11 +25,12 @@ export function WorkshopCard({ workshop }: { workshop: Workshop }) {
     <article className="group flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:border-primary/30 hover:shadow-md">
       <div className="relative aspect-[16/9] overflow-hidden bg-muted">
         {workshop.imageUrl ? (
-          <img
+          <AppImage
             src={workshop.imageUrl}
             alt=""
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            loading="lazy"
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="transition duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-indigo-500/10 text-primary">

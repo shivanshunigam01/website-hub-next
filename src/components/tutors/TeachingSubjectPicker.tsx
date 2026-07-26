@@ -22,6 +22,14 @@ const FALLBACK_POPULAR = [
   "C/C++",
   "HTML",
   "Psychology",
+  "NEET",
+  "JEE Main",
+  "Spoken English",
+  "Machine Learning",
+  "Data Science",
+  "React",
+  "Mechanical Engineering",
+  "Digital Marketing",
 ];
 
 type Props = {

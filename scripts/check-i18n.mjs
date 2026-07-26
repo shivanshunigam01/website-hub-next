@@ -109,5 +109,23 @@ for (const l of LOCALES.filter((x) => x !== "en")) {
   console.log(`  ${l}: ${same.length}`);
 }
 
+// A dropped or malformed {{placeholder}} renders as literal text to the user.
+const placeholders = (s) =>
+  [...String(s).matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).sort().join(",");
+
+let placeholderIssues = 0;
+for (const l of LOCALES.filter((x) => x !== "en")) {
+  for (const k of Object.keys(en)) {
+    const expectedP = placeholders(en[k]);
+    const actualP = placeholders(catalogs[l][k] ?? "");
+    if (expectedP !== actualP) {
+      console.log(`  PLACEHOLDER  ${l} ${k}: en=[${expectedP}] ${l}=[${actualP}]`);
+      placeholderIssues++;
+    }
+  }
+}
+console.log(`\nPlaceholder mismatches: ${placeholderIssues}`);
+if (placeholderIssues) failed = true;
+
 console.log(failed ? "\nFAILED" : "\nOK");
 if (failed) process.exitCode = 1;

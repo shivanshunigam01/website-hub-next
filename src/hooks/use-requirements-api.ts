@@ -21,6 +21,7 @@ function serializeFilters(filters: TutorJobsFilters): string {
     location: filters.location ?? "",
     mode: filters.mode ?? "all",
     jobType: filters.jobType ?? "all",
+    level: filters.level ?? "all",
   });
 }
 

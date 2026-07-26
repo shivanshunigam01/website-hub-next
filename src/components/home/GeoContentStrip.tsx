@@ -11,36 +11,38 @@ import { useRegionalAds } from "@/hooks/use-regional-ads";
 import { useLocationContext } from "@/hooks/use-user-location";
 import { filterRegionalAds } from "@/lib/regional-ads";
 import { AppImage } from "@/components/AppImage";
+import { DeferredBackgroundVideo } from "@/components/DeferredBackgroundVideo";
+import geoBannerFallback from "@/assets/career-banner.jpg";
+import geoStudentsFallback from "@/assets/hero-illustration.jpg";
+
+function resolveAdImage(ad: RegionalAd) {
+  return ad.approvedImageUrl || ad.imageUrl || undefined;
+}
 
 function Media({ ad }: { ad: RegionalAd }) {
   if (ad.mediaType === "video" && ad.videoUrl) {
     return (
-      <video
+      <DeferredBackgroundVideo
         src={ad.videoUrl}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="none"
-        className="absolute inset-0 h-full w-full object-cover"
-        aria-hidden
+        poster={resolveAdImage(ad) || geoBannerFallback}
+        desktopDelayMs={1200}
+        mobileDelayMs={3500}
       />
     );
   }
-  if (ad.mediaType === "image" && ad.imageUrl) {
-    return (
-      <AppImage
-        src={ad.imageUrl}
-        alt=""
-        fill
-        sizes="(max-width: 768px) 100vw, 50vw"
-      />
-    );
-  }
+
+  const imageSrc =
+    resolveAdImage(ad) ||
+    (ad.placement === "hero-strip" ? geoStudentsFallback : geoBannerFallback);
+
   return (
-    <div
-      className="absolute inset-0"
-      style={{ background: "var(--gradient-primary, linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))))" }}
+    <AppImage
+      src={imageSrc}
+      alt=""
+      fill
+      sizes="(max-width: 768px) 100vw, 50vw"
+      className="object-cover object-[72%_center] sm:object-right"
+      fallbackSrc={typeof geoStudentsFallback === "string" ? geoStudentsFallback : geoStudentsFallback.src}
     />
   );
 }
@@ -51,8 +53,8 @@ function AdCard({ ad }: { ad: RegionalAd }) {
     <article className="group relative isolate overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:shadow-lg">
       <div className="relative aspect-[16/7] w-full">
         <Media ad={ad} />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/50 to-slate-900/10 dark:from-slate-950/90 dark:via-slate-900/60" />
-        <div className="relative z-10 flex h-full max-w-full flex-col justify-center gap-2 p-4 sm:max-w-[62%] sm:p-7">
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/65 to-slate-900/15 dark:from-slate-950/95 dark:via-slate-900/70" />
+        <div className="relative z-10 flex h-full max-w-full flex-col justify-center gap-2 p-4 sm:max-w-[58%] sm:p-7">
           <Badge variant="secondary" className="w-fit border-white/30 bg-white/15 text-white">
             <Sparkles className="me-1 h-3 w-3" /> {t("geo.featured")}
           </Badge>

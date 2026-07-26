@@ -9,8 +9,11 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { useApp } from "@/hooks/use-app";
 import { afterAuthPath } from "@/lib/auth-redirect";
 import { formatApiErrorMessage } from "@/lib/api";
+import { formatCooldown, parseOtpCooldown } from "@/lib/otp-cooldown";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+
+const RESEND_SECONDS = 60;
 
 function VerifyEmail() {
   const { t } = useTranslation();
@@ -19,6 +22,17 @@ function VerifyEmail() {
   const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      setNotice(null);
+      return;
+    }
+    const timer = window.setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [countdown]);
 
   const role =
     user?.role === "teacher" || user?.role === "student" || user?.role === "parent" ? user.role : null;
@@ -79,11 +93,21 @@ function VerifyEmail() {
   };
 
   const resend = async () => {
+    if (countdown > 0) return;
     setResending(true);
+    setNotice(null);
     try {
       await resendVerificationEmail();
+      setCountdown(RESEND_SECONDS);
       toast.success(t("verify.codeSent", "New code sent to {{email}}", { email: user.email }));
     } catch (err) {
+      const cooldown = parseOtpCooldown(err);
+      if (cooldown) {
+        setCountdown(cooldown.seconds);
+        setNotice(cooldown.message);
+        toast.info(cooldown.message);
+        return;
+      }
       toast.error(formatApiErrorMessage(err, t("verify.resendFailed", "Could not resend code")));
     } finally {
       setResending(false);
@@ -128,10 +152,20 @@ function VerifyEmail() {
             {submitting ? t("verify.verifying") : t("verify.submit")}
           </Button>
 
-          <Button variant="ghost" size="sm" disabled={resending} onClick={resend}>
+          <Button variant="ghost" size="sm" disabled={resending || countdown > 0} onClick={resend}>
             <Mail className="h-4 w-4 mr-2" />
-            {resending ? t("verify.sending") : t("verify.resend")}
+            {countdown > 0
+              ? t("verify.resendIn", "Resend in {{time}}", { time: formatCooldown(countdown) })
+              : resending
+                ? t("verify.sending")
+                : t("verify.resend")}
           </Button>
+
+          {notice ? (
+            <p className="w-full rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-700 dark:text-amber-300">
+              {notice}
+            </p>
+          ) : null}
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-6">

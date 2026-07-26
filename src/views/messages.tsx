@@ -9,6 +9,7 @@ import { useTutors, useTutor } from "@/hooks/use-catalog";
 import type { Tutor } from "@/types/catalog";
 import { tutorImage } from "@/data/images";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/AppImage";
 
 function Messages() {
   const { tutorId } = useSearch<{ tutorId?: string }>();
@@ -85,9 +86,12 @@ function Messages() {
               onClick={() => selectThread(t)}
               className={`flex w-full items-center gap-3 p-3 text-left hover:bg-muted/40 ${active.id === t.id ? "bg-muted/50" : ""}`}
             >
-              <img
+              <AppImage
                 src={t.avatarUrl || t.image || tutorImage(t.id)}
                 alt=""
+                width={40}
+                height={40}
+                sizes="40px"
                 className="h-10 w-10 shrink-0 rounded-full object-cover"
               />
               <div className="min-w-0 flex-1">
@@ -109,7 +113,14 @@ function Messages() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <img src={img} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+            <AppImage
+              src={img}
+              alt=""
+              width={36}
+              height={36}
+              sizes="36px"
+              className="h-9 w-9 shrink-0 rounded-full object-cover"
+            />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold">{active.name}</div>
               <div className="text-xs text-emerald-600">● Ready to chat</div>

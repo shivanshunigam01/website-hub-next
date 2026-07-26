@@ -56,6 +56,7 @@ export function SubjectsAdminPanel() {
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
+  const [approval, setApproval] = useState<"all" | "pending" | "approved">("all");
   const [group, setGroup] = useState<string>("all");
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -70,6 +71,7 @@ export function SubjectsAdminPanel() {
       const data = await fetchAdminSubjects({
         q: debouncedQ,
         status,
+        approval,
         group: group === "all" ? undefined : group,
         limit: 100,
         page: 1,
@@ -81,7 +83,7 @@ export function SubjectsAdminPanel() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedQ, status, group]);
+  }, [debouncedQ, status, approval, group]);
 
   useEffect(() => {
     void load();
@@ -136,6 +138,16 @@ export function SubjectsAdminPanel() {
             <SelectItem value="inactive">Disabled</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={approval} onValueChange={(v) => setApproval(v as typeof approval)}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Approval" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All approval</SelectItem>
+            <SelectItem value="pending">Pending approval</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={group} onValueChange={setGroup}>
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Group" />
@@ -181,7 +193,14 @@ export function SubjectsAdminPanel() {
               items.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>
-                    <div className="font-medium">{item.name}</div>
+                    <div className="font-medium flex flex-wrap items-center gap-2">
+                      {item.name}
+                      {item.approvalStatus === "pending" || item.isActive === false ? (
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                          Pending
+                        </Badge>
+                      ) : null}
+                    </div>
                     <div className="text-xs text-muted-foreground">{item.slug}</div>
                   </TableCell>
                   <TableCell>

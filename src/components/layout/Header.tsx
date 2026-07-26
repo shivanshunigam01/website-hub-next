@@ -84,12 +84,16 @@ function DesktopNavLinks({
   navLabel,
   tc,
   t,
+  role,
 }: {
   path: string;
   navLabel: (key: string, fallback: string) => string;
   tc: (name: string) => string;
   t: (key: string) => string;
+  role: string | null;
 }) {
+  const isLearner = role === "student" || role === "parent";
+
   return (
     <>
       <DropdownMenu modal={false}>
@@ -145,6 +149,12 @@ function DesktopNavLinks({
           {navLabel(n.key, n.to.slice(1).replace(/^./, (c) => c.toUpperCase()))}
         </Link>
       ))}
+
+      {isLearner ? (
+        <Link to="/my-posts" className={navItemClass(path.startsWith("/my-posts"))}>
+          {navLabel("nav.myPosts", "My Posts")}
+        </Link>
+      ) : null}
 
       <Link to="/post-requirement" className={navItemClass(path.startsWith("/post-requirement"))}>
         {navLabel("nav.postJob", "Post a job")}
@@ -224,7 +234,7 @@ export function Header() {
             aria-label={t("nav.ariaMain")}
           >
             <div className="pointer-events-auto flex max-w-[calc(100%-18rem)] flex-nowrap items-center justify-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <DesktopNavLinks path={path} navLabel={navLabel} tc={tc} t={t} />
+              <DesktopNavLinks path={path} navLabel={navLabel} tc={tc} t={t} role={role} />
             </div>
           </nav>
 
@@ -240,13 +250,18 @@ export function Header() {
             </Button>
             <LanguageSwitcher />
             <Button
+              asChild
               variant="ghost"
               size="icon"
               className="relative hidden h-9 w-9 shrink-0 md:flex"
               aria-label={t("nav.notifications")}
             >
-              <Bell className="h-4 w-4" />
-              <span className="absolute end-2 top-2 h-1.5 w-1.5 rounded-full bg-destructive" />
+              <Link to={role && user ? "/messages" : "/login"}>
+                <Bell className="h-4 w-4" />
+                {role && user ? (
+                  <span className="absolute end-2 top-2 h-1.5 w-1.5 rounded-full bg-destructive" />
+                ) : null}
+              </Link>
             </Button>
 
             {role && user ? (
@@ -266,6 +281,11 @@ export function Header() {
                   <DropdownMenuItem asChild>
                     <Link to={`/${role}` as any}>{t("nav.dashboard")}</Link>
                   </DropdownMenuItem>
+                  {(role === "student" || role === "parent") && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/my-posts">{t("nav.myPosts")}</Link>
+                    </DropdownMenuItem>
+                  )}
                   {(role === "student" || role === "teacher" || role === "parent") && (
                     <DropdownMenuItem asChild>
                       <Link to="/profile">{t("nav.editProfile")}</Link>
@@ -408,6 +428,16 @@ export function Header() {
               >
                 {t("nav.postJob")}
               </Link>
+
+              {(role === "student" || role === "parent") && (
+                <Link
+                  to="/my-posts"
+                  onClick={() => setMobileOpen(false)}
+                  className={`block ${navItemClass(path.startsWith("/my-posts"))}`}
+                >
+                  {t("nav.myPosts")}
+                </Link>
+              )}
 
               {!role && (
                 <>

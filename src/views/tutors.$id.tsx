@@ -2,6 +2,8 @@
 
 import { Link, useNavigate, useParams } from "@/lib/navigation";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   Star,
   MapPin,
@@ -40,34 +42,45 @@ import { requestTutorPhone } from "@/services/tutor-actions-api";
 import { completeRazorpayCheckout } from "@/lib/razorpay";
 import { toRazorpayPaise } from "@/services/razorpay-api";
 import { TimelineList } from "@/components/teacher/TimelineList";
+import { AppImage } from "@/components/AppImage";
 import { tutorImage } from "@/data/images";
 import type { Tutor } from "@/types/catalog";
 
 import { toast } from "sonner";
 
-function formatLastActive(iso?: string | null) {
-  if (!iso) return "Recently active";
+function formatLastActive(t: TFunction, iso?: string | null) {
+  if (!iso) return t("tutorDetail.recentlyActive", "Recently active");
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "Active now";
-  if (mins < 60) return `Last login: ${mins} min${mins === 1 ? "" : "s"} ago`;
+  if (mins < 1) return t("tutorDetail.activeNow", "Active now");
+  if (mins < 60) {
+    return mins === 1
+      ? t("tutorDetail.lastLoginMinsOne", "Last login: {{count}} min ago", { count: mins })
+      : t("tutorDetail.lastLoginMins", "Last login: {{count}} mins ago", { count: mins });
+  }
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `Last login: ${hrs} hour${hrs === 1 ? "" : "s"} ago`;
+  if (hrs < 24) {
+    return hrs === 1
+      ? t("tutorDetail.lastLoginHoursOne", "Last login: {{count}} hour ago", { count: hrs })
+      : t("tutorDetail.lastLoginHours", "Last login: {{count}} hours ago", { count: hrs });
+  }
   const days = Math.floor(hrs / 24);
-  return `Last login: ${days} day${days === 1 ? "" : "s"} ago`;
+  return days === 1
+    ? t("tutorDetail.lastLoginDaysOne", "Last login: {{count}} day ago", { count: days })
+    : t("tutorDetail.lastLoginDays", "Last login: {{count}} days ago", { count: days });
 }
 
-function subjectHeadline(t: Tutor) {
-  const list = t.subjects?.length ? t.subjects : [t.subject];
+function subjectHeadline(tutor: Tutor) {
+  const list = tutor.subjects?.length ? tutor.subjects : [tutor.subject];
   return list.join(", ");
 }
 
-function displaySubjects(t: Tutor) {
-  if (t.teachingSubjects?.length) {
-    return t.teachingSubjects.map((entry) => formatTeachingSubjectLabel(entry));
+function displaySubjects(tutor: Tutor) {
+  if (tutor.teachingSubjects?.length) {
+    return tutor.teachingSubjects.map((entry) => formatTeachingSubjectLabel(entry));
   }
-  if (t.subjects?.length) return t.subjects;
-  return [t.subject];
+  if (tutor.subjects?.length) return tutor.subjects;
+  return [tutor.subject];
 }
 
 function SectionBlock({
@@ -91,17 +104,18 @@ function SectionBlock({
 }
 
 function TutorDetail() {
+  const { t } = useTranslation("common");
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useApp();
   const { formatLocalizedPrice, currency: visitorCurrency } = useCurrency();
-  const { data: t, isLoading, error } = useTutor(id);
+  const { data: tutor, isLoading, error } = useTutor(id);
   const { reviews, summary } = useTutorReviews(id);
   const { data: relatedResult } = useTutorSearch(
-    { subject: t?.subject, sortBy: "rating" },
+    { subject: tutor?.subject, sortBy: "rating" },
     1,
     8,
-    !!t?.subject,
+    !!tutor?.subject,
   );
   const related = (relatedResult?.tutors ?? []).filter((x) => x.id !== id).slice(0, 4);
 
@@ -112,16 +126,16 @@ function TutorDetail() {
 
   const requireStudent = (action: () => void) => {
     if (!user) {
-      toast.info("Please sign in as a student or parent to continue.");
+      toast.info(t("tutorDetail.toastSignIn", "Please sign in as a student or parent to continue."));
       void navigate({ to: "/login", search: { redirect: `/tutors/${id}` } });
       return;
     }
     if (user.role !== "student" && user.role !== "parent") {
-      toast.info("Only students and parents can contact tutors from this page.");
+      toast.info(t("tutorDetail.toastStudentsOnly", "Only students and parents can contact tutors from this page."));
       return;
     }
     if (!user.profileComplete) {
-      toast.info("Complete your profile registration before contacting tutors.");
+      toast.info(t("tutorDetail.toastCompleteProfile", "Complete your profile registration before contacting tutors."));
       void navigate({
         to: afterAuthPath(user.role, false, user.isVerified !== false),
       });
@@ -142,14 +156,17 @@ function TutorDetail() {
       try {
         const result = await requestTutorPhone(id);
         if (result.sent) {
-          toast.success(`Phone number sent to ${result.deliveredTo}`);
+          toast.success(t("tutorDetail.toastPhoneSent", "Phone number sent to {{email}}", { email: result.deliveredTo }));
         } else {
           toast.warning(
-            "Email could not be sent — ask an admin to configure SMTP. The tutor may not have a phone on file.",
+            t(
+              "tutorDetail.toastPhoneEmailFailed",
+              "Email could not be sent — ask an admin to configure SMTP. The tutor may not have a phone on file.",
+            ),
           );
         }
       } catch (e) {
-        toast.error(formatApiErrorMessage(e, "Could not send phone number"));
+        toast.error(formatApiErrorMessage(e, t("tutorDetail.toastPhoneFailed", "Could not send phone number")));
       } finally {
         setPhoneLoading(false);
       }
@@ -161,26 +178,26 @@ function TutorDetail() {
   };
 
   const confirmPay = async () => {
-    if (!t || !user) return;
+    if (!tutor || !user) return;
     setPayLoading(true);
     try {
-      const currency = t.currency || "INR";
-      const amountPaise = toRazorpayPaise(t.price, currency);
+      const currency = tutor.currency || "INR";
+      const amountPaise = toRazorpayPaise(tutor.price, currency);
       const result = await completeRazorpayCheckout({
         amount: amountPaise,
         currency: "INR",
         type: "tutor_session",
-        referenceId: t.id,
-        description: `Tutor session with ${t.name}`,
+        referenceId: tutor.id,
+        description: t("tutorDetail.paymentDescription", "Tutor session with {{name}}", { name: tutor.name }),
         customerName: user.name,
         customerEmail: user.email,
         customerPhone: user.phone ? `${user.phoneCountryCode || ""}${user.phone}` : undefined,
-        metadata: { tutorName: t.name, displayCurrency: currency, displayPrice: t.price },
+        metadata: { tutorName: tutor.name, displayCurrency: currency, displayPrice: tutor.price },
       });
       setPayOpen(false);
-      toast.success(`Payment successful — invoice ${result.invoiceId}`);
+      toast.success(t("tutorDetail.toastPaymentSuccess", "Payment successful — invoice {{id}}", { id: result.invoiceId }));
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Payment failed";
+      const message = e instanceof Error ? e.message : t("tutorDetail.paymentFailed", "Payment failed");
       if (message !== "Payment cancelled") {
         toast.error(formatApiErrorMessage(e, message));
       }
@@ -201,26 +218,30 @@ function TutorDetail() {
     );
   }
 
-  if (error || !t) {
+  if (error || !tutor) {
     return (
       <div className="container mx-auto p-12 text-center">
-        <h1 className="font-display font-bold">Tutor not found</h1>
+        <h1 className="font-display font-bold">{t("tutorDetail.notFound", "Tutor not found")}</h1>
         <Button asChild className="mt-4">
-          <Link to="/tutors">Browse tutors</Link>
+          <Link to="/tutors">{t("tutorDetail.browseTutors", "Browse tutors")}</Link>
         </Button>
       </div>
     );
   }
 
-  const img = t.avatarUrl || t.image || tutorImage(t.id);
-  const subjects = displaySubjects(t);
-  const localizedHourly = formatLocalizedPrice(t.price, t.currency);
+  const img = tutor.avatarUrl || tutor.image || tutorImage(tutor.id);
+  const subjects = displaySubjects(tutor);
+  const localizedHourly = formatLocalizedPrice(tutor.price, tutor.currency);
   const showStoredCurrency =
-    t.currency && t.currency.toUpperCase() !== visitorCurrency.toUpperCase();
-  const ratingValue = summary.count ? summary.rating : t.rating;
-  const reviewCount = summary.count || t.reviews;
+    tutor.currency && tutor.currency.toUpperCase() !== visitorCurrency.toUpperCase();
+  const ratingValue = summary.count ? summary.rating : tutor.rating;
+  const reviewCount = summary.count || tutor.reviews;
   const genderLabel =
-    t.gender === "female" ? "Female" : t.gender === "male" ? "Male" : "Other";
+    tutor.gender === "female"
+      ? t("tutorDetail.female", "Female")
+      : tutor.gender === "male"
+        ? t("tutorDetail.male", "Male")
+        : t("tutorDetail.other", "Other");
 
   return (
     <section className="bg-muted/20 pb-16">
@@ -228,7 +249,7 @@ function TutorDetail() {
         <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2 text-muted-foreground">
           <Link to="/tutors">
             <ChevronLeft className="mr-1 h-4 w-4" />
-            Back to tutors
+            {t("tutorDetail.backToTutors", "Back to tutors")}
           </Link>
         </Button>
 
@@ -237,28 +258,35 @@ function TutorDetail() {
           <div className="min-w-0 rounded-2xl border bg-card px-6 shadow-sm md:px-8">
             <header className="border-b py-6">
               <div className="flex flex-wrap items-start gap-4">
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border shadow-sm md:h-24 md:w-24">
-                  <img src={img} alt={t.name} className="h-full w-full object-cover object-top" />
+                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border shadow-sm md:h-24 md:w-24">
+                  <AppImage
+                    src={img}
+                    alt={tutor.name}
+                    fill
+                    sizes="96px"
+                    priority
+                    className="object-top"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h1 className="font-display text-2xl font-extrabold leading-tight md:text-3xl">
-                    {t.name}
+                    {tutor.name}
                     <span className="font-normal text-muted-foreground">
                       {" "}
-                      · {subjectHeadline(t)}
+                      · {subjectHeadline(tutor)}
                     </span>
                   </h1>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {t.verified && (
+                    {tutor.verified && (
                       <Badge className="bg-sky text-sky-foreground">
                         <ShieldCheck className="mr-1 h-3 w-3" />
-                        Verified
+                        {t("search.chipVerified")}
                       </Badge>
                     )}
-                    {t.topTen && (
+                    {tutor.topTen && (
                       <Badge className="bg-amber-400 text-amber-950">
                         <Crown className="mr-1 h-3 w-3" />
-                        Top 10%
+                        {t("tutorDetail.topTen", "Top 10%")}
                       </Badge>
                     )}
                   </div>
@@ -267,12 +295,12 @@ function TutorDetail() {
                       <>
                         <RatingStars value={ratingValue} size={4} />
                         <span className="font-semibold">{ratingValue.toFixed(1)}</span>
-                        <span className="text-muted-foreground">({reviewCount} reviews)</span>
+                        <span className="text-muted-foreground">{t("tutorDetail.reviewsCount", "({{count}} reviews)", { count: reviewCount })}</span>
                       </>
                     ) : (
                       <span className="flex items-center gap-1 text-muted-foreground">
                         <Star className="h-4 w-4" />
-                        No reviews yet
+                        {t("tutorDetail.noReviewsYet", "No reviews yet")}
                       </span>
                     )}
                   </div>
@@ -280,21 +308,21 @@ function TutorDetail() {
               </div>
             </header>
 
-            <SectionBlock icon={User} title="Bio">
-              {t.bio?.trim() ? (
+            <SectionBlock icon={User} title={t("tutorDetail.bio", "Bio")}>
+              {tutor.bio?.trim() ? (
                 <div className="rounded-xl border bg-muted/30 px-4 py-4">
                   <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">
-                    {t.bio}
+                    {tutor.bio}
                   </p>
                 </div>
               ) : (
                 <p className="rounded-xl border border-dashed bg-muted/20 px-4 py-6 text-sm text-muted-foreground">
-                  This tutor has not added a bio yet.
+                  {t("tutorDetail.noBio", "This tutor has not added a bio yet.")}
                 </p>
               )}
             </SectionBlock>
 
-            <SectionBlock icon={BookOpen} title="Subjects">
+            <SectionBlock icon={BookOpen} title={t("tutorDetail.subjects", "Subjects")}>
               <ul className="space-y-2">
                 {subjects.map((label) => (
                   <li key={label} className="flex items-center gap-2 text-sm">
@@ -305,12 +333,12 @@ function TutorDetail() {
               </ul>
             </SectionBlock>
 
-            <SectionBlock icon={Briefcase} title="Experience">
-              {t.experienceEntries?.length ? (
+            <SectionBlock icon={Briefcase} title={t("tutorDetail.experience", "Experience")}>
+              {tutor.experienceEntries?.length ? (
                 <TimelineList
                   icon="experience"
                   emptyMessage=""
-                  items={t.experienceEntries.map((entry) => ({
+                  items={tutor.experienceEntries.map((entry) => ({
                     id: entry.id,
                     title: entry.title,
                     subtitle: entry.organization,
@@ -319,25 +347,25 @@ function TutorDetail() {
                     description: entry.description,
                   }))}
                 />
-              ) : t.experience > 0 ? (
+              ) : tutor.experience > 0 ? (
                 <p className="text-sm text-foreground/85">
-                  <strong className="text-foreground">{t.experience} years</strong> of teaching
-                  experience
-                  {t.speciality ? ` · ${t.speciality}` : ""}.
+                  <strong className="text-foreground">{t("tutorDetail.experienceYears", "{{count}} years", { count: tutor.experience })}</strong>{" "}
+                  {t("tutorDetail.teachingExperienceSuffix", "of teaching experience")}
+                  {tutor.speciality ? ` · ${tutor.speciality}` : ""}.
                 </p>
               ) : (
                 <p className="rounded-lg border border-dashed bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
-                  No experience details added yet.
+                  {t("tutorDetail.noExperience", "No experience details added yet.")}
                 </p>
               )}
             </SectionBlock>
 
-            <SectionBlock icon={GraduationCap} title="Education">
-              {(t.education ?? []).length > 0 ? (
+            <SectionBlock icon={GraduationCap} title={t("tutorDetail.education", "Education")}>
+              {(tutor.education ?? []).length > 0 ? (
                 <TimelineList
                   icon="education"
                   emptyMessage=""
-                  items={(t.education ?? []).map((entry) => ({
+                  items={(tutor.education ?? []).map((entry) => ({
                     id: entry.id,
                     title: entry.degree,
                     subtitle: entry.institute,
@@ -348,48 +376,48 @@ function TutorDetail() {
                 />
               ) : (
                 <p className="rounded-lg border border-dashed bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
-                  No education details added yet.
+                  {t("tutorDetail.noEducation", "No education details added yet.")}
                 </p>
               )}
             </SectionBlock>
 
-            {t.teachingStyle?.trim() && (
-              <SectionBlock icon={BookOpen} title="Teaching style">
+            {tutor.teachingStyle?.trim() && (
+              <SectionBlock icon={BookOpen} title={t("tutorDetail.teachingStyle", "Teaching style")}>
                 <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">
-                  {t.teachingStyle}
+                  {tutor.teachingStyle}
                 </p>
               </SectionBlock>
             )}
 
-            <SectionBlock icon={DollarSign} title="Fee details">
+            <SectionBlock icon={DollarSign} title={t("tutorDetail.feeDetails", "Fee details")}>
               <div className="space-y-2 rounded-xl border bg-muted/20 px-4 py-4 text-sm text-foreground/85">
                 <p>
                   <strong className="text-foreground">
-                    {localizedHourly}/hour
+                    {t("tutorDetail.pricePerHour", "{{price}}/hour", { price: localizedHourly })}
                   </strong>
-                  {showStoredCurrency ? ` (listed in ${t.currency})` : ""}
+                  {showStoredCurrency ? ` ${t("tutorDetail.listedIn", "(listed in {{currency}})", { currency: tutor.currency })}` : ""}
                 </p>
-                {t.availability && (
+                {tutor.availability && (
                   <p>
-                    Availability: <span className="text-foreground">{t.availability}</span>
+                    {t("tutorDetail.availabilityLabel", "Availability:")} <span className="text-foreground">{tutor.availability}</span>
                   </p>
                 )}
-                {t.online && (
-                  <p className="text-emerald-600 dark:text-emerald-400">Free demo class may be available — message the tutor to ask.</p>
+                {tutor.online && (
+                  <p className="text-emerald-600 dark:text-emerald-400">{t("tutorDetail.freeDemoNote", "Free demo class may be available — message the tutor to ask.")}</p>
                 )}
               </div>
             </SectionBlock>
 
-            <SectionBlock icon={MessageSquare} title="Reviews">
+            <SectionBlock icon={MessageSquare} title={t("footer.reviews")}>
               {reviews.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No reviews yet. Be the first one to{" "}
+                  {t("tutorDetail.noReviewsPrompt", "No reviews yet. Be the first one to")}{" "}
                   <button
                     type="button"
                     onClick={handleReview}
                     className="font-semibold text-primary hover:underline"
                   >
-                    review this tutor
+                    {t("tutorDetail.reviewThisTutor", "review this tutor")}
                   </button>
                   .
                 </p>
@@ -422,32 +450,32 @@ function TutorDetail() {
             <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
               <div className="flex border-b">
                 <ActionButton
-                  label="Message"
+                  label={t("tutorDetail.actionMessage", "Message")}
                   icon={Mail}
                   className="bg-emerald-500 hover:bg-emerald-600"
                   onClick={handleMessage}
                 />
                 <ActionButton
-                  label="Phone"
+                  label={t("tutorDetail.actionPhone", "Phone")}
                   icon={Phone}
                   className="bg-sky-500 hover:bg-sky-600"
                   onClick={handlePhone}
                   loading={phoneLoading}
                 />
                 <ActionButton
-                  label="Trial"
+                  label={t("tutorDetail.actionTrial", "Trial")}
                   icon={Clock}
                   className="bg-teal-500 hover:bg-teal-600"
                   onClick={handlePay}
                 />
                 <ActionButton
-                  label="Hire"
+                  label={t("tutorDetail.actionHire", "Hire")}
                   icon={CreditCard}
                   className="bg-violet-500 hover:bg-violet-600"
                   onClick={handlePay}
                 />
                 <ActionButton
-                  label="Review"
+                  label={t("tutorDetail.actionReview", "Review")}
                   icon={Star}
                   className="bg-amber-500 hover:bg-amber-600"
                   onClick={handleReview}
@@ -455,49 +483,49 @@ function TutorDetail() {
               </div>
 
               <div className="divide-y">
-                <SidebarRow icon={MapPin} label="Location" value={t.publicLocation || t.location || "Not specified"} />
+                <SidebarRow icon={MapPin} label={t("search.locationLabel")} value={tutor.publicLocation || tutor.location || t("tutorDetail.notSpecified", "Not specified")} />
                 <SidebarRow
                   icon={Briefcase}
-                  label="Experience"
-                  value={`${t.yearsOfExperience ?? t.experience} yrs`}
+                  label={t("tutorDetail.experience", "Experience")}
+                  value={t("tutorDetail.yearsShort", "{{count}} yrs", { count: tutor.yearsOfExperience ?? tutor.experience })}
                 />
                 <SidebarRow
                   icon={Wifi}
-                  label="Teaching mode"
+                  label={t("tutorDetail.teachingMode", "Teaching mode")}
                   value={[
-                    t.onlineTeaching || t.online ? "Online" : null,
-                    t.homeTuition ? "Home tuition" : null,
-                    t.groupClasses ? "Group classes" : null,
-                    t.assignmentHelp ? "Assignment help" : null,
+                    tutor.onlineTeaching || tutor.online ? t("search.modeOnline") : null,
+                    tutor.homeTuition ? t("search.homeTuition") : null,
+                    tutor.groupClasses ? t("tutorDetail.groupClasses", "Group classes") : null,
+                    tutor.assignmentHelp ? t("postReq.assignmentHelp") : null,
                   ]
                     .filter(Boolean)
-                    .join(" · ") || "Not specified"}
+                    .join(" · ") || t("tutorDetail.notSpecified", "Not specified")}
                 />
                 <SidebarRow
                   icon={Wifi}
-                  label="Online teaching"
-                  value={t.onlineTeaching || t.online ? "Yes" : "No"}
+                  label={t("tutorDetail.onlineTeaching", "Online teaching")}
+                  value={tutor.onlineTeaching || tutor.online ? t("tutorDetail.yes", "Yes") : t("tutorDetail.no", "No")}
                 />
-                <SidebarRow icon={MapPin} label="Home tuition" value={t.homeTuition ? "Yes" : "No"} />
-                <SidebarRow icon={BookOpen} label="Assignment help" value={t.assignmentHelp ? "Yes" : "No"} />
-                <SidebarRow icon={User} label="Gender" value={genderLabel} />
-                <SidebarRow icon={Clock} label="Activity" value={formatLastActive(t.lastLoginAt)} />
+                <SidebarRow icon={MapPin} label={t("search.homeTuition")} value={tutor.homeTuition ? t("tutorDetail.yes", "Yes") : t("tutorDetail.no", "No")} />
+                <SidebarRow icon={BookOpen} label={t("postReq.assignmentHelp")} value={tutor.assignmentHelp ? t("tutorDetail.yes", "Yes") : t("tutorDetail.no", "No")} />
+                <SidebarRow icon={User} label={t("tutorDetail.gender", "Gender")} value={genderLabel} />
+                <SidebarRow icon={Clock} label={t("tutorDetail.activity", "Activity")} value={formatLastActive(t, tutor.lastLoginAt)} />
                 <SidebarRow
                   icon={Languages}
-                  label="Speaks"
-                  value={t.language.length ? t.language.join(", ") : "Not specified"}
+                  label={t("tutorDetail.speaks", "Speaks")}
+                  value={tutor.language.length ? tutor.language.join(", ") : t("tutorDetail.notSpecified", "Not specified")}
                 />
-                <SidebarRow icon={Clock} label="Availability" value={t.availability || "Not specified"} />
+                <SidebarRow icon={Clock} label={t("tutorDetail.availability", "Availability")} value={tutor.availability || t("tutorDetail.notSpecified", "Not specified")} />
               </div>
 
               <div className="border-t bg-muted/20 p-4">
                 <div className="font-display text-2xl font-extrabold">
                   {localizedHourly}
-                  <span className="text-sm font-normal text-muted-foreground">/hour</span>
+                  <span className="text-sm font-normal text-muted-foreground">{t("tutorDetail.perHour", "/hour")}</span>
                 </div>
                 <Button size="lg" variant="gradient" className="mt-3 w-full" onClick={handlePay}>
                   <CreditCard className="mr-2 h-4 w-4" />
-                  Book trial session
+                  {t("tutorDetail.bookTrial", "Book trial session")}
                 </Button>
               </div>
             </div>
@@ -506,7 +534,7 @@ function TutorDetail() {
 
         {related.length > 0 && (
           <div className="mt-12">
-            <h2 className="mb-6 font-display text-xl font-bold">More {t.subject} tutors</h2>
+            <h2 className="mb-6 font-display text-xl font-bold">{t("tutorDetail.moreSubjectTutors", "More {{subject}} tutors", { subject: tutor.subject })}</h2>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {related.map((r) => (
                 <TutorCard key={r.id} tutor={r} />
@@ -517,7 +545,7 @@ function TutorDetail() {
       </div>
 
       <TutorPayDialog
-        tutor={t}
+        tutor={tutor}
         open={payOpen}
         onOpenChange={setPayOpen}
         paying={payLoading}
@@ -525,7 +553,7 @@ function TutorDetail() {
       />
       <TutorReviewDialog
         tutorId={id}
-        tutorName={t.name}
+        tutorName={tutor.name}
         open={reviewOpen}
         onOpenChange={setReviewOpen}
       />
@@ -572,7 +600,8 @@ function SidebarRow({
   label: string;
   value?: string | null;
 }) {
-  const display = value?.trim() || "Not specified";
+  const { t } = useTranslation("common");
+  const display = value?.trim() || t("tutorDetail.notSpecified", "Not specified");
   return (
     <div className="flex gap-3 px-4 py-3.5 text-sm">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />

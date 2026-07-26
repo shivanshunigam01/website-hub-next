@@ -3,14 +3,49 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Star, ShieldCheck } from "lucide-react";
+import { Link } from "@/lib/navigation";
 import { TESTIMONIALS } from "@/data/mock";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useApp } from "@/hooks/use-app";
+import { api, formatApiErrorMessage } from "@/lib/api";
 
 function Reviews() {
   const { t } = useTranslation("common");
+  const { user } = useApp();
   const [rating, setRating] = useState(5);
   const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitReview = async () => {
+    if (!user) {
+      toast.info(t("reviews.toastSignIn", "Please sign in to leave a review."));
+      return;
+    }
+    if (text.trim().length < 10) {
+      toast.error(t("reviews.toastTooShort", "Please write at least a few words."));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api("/reviews", {
+        method: "POST",
+        body: JSON.stringify({
+          rating,
+          text: text.trim(),
+          targetType: "platform",
+        }),
+      });
+      toast.success(t("reviews.toastThanks"));
+      setText("");
+      setRating(5);
+    } catch (err) {
+      toast.error(formatApiErrorMessage(err, t("reviews.toastFailed", "Could not submit review.")));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section className="container mx-auto px-4 py-10 max-w-4xl">
       <h1 className="font-display font-extrabold text-3xl">{t("reviews.title")}</h1>
@@ -18,9 +53,17 @@ function Reviews() {
 
       <div className="bg-card border rounded-2xl p-6 mt-8">
         <h2 className="font-display font-bold mb-3">{t("reviews.leaveReview")}</h2>
+        {!user ? (
+          <p className="mb-3 text-sm text-muted-foreground">
+            {t("reviews.signInHint", "Sign in to share your experience.")}{" "}
+            <Link to="/login" className="font-medium text-primary hover:underline">
+              {t("nav.login")}
+            </Link>
+          </p>
+        ) : null}
         <div className="flex gap-1 mb-3">
           {[1, 2, 3, 4, 5].map((n) => (
-            <button key={n} onClick={() => setRating(n)} aria-label={t("reviews.starsAria", "{{n}} stars", { n })}>
+            <button key={n} type="button" onClick={() => setRating(n)} aria-label={t("reviews.starsAria", "{{n}} stars", { n })}>
               <Star className={`h-7 w-7 ${n <= rating ? "fill-amber-500 text-amber-500" : "text-muted-foreground"}`} />
             </button>
           ))}
@@ -35,12 +78,10 @@ function Reviews() {
           size="lg"
           variant="gradient"
           className="mt-3"
-          onClick={() => {
-            toast.success(t("reviews.toastThanks"));
-            setText("");
-          }}
+          disabled={submitting}
+          onClick={submitReview}
         >
-          {t("reviews.submit")}
+          {submitting ? t("reviews.submitting", "Submitting…") : t("reviews.submit")}
         </Button>
       </div>
 

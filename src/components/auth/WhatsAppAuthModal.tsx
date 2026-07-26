@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "@/lib/navigation";
-import { Loader2 } from "lucide-react";
+import { Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -20,6 +20,7 @@ import { findPhoneCountryByCode } from "@/lib/phone-codes";
 import { useApp } from "@/hooks/use-app";
 import { afterAuthPath } from "@/lib/auth-redirect";
 import { formatApiErrorMessage } from "@/lib/api";
+import { formatCooldown, parseOtpCooldown } from "@/lib/otp-cooldown";
 import { parseE164Digits } from "@/lib/phone-codes";
 import { persistWhatsappVerifiedPhone } from "@/lib/whatsapp-verified-phone";
 import {
@@ -64,6 +65,8 @@ export function WhatsAppAuthModal({
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const purpose: WhatsappOtpPurpose = mode;
 
@@ -75,6 +78,8 @@ export function WhatsAppAuthModal({
     setSending(false);
     setVerifying(false);
     setCountdown(0);
+    setNotice(null);
+    setError(null);
     if (mode === "signup") {
       setName("");
       setRole(defaultRole);
@@ -86,7 +91,10 @@ export function WhatsAppAuthModal({
   }, [open, reset]);
 
   useEffect(() => {
-    if (countdown <= 0) return;
+    if (countdown <= 0) {
+      setNotice(null);
+      return;
+    }
     const t = window.setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => window.clearTimeout(t);
   }, [countdown]);
@@ -116,15 +124,43 @@ export function WhatsAppAuthModal({
     if (!phone) return;
 
     setSending(true);
+    setError(null);
+    setNotice(null);
     try {
       const res = await sendWhatsappOtp(phone, purpose);
       setPhoneE164(res.phone || phone);
       setStep("otp");
       setCountdown(RESEND_SECONDS);
       setOtp("");
-      toast.success("OTP sent on WhatsApp");
+      if (res.devOtp) {
+        toast.success(`Dev OTP: ${res.devOtp} (WhatsApp mock / local only)`);
+        setOtp(res.devOtp);
+      } else {
+        toast.success("OTP sent on WhatsApp");
+      }
     } catch (err) {
-      toast.error(formatApiErrorMessage(err, "Could not send OTP"));
+      const cooldown = parseOtpCooldown(err);
+      if (cooldown?.kind === "resend") {
+        // The previous code is still valid — let them type it instead of dead-ending.
+        setPhoneE164(phone);
+        setStep("otp");
+        setOtp("");
+        setCountdown(cooldown.seconds);
+        setNotice(
+          `${cooldown.message}. We already sent a code to this number — enter it below.`,
+        );
+        toast.info(cooldown.message);
+        return;
+      }
+      if (cooldown?.kind === "lockout") {
+        setCountdown(cooldown.seconds);
+        setError(cooldown.message);
+        toast.error(cooldown.message);
+        return;
+      }
+      const message = formatApiErrorMessage(err, "Could not send OTP");
+      setError(message);
+      toast.error(message);
     } finally {
       setSending(false);
     }
@@ -190,11 +226,14 @@ export function WhatsAppAuthModal({
       return;
     }
     setVerifying(true);
+    setError(null);
     try {
       await verifyWhatsappOtp(phoneE164, otp, purpose);
       await completeAuth();
     } catch (err) {
-      toast.error(formatApiErrorMessage(err, "Verification failed"));
+      const message = formatApiErrorMessage(err, "Verification failed");
+      setError(message);
+      toast.error(message);
     } finally {
       setVerifying(false);
     }
@@ -203,12 +242,34 @@ export function WhatsAppAuthModal({
   const handleResend = async () => {
     if (countdown > 0 || !phoneE164) return;
     setSending(true);
+    setError(null);
+    setNotice(null);
     try {
       const res = await sendWhatsappOtp(phoneE164, purpose);
       setCountdown(RESEND_SECONDS);
-      toast.success("OTP resent on WhatsApp");
+      setOtp("");
+      if (res.devOtp) {
+        toast.success(`Dev OTP: ${res.devOtp} (WhatsApp mock / local only)`);
+        setOtp(res.devOtp);
+      } else {
+        toast.success("OTP resent on WhatsApp");
+      }
     } catch (err) {
-      toast.error(formatApiErrorMessage(err, "Could not resend OTP"));
+      const cooldown = parseOtpCooldown(err);
+      if (cooldown) {
+        setCountdown(cooldown.seconds);
+        if (cooldown.kind === "lockout") {
+          setError(cooldown.message);
+          toast.error(cooldown.message);
+        } else {
+          setNotice(cooldown.message);
+          toast.info(cooldown.message);
+        }
+        return;
+      }
+      const message = formatApiErrorMessage(err, "Could not resend OTP");
+      setError(message);
+      toast.error(message);
     } finally {
       setSending(false);
     }
@@ -291,11 +352,17 @@ export function WhatsAppAuthModal({
                 userHasSavedPhone={false}
               />
 
+              {error ? (
+                <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
+              ) : null}
+
               <Button
                 type="button"
                 variant="gradient"
                 className="w-full"
-                disabled={sending}
+                disabled={sending || countdown > 0}
                 onClick={handleSendOtp}
               >
                 {sending ? (
@@ -303,6 +370,8 @@ export function WhatsAppAuthModal({
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Sending…
                   </>
+                ) : countdown > 0 ? (
+                  `Try again in ${formatCooldown(countdown)}`
                 ) : (
                   "Continue"
                 )}
@@ -323,6 +392,19 @@ export function WhatsAppAuthModal({
             </DialogHeader>
 
             <div className="space-y-6 pt-2">
+              {notice ? (
+                <p className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{notice}</span>
+                </p>
+              ) : null}
+
+              {error ? (
+                <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
+              ) : null}
+
               <div className="flex justify-center">
                 <InputOTP maxLength={6} value={otp} onChange={setOtp}>
                   <InputOTPGroup>
@@ -354,7 +436,13 @@ export function WhatsAppAuthModal({
                 <button
                   type="button"
                   className="text-muted-foreground hover:text-foreground"
-                  onClick={() => setStep("details")}
+                  onClick={() => {
+                    setError(null);
+                    setNotice(null);
+                    // Cooldowns are per-number, so a new number starts clean.
+                    setCountdown(0);
+                    setStep("details");
+                  }}
                 >
                   ← Change number
                 </button>
@@ -364,7 +452,11 @@ export function WhatsAppAuthModal({
                   disabled={countdown > 0 || sending}
                   onClick={handleResend}
                 >
-                  {countdown > 0 ? `Resend in ${countdown}s` : sending ? "Sending…" : "Resend OTP"}
+                  {countdown > 0
+                    ? `Resend in ${formatCooldown(countdown)}`
+                    : sending
+                      ? "Sending…"
+                      : "Resend OTP"}
                 </button>
               </div>
             </div>

@@ -68,10 +68,13 @@ export function LevelUpSection() {
             <Button asChild size="lg" variant="gradient" className="shadow-lg">
               <Link to="/courses">{t("levelUp.exploreCourses")}</Link>
             </Button>
-            <button className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+            <Link
+              to="/refund"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+            >
               <PlayCircle className="h-6 w-6" />
               {t("levelUp.refundOffer")}
-            </button>
+            </Link>
           </div>
         </div>
 

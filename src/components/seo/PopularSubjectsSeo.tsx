@@ -20,13 +20,13 @@ export function PopularSubjectsSeo() {
           subtitle={t("popularSubjects.subtitle")}
         />
         <nav aria-label={t("popularSubjects.aria")}>
-          <ul className="mt-8 flex flex-wrap gap-2">
+          <ul className="mt-8 columns-2 gap-x-8 gap-y-0 sm:columns-3 lg:columns-4">
             {POPULAR_SUBJECT_LINKS.map(({ label, subject }) => (
-              <li key={subject}>
+              <li key={subject} className="mb-2 break-inside-avoid">
                 <Link
                   to="/tutors"
                   search={{ subject }}
-                  className="inline-flex rounded-full border bg-background px-3 py-1.5 text-xs font-medium text-foreground/90 transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary sm:text-sm"
+                  className="inline-flex text-sm font-medium text-primary/90 transition hover:text-primary hover:underline"
                 >
                   {label}
                 </Link>

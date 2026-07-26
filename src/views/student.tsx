@@ -1,7 +1,7 @@
 "use client";
 
 import { Link, useNavigate } from "@/lib/navigation";
-import { LayoutDashboard, BookOpen, Heart, Award, MessageCircle, LifeBuoy, Clock, TrendingUp, Bell, Search, ShoppingBag, User, Building2 } from "lucide-react";
+import { LayoutDashboard, BookOpen, Heart, Award, MessageCircle, LifeBuoy, Clock, TrendingUp, Bell, Search, ShoppingBag, User, Building2, ClipboardList } from "lucide-react";
 import { AccountSecurityPanel } from "@/components/auth/AccountSecurityPanel";
 import { AccountProfilePanel } from "@/components/auth/AccountProfilePanel";
 import { TutorSearchPanel, tutorSearchToUrl } from "@/components/tutors/TutorSearchPanel";
@@ -19,9 +19,16 @@ import { CertificateCard } from "@/components/lms/CertificateCard";
 import { StudentExchangePanel } from "@/components/marketplace/StudentExchangePanel";
 import { DashboardProfileCard } from "@/components/dashboard/DashboardProfileCard";
 import { UserAccommodationInquiriesPanel } from "@/components/accommodation/UserAccommodationInquiriesPanel";
+import { useMyRequirements } from "@/hooks/use-requirements-api";
+import {
+  jobTypeLabel,
+  requirementStatusClass,
+  requirementStatusLabel,
+} from "@/lib/tutor-jobs-utils";
 
 const ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "my-posts", label: "My Posts", icon: ClipboardList },
   { id: "exchange", label: "Student Exchange", icon: ShoppingBag },
   { id: "find-tutors", label: "Find Tutors", icon: Search },
   { id: "continue", label: "Continue Learning", icon: BookOpen },
@@ -39,6 +46,8 @@ function Student() {
   const navigate = useNavigate();
   const { enrollments, certificates, loading } = useLearning();
   const { data: tutors = [] } = useTutors();
+  const { data: myPosts = [], isLoading: postsLoading } = useMyRequirements(true);
+  const approvedPosts = myPosts.filter((p) => p.status === "approved");
 
   const openFullSearch = (filters: TutorSearchFilters) => {
     navigate({ to: "/tutors", search: tutorSearchToUrl(filters) });
@@ -63,6 +72,71 @@ function Student() {
           <StatCard label="Certificates" value={String(certificates.length)} icon={Award} color="from-amber-400 to-orange-600" />
           <StatCard label="Completed" value={String(completedCount)} icon={TrendingUp} color="from-emerald-400 to-teal-600" />
         </div>
+      </DashboardSection>
+
+      <DashboardSection
+        id="my-posts"
+        title="My Posts"
+        description="Your tutoring requirements — approved posts go live on the tutor jobs board."
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link to="/my-posts">Open My Posts →</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link to="/post-requirement">Post requirement</Link>
+            </Button>
+          </div>
+        }
+      >
+        {postsLoading ? (
+          <p className="text-sm text-muted-foreground">Loading your posts…</p>
+        ) : myPosts.length === 0 ? (
+          <div className="rounded-2xl border border-dashed bg-muted/20 px-6 py-10 text-center">
+            <p className="text-sm text-muted-foreground">You haven&apos;t posted any requirements yet.</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Button asChild>
+                <Link to="/post-requirement">Post a requirement</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/tutors">Find teachers</Link>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {(approvedPosts.length ? approvedPosts : myPosts).slice(0, 5).map((post) => (
+              <div
+                key={post.id}
+                className="flex flex-wrap items-start justify-between gap-3 rounded-xl border bg-card px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium">{post.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {post.subject} · {jobTypeLabel(post.jobType)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className={requirementStatusClass(post.status)}>
+                    {requirementStatusLabel(post.status)}
+                  </Badge>
+                  {post.status === "approved" ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/tutor-jobs/$id" params={{ id: post.id }}>
+                        View live
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+            {myPosts.length > 5 ? (
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/my-posts">View all {myPosts.length} posts →</Link>
+              </Button>
+            ) : null}
+          </div>
+        )}
       </DashboardSection>
 
       <DashboardSection

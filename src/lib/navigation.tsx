@@ -10,6 +10,7 @@ import {
 import {
   forwardRef,
   type ComponentProps,
+  type MouseEvent,
   type ReactNode,
   useMemo,
   useEffect,
@@ -52,12 +53,42 @@ function buildHref(
 }
 
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
-  { to, search, params, hash, children, ...rest },
+  { to, search, params, hash, children, onClick, ...rest },
   ref,
 ) {
   const href = buildHref(to, search, params, hash);
+  const currentPathname = usePathname() || "/";
+  const destinationPathname = href.split(/[?#]/, 1)[0] || currentPathname;
+
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    onClick?.(event);
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      rest.target === "_blank"
+    ) {
+      return;
+    }
+
+    // Next's dev server compiles routes on demand. A client transition can leave
+    // the current page looking frozen while that compilation runs. A document
+    // navigation gives immediate browser feedback and is also resilient to a
+    // stale RSC/chunk cache. Production retains normal Next.js SPA navigation.
+    if (
+      process.env.NODE_ENV === "development" &&
+      destinationPathname !== currentPathname
+    ) {
+      event.preventDefault();
+      window.location.assign(href);
+    }
+  };
+
   return (
-    <NextLink ref={ref} href={href} scroll {...rest}>
+    <NextLink ref={ref} href={href} scroll onClick={handleClick} {...rest}>
       {children}
     </NextLink>
   );
@@ -89,8 +120,21 @@ export function useNavigate() {
       search = search(readSearchRecord(searchParams));
     }
     const href = buildHref(target, search, undefined, opts.hash);
-    if (opts.replace) router.replace(href);
-    else router.push(href);
+    const scroll = !opts.hash;
+
+    const destinationPathname = href.split(/[?#]/, 1)[0] || pathname;
+    if (
+      process.env.NODE_ENV === "development" &&
+      opts.to &&
+      destinationPathname !== pathname
+    ) {
+      if (opts.replace) window.location.replace(href);
+      else window.location.assign(href);
+      return Promise.resolve();
+    }
+
+    if (opts.replace) router.replace(href, { scroll });
+    else router.push(href, { scroll });
     return Promise.resolve();
   };
 }

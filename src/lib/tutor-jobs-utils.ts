@@ -12,6 +12,20 @@ export function parseJobTypeFilter(raw: unknown): TutorJobsFilters["jobType"] {
   return "all";
 }
 
+export function parseLevelFilter(raw: unknown): TutorJobsFilters["level"] {
+  if (
+    raw === "elem" ||
+    raw === "middle" ||
+    raw === "high" ||
+    raw === "college" ||
+    raw === "pro" ||
+    raw === "other"
+  ) {
+    return raw;
+  }
+  return "all";
+}
+
 export function filtersFromSearch(search: Record<string, unknown>): TutorJobsFilters {
   return {
     q: typeof search.q === "string" ? search.q : undefined,
@@ -20,6 +34,7 @@ export function filtersFromSearch(search: Record<string, unknown>): TutorJobsFil
     location: typeof search.location === "string" ? search.location : undefined,
     mode: parseTutorJobMode(search.mode),
     jobType: parseJobTypeFilter(search.jobType),
+    level: parseLevelFilter(search.level),
   };
 }
 
@@ -64,6 +79,16 @@ export function posterDisplayName(job: Pick<Requirement, "posterName" | "student
 /** e.g. "Posted by Sanchita Das (Parent/Guardian)" */
 export function postedByLine(job: Pick<Requirement, "posterName" | "studentName" | "posterRole">): string {
   return `Posted by ${posterDisplayName(job)} (${posterRoleLabel(job.posterRole)})`;
+}
+
+/** e.g. "Phone verified +91-**********" */
+export function posterPhoneLine(
+  job: Pick<Requirement, "posterPhoneMasked" | "posterPhoneVerified">,
+): string | null {
+  const masked = (job.posterPhoneMasked || "").trim();
+  if (!masked) return null;
+  if (job.posterPhoneVerified) return `Phone verified ${masked}`;
+  return masked;
 }
 
 export function requirementStatusLabel(status: Requirement["status"]): string {

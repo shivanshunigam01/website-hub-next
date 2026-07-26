@@ -1,4 +1,4 @@
-export type WhatsappOtpPurpose = "login" | "signup";
+export type WhatsappOtpPurpose = "login" | "signup" | "verify";
 
 export type SendWhatsappOtpResponse = {
   sent: boolean;

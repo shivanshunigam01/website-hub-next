@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GraduationCap, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useSubjectSearch, invalidateSubjectCatalog } from "@/hooks/use-subject-catalog";
@@ -10,6 +10,8 @@ import { formatApiErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
+const SUGGESTION_LIMIT = 50;
 
 type Props = {
   value: string;
@@ -31,7 +33,6 @@ export function SubjectAutocomplete({
   showIcon = true,
   extraOptions = [],
 }: Props) {
-  const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -43,7 +44,11 @@ export function SubjectAutocomplete({
     return () => window.clearTimeout(t);
   }, [value]);
 
-  const { data: matches = [], isFetching } = useSubjectSearch(debounced, open && debounced.length >= 1);
+  const { data: matches = [], isFetching } = useSubjectSearch(
+    debounced,
+    open && debounced.length >= 1,
+    SUGGESTION_LIMIT,
+  );
 
   const normalizedValue = normalizeSubjectName(value);
   const hasExactMatch = useMemo(() => {
@@ -64,15 +69,25 @@ export function SubjectAutocomplete({
   const suggestions = useMemo(() => {
     const seen = new Set<string>();
     const out: string[] = [];
-    for (const name of [...matches.map((m) => m.name), ...extraOptions]) {
+    const q = debounced.trim().toLowerCase();
+    // Prefer API matches, then facet extras that match the typed query
+    for (const name of matches.map((m) => m.name)) {
       const key = name.toLowerCase();
       if (!seen.has(key)) {
         seen.add(key);
         out.push(name);
       }
     }
-    return out.slice(0, 25);
-  }, [matches, extraOptions]);
+    for (const name of extraOptions) {
+      if (out.length >= SUGGESTION_LIMIT) break;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      if (q && !key.includes(q)) continue;
+      seen.add(key);
+      out.push(name);
+    }
+    return out.slice(0, SUGGESTION_LIMIT);
+  }, [matches, extraOptions, debounced]);
 
   async function commitNewSubject(name: string) {
     const trimmed = normalizeSubjectName(name);
@@ -124,23 +139,17 @@ export function SubjectAutocomplete({
           }, 150);
         }}
         placeholder={placeholder}
-        list={suggestions.length ? listId : undefined}
         autoComplete="off"
         className={cn(showIcon && "ps-10", inputClassName)}
+        role="combobox"
         aria-autocomplete="list"
         aria-expanded={showDropdown}
+        aria-haspopup="listbox"
         disabled={ensuring}
       />
-      {suggestions.length > 0 ? (
-        <datalist id={listId}>
-          {suggestions.map((name) => (
-            <option key={name} value={name} />
-          ))}
-        </datalist>
-      ) : null}
       {showDropdown ? (
         <ul
-          className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-lg border bg-popover p-1 text-sm shadow-lg"
+          className="absolute z-50 mt-1 max-h-72 w-full overflow-auto rounded-lg border bg-popover p-1 text-sm shadow-lg"
           role="listbox"
         >
           {canAddNew ? (

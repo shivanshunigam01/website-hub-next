@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import logoLight from "@/assets/teacherspoints-logo.png";
-import logoDark from "@/assets/teacherspoints-logo-dark.png";
+import logoDark from "@/assets/teacherspoints-logo-dark.webp";
 import { cn } from "@/lib/utils";
 
 const sizeClass = {
@@ -21,7 +21,7 @@ const sizePx = {
 
 /**
  * Light mode → teacherspoints-logo.png
- * Dark mode  → teacherspoints-logo-dark.png (white text / dark-background variant)
+ * Dark mode  → teacherspoints-logo-dark.webp (white text / dark-background variant)
  */
 export function BrandLogo({
   size = "header",
@@ -47,12 +47,13 @@ export function BrandLogo({
         sizes="(max-width: 640px) 14rem, 17rem"
         className={cn(imgClass, "dark:hidden")}
       />
+      {/* Never priority both themes — dark logo is large and CSS-hidden in light mode */}
       <Image
         src={logoDark}
         alt="TeacherPoint"
         width={w}
         height={h}
-        priority={priority}
+        loading="lazy"
         sizes="(max-width: 640px) 14rem, 17rem"
         className={cn(imgClass, "hidden dark:block")}
       />

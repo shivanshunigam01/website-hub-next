@@ -4,25 +4,19 @@ import { Link, useNavigate } from "@/lib/navigation";
 import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
-  BookOpen,
   Calendar,
   CheckCircle2,
   Clock,
-  DollarSign,
   FileText,
-  MapPin,
+  Loader2,
+  LogIn,
   MessageCircle,
+  Paperclip,
   Send,
   ShieldCheck,
   Sparkles,
   Star,
   Users,
-  Wifi,
-  ClipboardList,
-  Briefcase,
-  LogIn,
-  Loader2,
-  WifiOff,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -37,34 +32,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SelectWithOther } from "@/components/ui/SelectWithOther";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/hooks/use-app";
 import { useCreateRequirement, useMyRequirements } from "@/hooks/use-requirements-api";
 import { useCurrency } from "@/hooks/use-currency";
-import { formatApiErrorMessage } from "@/lib/api";
+import { apiUpload, formatApiErrorMessage } from "@/lib/api";
 import { afterAuthPath } from "@/lib/auth-redirect";
 import { requirementStatusClass, requirementStatusLabel } from "@/lib/tutor-jobs-utils";
 import { TutorPageBannerBackground } from "@/components/tutors/TutorPageBannerBackground";
 import { SubjectAutocomplete } from "@/components/tutors/SubjectAutocomplete";
+import { AddressAutocomplete } from "@/components/forms/AddressAutocomplete";
+import { StudentConfirmDialog } from "@/components/forms/StudentConfirmDialog";
+import { RequirementVerifyDialog } from "@/components/forms/RequirementVerifyDialog";
+import { LanguageMultiSelect } from "@/components/forms/LanguageMultiSelect";
+import { PhoneNumberField } from "@/components/PhoneNumberField";
+import { ensureSubject } from "@/services/subjects-api";
+import {
+  BUDGET_UNIT_OPTIONS,
+  DETAILS_EXAMPLE,
+  LEVEL_OPTIONS,
+  TEACHER_GENDER_OPTIONS,
+  TIME_COMMITMENT_OPTIONS,
+  TUTOR_ORIGIN_OPTIONS,
+} from "@/data/requirement-form";
+import { countWords, validateRequirementDetails } from "@/lib/requirement-details";
 import { normalizeSubjectName } from "@/lib/subject-name";
 import { cn } from "@/lib/utils";
-
-const LEVEL_OPTION_KEYS = [
-  { value: "elem", key: "postReq.level.elem" },
-  { value: "middle", key: "postReq.level.middle" },
-  { value: "high", key: "postReq.level.high" },
-  { value: "college", key: "postReq.level.college" },
-  { value: "pro", key: "postReq.level.pro" },
-] as const;
-
-const DURATION_OPTION_KEYS = [
-  { value: "once", key: "postReq.duration.once" },
-  { value: "month", key: "postReq.duration.month" },
-  { value: "semester", key: "postReq.duration.semester" },
-  { value: "ongoing", key: "postReq.duration.ongoing" },
-] as const;
+import type { AddressSuggestion } from "@/app/api/geolocation/autocomplete/route";
+import type { CreateRequirementPayload } from "@/types/requirement";
 
 const QUICK_TITLE_KEYS = [
   "postReq.quick1",
@@ -93,39 +89,80 @@ const PERK_KEYS = [
   { icon: Sparkles, key: "postReq.perk4" },
 ] as const;
 
+type Attachment = { url: string; name: string; mimeType?: string; size?: number };
+
+type MeetingOptions = {
+  online: boolean;
+  atMyPlace: boolean;
+  travelToTutor: boolean;
+};
+
 type FormState = {
   title: string;
+  locationQuery: string;
+  locationSelected: boolean;
+  addressFormatted: string;
+  city: string;
+  country: string;
+  placeId: string;
+  locationLat?: number;
+  locationLng?: number;
+  phoneCountryCode: string;
+  phone: string;
+  details: string;
   subject: string;
-  skills: string[];
+  subjectPendingApproval: boolean;
   level: string;
   levelOther: string;
   jobType: "tutoring" | "assignment";
-  mode: "online" | "offline" | "both";
-  sessionsPerWeek: string;
-  location: string;
-  country: string;
+  meetingOptions: MeetingOptions;
   budget: string;
-  duration: string;
-  durationOther: string;
-  details: string;
+  budgetUnit: CreateRequirementPayload["budgetUnit"];
+  teacherGender: NonNullable<CreateRequirementPayload["teacherGender"]>;
+  timeCommitment: NonNullable<CreateRequirementPayload["timeCommitment"]>;
+  languages: string[];
+  tutorOrigin: string;
+  attachments: Attachment[];
+  acceptedTerms: boolean;
 };
 
-const INITIAL_FORM: FormState = {
-  title: "",
-  subject: "Mathematics",
-  skills: [],
-  level: "high",
-  levelOther: "",
-  jobType: "tutoring",
-  mode: "online",
-  sessionsPerWeek: "3",
-  location: "",
-  country: "",
-  budget: "30",
-  duration: "ongoing",
-  durationOther: "",
-  details: "",
-};
+function buildInitialForm(phoneCountryCode = "+91", phone = ""): FormState {
+  return {
+    title: "",
+    locationQuery: "",
+    locationSelected: false,
+    addressFormatted: "",
+    city: "",
+    country: "",
+    placeId: "",
+    locationLat: undefined,
+    locationLng: undefined,
+    phoneCountryCode,
+    phone,
+    details: "",
+    subject: "",
+    subjectPendingApproval: false,
+    level: "high",
+    levelOther: "",
+    jobType: "tutoring",
+    meetingOptions: { online: true, atMyPlace: false, travelToTutor: false },
+    budget: "30",
+    budgetUnit: "hour",
+    teacherGender: "any",
+    timeCommitment: "part-time",
+    languages: ["English"],
+    tutorOrigin: "",
+    attachments: [],
+    acceptedTerms: false,
+  };
+}
+
+function deriveMode(mo: MeetingOptions): "online" | "offline" | "both" {
+  const inPerson = mo.atMyPlace || mo.travelToTutor;
+  if (mo.online && inPerson) return "both";
+  if (mo.online) return "online";
+  return "offline";
+}
 
 function Post() {
   const { t } = useTranslation("common");
@@ -136,20 +173,21 @@ function Post() {
   );
   const { currency, symbol } = useCurrency();
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
-  const [skillDraft, setSkillDraft] = useState("");
+  const [form, setForm] = useState<FormState>(() =>
+    buildInitialForm(user?.phoneCountryCode || "+91", user?.phone || ""),
+  );
+  const [confirmedStudent, setConfirmedStudent] = useState(false);
+  const [studentDialogOpen, setStudentDialogOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyEmailSent, setVerifyEmailSent] = useState(false);
+  const [verifyPhone, setVerifyPhone] = useState({ countryCode: "+91", phone: "" });
+  const [uploading, setUploading] = useState(false);
+  const [addingSubject, setAddingSubject] = useState(false);
   const nav = useNavigate();
 
   const canPost = role === "student" || role === "parent";
+  const detailsWords = countWords(form.details);
 
-  const levelOptions = useMemo(
-    () => LEVEL_OPTION_KEYS.map((o) => ({ value: o.value, label: t(o.key) })),
-    [t],
-  );
-  const durationOptions = useMemo(
-    () => DURATION_OPTION_KEYS.map((o) => ({ value: o.value, label: t(o.key) })),
-    [t],
-  );
   const quickTitles = useMemo(
     () => QUICK_TITLE_KEYS.map((key, i) => t(key, QUICK_TITLE_DEFAULTS[i])),
     [t],
@@ -164,85 +202,222 @@ function Post() {
     }
   }, [authLoading, user, canPost, profileComplete, role, nav]);
 
+  useEffect(() => {
+    if (!user) return;
+    setForm((prev) => ({
+      ...prev,
+      phoneCountryCode: user.phoneCountryCode || prev.phoneCountryCode || "+91",
+      phone: user.phone || prev.phone || "",
+    }));
+  }, [user]);
+
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const addSkill = (raw: string) => {
-    const name = normalizeSubjectName(raw);
-    if (!name) return;
-    setForm((prev) => {
-      if (prev.skills.some((s) => s.toLowerCase() === name.toLowerCase())) return prev;
-      return { ...prev, skills: [...prev.skills, name] };
-    });
-    setSkillDraft("");
-  };
-
-  const removeSkill = (name: string) => {
+  const onLocationChange = (value: string) => {
     setForm((prev) => ({
       ...prev,
-      skills: prev.skills.filter((s) => s.toLowerCase() !== name.toLowerCase()),
+      locationQuery: value,
+      locationSelected: false,
+      addressFormatted: "",
+      city: "",
+      country: "",
+      placeId: "",
+      locationLat: undefined,
+      locationLng: undefined,
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !canPost) {
-      toast.error(t("postReq.toastSignIn", "Please sign in as a student or parent to post a requirement."));
-      return;
-    }
-    if (!profileComplete) {
-      toast.error(t("postReq.toastCompleteProfile", "Complete your profile registration before posting a requirement."));
-      void nav({ to: afterAuthPath(role!, false, true) });
-      return;
-    }
-    if (!form.subject.trim()) {
+  const onLocationSelect = (suggestion: AddressSuggestion) => {
+    setForm((prev) => ({
+      ...prev,
+      locationQuery: suggestion.label,
+      locationSelected: true,
+      addressFormatted: suggestion.label,
+      city: suggestion.city || "",
+      country: suggestion.country || "",
+      placeId: suggestion.id,
+      locationLat: suggestion.lat,
+      locationLng: suggestion.lng,
+    }));
+  };
+
+  const handleAddNewSubject = async () => {
+    const name = normalizeSubjectName(form.subject);
+    if (!name) {
       toast.error(t("postReq.toastSubject", "Please choose a subject."));
       return;
     }
-    if (!form.title.trim() || !form.details.trim()) {
-      toast.error(t("postReq.toastTitleDetails", "Please fill in the title and details."));
+    setAddingSubject(true);
+    try {
+      const subject = await ensureSubject(name, { pendingApproval: true });
+      setForm((prev) => ({
+        ...prev,
+        subject: subject.name,
+        subjectPendingApproval: true,
+      }));
+      toast.success(t("postReq.subjectPending", "Subject added and pending approval."));
+    } catch (err) {
+      toast.error(formatApiErrorMessage(err, t("postReq.toastSubjectAddFailed", "Could not add subject")));
+    } finally {
+      setAddingSubject(false);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    if (form.attachments.length + files.length > 10) {
+      toast.error(t("postReq.toastMaxFiles", "You can upload up to 10 files."));
       return;
     }
-    if (form.details.trim().length < 20) {
-      toast.error(t("postReq.toastMoreDetail", "Please add more detail (at least 20 characters)."));
-      return;
+    setUploading(true);
+    try {
+      const uploaded: Attachment[] = [];
+      for (const file of files) {
+        const result = await apiUpload(file);
+        uploaded.push({
+          url: result.url,
+          name: result.filename || file.name,
+          mimeType: result.mimetype || file.type,
+          size: result.size ?? file.size,
+        });
+      }
+      setForm((prev) => ({ ...prev, attachments: [...prev.attachments, ...uploaded] }));
+      toast.success(t("postReq.toastFilesUploaded", "File(s) uploaded."));
+    } catch (err) {
+      toast.error(formatApiErrorMessage(err, t("postReq.toastUploadFailed", "Could not upload file")));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAttachment = (url: string) => {
+    setForm((prev) => ({
+      ...prev,
+      attachments: prev.attachments.filter((a) => a.url !== url),
+    }));
+  };
+
+  const validateForm = (): boolean => {
+    if (!user || !canPost) {
+      toast.error(t("postReq.toastSignIn", "Please sign in as a student or parent to post a requirement."));
+      return false;
+    }
+    if (!profileComplete) {
+      toast.error(
+        t("postReq.toastCompleteProfile", "Complete your profile registration before posting a requirement."),
+      );
+      void nav({ to: afterAuthPath(role!, false, true) });
+      return false;
+    }
+    if (!form.subject.trim()) {
+      toast.error(t("postReq.toastSubject", "Please choose a subject."));
+      return false;
+    }
+    if (!form.locationSelected || !form.addressFormatted.trim()) {
+      toast.error(
+        t("postReq.toastSelectLocation", "Please select your location from the suggested options."),
+      );
+      return false;
+    }
+    const phoneDigits = form.phone.replace(/\D/g, "");
+    if (!form.phoneCountryCode.trim() || phoneDigits.length < 7) {
+      toast.error(t("postReq.toastPhone", "Please enter a valid phone number."));
+      return false;
+    }
+    const detailsCheck = validateRequirementDetails(form.details);
+    if (!detailsCheck.ok) {
+      toast.error(detailsCheck.message || t("postReq.toastDetails", "Please fix the details field."));
+      return false;
     }
     if (form.level === "other" && !form.levelOther.trim()) {
       toast.error(t("postReq.toastLevel", "Please specify the level."));
-      return;
+      return false;
     }
-    if (form.duration === "other" && !form.durationOther.trim()) {
-      toast.error(t("postReq.toastDuration", "Please specify the duration."));
-      return;
+    const { online, atMyPlace, travelToTutor } = form.meetingOptions;
+    if (!online && !atMyPlace && !travelToTutor) {
+      toast.error(t("postReq.toastMeeting", "Select at least one meeting option."));
+      return false;
     }
+    if (!form.budget.trim() || Number(form.budget) < 0) {
+      toast.error(t("postReq.toastBudget", "Please enter a valid budget."));
+      return false;
+    }
+    if (!form.acceptedTerms) {
+      toast.error(t("postReq.toastTerms", "Please accept the Terms and conditions."));
+      return false;
+    }
+    return true;
+  };
+
+  const submitRequirement = async () => {
+    const subject = form.subject.trim();
+    const city = form.city.trim() || form.addressFormatted.trim();
+    const mode = deriveMode(form.meetingOptions);
+    const autoTitle =
+      form.title.trim() ||
+      `${mode === "offline" ? "" : "Online "}${subject} tutor needed in ${city}`.trim();
+
     try {
-      await createMut.mutateAsync({
-        title: form.title.trim(),
-        subject: form.subject.trim(),
-        skills: form.skills.length ? form.skills : undefined,
+      const result = await createMut.mutateAsync({
+        title: autoTitle,
+        subject,
+        subjectPendingApproval: form.subjectPendingApproval || undefined,
         level: form.level,
         levelOther: form.level === "other" ? form.levelOther.trim() : undefined,
         jobType: form.jobType,
-        mode: form.mode,
-        sessionsPerWeek: Number(form.sessionsPerWeek) || undefined,
-        city: form.location.trim(),
+        mode,
+        meetingOptions: form.meetingOptions,
+        location: form.addressFormatted.trim(),
+        city: form.city.trim() || undefined,
         country: form.country.trim() || undefined,
+        addressFormatted: form.addressFormatted.trim(),
+        placeId: form.placeId || undefined,
+        locationLat: form.locationLat,
+        locationLng: form.locationLng,
         budgetPerHour: Number(form.budget) || 0,
+        budget: Number(form.budget) || 0,
         currency,
-        duration: form.duration,
-        durationOther: form.duration === "other" ? form.durationOther.trim() : undefined,
+        budgetUnit: form.budgetUnit,
+        timeCommitment: form.timeCommitment,
+        teacherGender: form.teacherGender,
+        languages: form.languages.length ? form.languages : undefined,
+        tutorOrigin: form.tutorOrigin || undefined,
+        phoneCountryCode: form.phoneCountryCode.trim(),
+        phone: form.phone.trim(),
+        attachments: form.attachments.length ? form.attachments : undefined,
         details: form.details.trim(),
+        acceptedTerms: true,
       });
+
+      const emailSent = Boolean((result as { emailSent?: boolean })?.emailSent);
+      setVerifyEmailSent(emailSent);
+      setVerifyPhone({ countryCode: form.phoneCountryCode, phone: form.phone });
+      setVerifyOpen(true);
       setSubmitted(true);
-      setForm(INITIAL_FORM);
-      setSkillDraft("");
-      refetchMine();
+      setForm(buildInitialForm(user?.phoneCountryCode || "+91", user?.phone || ""));
+      setConfirmedStudent(false);
+      void refetchMine();
       toast.success(t("postReq.toastSubmitted", "Requirement submitted! Pending admin approval."));
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       toast.error(formatApiErrorMessage(err, t("postReq.toastSubmitFailed", "Could not submit requirement")));
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    if (!confirmedStudent) {
+      setStudentDialogOpen(true);
+      return;
+    }
+
+    await submitRequirement();
   };
 
   if (authLoading) {
@@ -266,16 +441,19 @@ function Post() {
               <h1 className="font-display text-3xl font-extrabold text-white sm:text-4xl">
                 {t("postReq.signInTitle")}
               </h1>
-              <p className="mt-4 text-base text-white/85">
-                {t("postReq.signInSubtitle")}
-              </p>
+              <p className="mt-4 text-base text-white/85">{t("postReq.signInSubtitle")}</p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Button asChild size="lg" variant="secondary">
                   <Link to="/login" search={{ redirect: "/post-requirement" }}>
                     {t("postReq.signIn")}
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                >
                   <Link to="/register">{t("postReq.createAccount")}</Link>
                 </Button>
               </div>
@@ -290,9 +468,7 @@ function Post() {
     return (
       <div className="container mx-auto px-4 py-16 text-center sm:px-6">
         <h1 className="font-display text-2xl font-bold">{t("postReq.studentsOnlyTitle")}</h1>
-        <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-          {t("postReq.studentsOnlyDesc")}
-        </p>
+        <p className="mx-auto mt-3 max-w-md text-muted-foreground">{t("postReq.studentsOnlyDesc")}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button asChild variant="outline">
             <Link to="/tutor-jobs">{t("postReq.browseJobs")}</Link>
@@ -319,9 +495,7 @@ function Post() {
             <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
               {t("postReq.title")}
             </h1>
-            <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">
-              {t("postReq.subtitle")}
-            </p>
+            <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">{t("postReq.subtitle")}</p>
 
             <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/90">
               <span className="inline-flex items-center gap-1.5">
@@ -345,7 +519,12 @@ function Post() {
                   <ArrowRight className="ms-1 h-4 w-4" />
                 </a>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              >
                 <Link to="/tutors">{t("postReq.browseInstead")}</Link>
               </Button>
             </div>
@@ -359,7 +538,7 @@ function Post() {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-lg font-bold">{t("postReq.yourRequirements")}</h2>
               <Button asChild variant="outline" size="sm">
-                <Link to="/tutor-jobs">{t("postReq.viewTutorJobs")}</Link>
+                <Link to="/my-posts">{t("postReq.viewMyPosts", "View My Posts")}</Link>
               </Button>
             </div>
             <div className="space-y-3">
@@ -400,9 +579,17 @@ function Post() {
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline" className="border-emerald-300 bg-white dark:bg-transparent">
+                  <Link to="/my-posts">{t("postReq.viewMyPosts", "View My Posts")}</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline" className="border-emerald-300 bg-white dark:bg-transparent">
                   <Link to="/tutors">{t("postReq.browseWhileWait")}</Link>
                 </Button>
-                <Button size="sm" variant="ghost" className="text-emerald-800 dark:text-emerald-200" onClick={() => setSubmitted(false)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-emerald-800 dark:text-emerald-200"
+                  onClick={() => setSubmitted(false)}
+                >
                   {t("postReq.postAnother")}
                 </Button>
               </div>
@@ -412,18 +599,19 @@ function Post() {
       )}
 
       <div className="container mx-auto px-4 py-10 sm:px-6 md:py-14">
-        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,500px)] lg:gap-14">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] lg:gap-14">
           <div className="space-y-8 lg:sticky lg:top-24">
             <div>
               <h2 className="font-display text-xl font-bold sm:text-2xl">{t("postReq.howTitle")}</h2>
-              <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-                {t("postReq.howSubtitle")}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">{t("postReq.howSubtitle")}</p>
               <ol className="relative mt-8 space-y-0">
                 {STEP_KEYS.map((s, i) => (
                   <li key={s.titleKey} className="relative flex gap-4 pb-8 last:pb-0">
                     {i < STEP_KEYS.length - 1 && (
-                      <span className="absolute start-5 top-11 h-[calc(100%-2.75rem)] w-px bg-border" aria-hidden />
+                      <span
+                        className="absolute start-5 top-11 h-[calc(100%-2.75rem)] w-px bg-border"
+                        aria-hidden
+                      />
                     )}
                     <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-4 ring-background">
                       <s.icon className="h-5 w-5" />
@@ -468,20 +656,23 @@ function Post() {
           </div>
 
           <div id="requirement-form" className="scroll-mt-24">
-            <form
-              onSubmit={handleSubmit}
-              className="overflow-hidden rounded-2xl border bg-card shadow-lg"
-            >
+            <form onSubmit={handleSubmit} className="overflow-hidden rounded-2xl border bg-card shadow-lg">
               <div className="border-b bg-muted/30 px-6 py-5 sm:px-8">
                 <h2 className="font-display text-xl font-bold">{t("postReq.formTitle")}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t("postReq.formHint")}
-                </p>
+                <p className="mt-1 text-sm text-muted-foreground">{t("postReq.formHint")}</p>
               </div>
 
-              <div className="space-y-8 p-6 sm:p-8">
+              <div className="space-y-5 p-6 sm:p-8">
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <Label htmlFor="req-title">{t("postReq.titleLabel", "Title")}</Label>
+                  <Input
+                    id="req-title"
+                    value={form.title}
+                    onChange={(e) => update("title", e.target.value)}
+                    placeholder={t("postReq.titlePlaceholder", "e.g. Online Math tutor needed in Delhi")}
+                    className="mt-1.5"
+                  />
+                  <p className="mb-2 mt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t("postReq.quickExamples")}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -501,263 +692,355 @@ function Post() {
                   </div>
                 </div>
 
-                <fieldset className="space-y-3">
-                  <legend className="mb-1 text-sm font-semibold">{t("postReq.whatNeed")}</legend>
-                  <div className="flex flex-wrap gap-2">
-                    {(
-                      [
-                        { value: "tutoring" as const, label: t("postReq.ongoingTutoring"), icon: Briefcase },
-                        { value: "assignment" as const, label: t("postReq.assignmentHelp"), icon: ClipboardList },
-                      ] as const
-                    ).map(({ value, label, icon: Icon }) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => update("jobType", value)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm transition",
-                          form.jobType === value
-                            ? "border-primary bg-primary/10 font-medium text-primary"
-                            : "border-border bg-background hover:border-primary/40",
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </fieldset>
+                <AddressAutocomplete
+                  label={t("postReq.location", "Location")}
+                  value={form.locationQuery}
+                  onChange={onLocationChange}
+                  onSelect={onLocationSelect}
+                  selected={form.locationSelected}
+                  required
+                  placeholder={t("postReq.locationPlaceholder", "Start typing your full address…")}
+                />
 
-                <fieldset className="space-y-4">
-                  <legend className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <BookOpen className="h-3.5 w-3.5" />
-                    </span>
-                    {t("postReq.basics")}
-                  </legend>
-                  <div>
-                    <Label htmlFor="req-title">
-                      {t("postReq.titleLabel")} <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="req-title"
-                      value={form.title}
-                      onChange={(e) => update("title", e.target.value)}
-                      placeholder={t("postReq.titlePlaceholder")}
-                      required
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label>{t("postReq.subject")}</Label>
-                      <SubjectAutocomplete
-                        className="mt-1.5"
-                        value={form.subject}
-                        onChange={(v) => update("subject", v)}
-                        placeholder={t("postReq.subjectPlaceholder")}
-                      />
-                    </div>
-                    <div>
-                      <Label>{t("postReq.level")}</Label>
-                      <SelectWithOther
-                        mode="enum-other"
-                        className="mt-1.5"
-                        options={levelOptions}
-                        value={form.level}
-                        customValue={form.levelOther}
-                        onValueChange={(v) => update("level", v)}
-                        onCustomValueChange={(v) => update("levelOther", v)}
-                        otherPlaceholder={t("postReq.levelOther")}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>{t("postReq.skills")}</Label>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {t("postReq.skillsHint")}
+                <PhoneNumberField
+                  id="req-phone"
+                  label={t("postReq.phone", "Phone")}
+                  countryCode={form.phoneCountryCode}
+                  onCountryCodeChange={(code) => update("phoneCountryCode", code)}
+                  phoneNumber={form.phone}
+                  onPhoneNumberChange={(num) => update("phone", num)}
+                  required
+                  userHasSavedPhone={Boolean(user?.phone)}
+                />
+
+                <div>
+                  <Label htmlFor="req-details">
+                    {t("postReq.detailsLabel", "Details")} <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="req-details"
+                    value={form.details}
+                    onChange={(e) => update("details", e.target.value)}
+                    placeholder={DETAILS_EXAMPLE}
+                    className="mt-1.5 min-h-[160px] resize-y"
+                  />
+                  <p className="mt-1.5 text-xs font-medium text-destructive">
+                    Please don&apos;t share any contact details (phone, email, website etc) here.
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 text-xs",
+                      detailsWords < 150 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground",
+                    )}
+                  >
+                    {t("postReq.wordCount", "{{count}} / 150 words minimum", { count: detailsWords })}
+                  </p>
+                </div>
+
+                <div>
+                  <Label>{t("postReq.subject", "Subjects")}</Label>
+                  <SubjectAutocomplete
+                    className="mt-1.5"
+                    value={form.subject}
+                    onChange={(v) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        subject: v,
+                        subjectPendingApproval: false,
+                      }));
+                    }}
+                    placeholder={t("postReq.subjectPlaceholder", "e.g. Mathematics, Python")}
+                  />
+                  <button
+                    type="button"
+                    className="mt-2 text-sm text-primary hover:underline disabled:opacity-60"
+                    onClick={() => void handleAddNewSubject()}
+                    disabled={addingSubject || !form.subject.trim()}
+                  >
+                    {addingSubject
+                      ? t("postReq.addingSubject", "Adding subject…")
+                      : t("postReq.addNewSubject", "If not in options above, add a new subject.")}
+                  </button>
+                  {form.subjectPendingApproval ? (
+                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                      {t("postReq.subjectPendingHint", "This subject will need admin approval.")}
                     </p>
-                    <div className="mt-1.5 flex gap-2">
-                      <SubjectAutocomplete
-                        className="flex-1"
-                        showIcon={false}
-                        value={skillDraft}
-                        onChange={setSkillDraft}
-                        placeholder={t("postReq.skillsPlaceholder")}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => addSkill(skillDraft)}
-                        disabled={!skillDraft.trim()}
-                      >
-                        {t("postReq.add")}
-                      </Button>
-                    </div>
-                    {form.skills.length > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {form.skills.map((skill) => (
-                          <Badge key={skill} variant="secondary" className="gap-1 pr-1 font-normal">
-                            {skill}
-                            <button
-                              type="button"
-                              className="rounded-full p-0.5 hover:bg-muted"
-                              onClick={() => removeSkill(skill)}
-                              aria-label={t("postReq.removeSkill", "Remove {{skill}}", { skill })}
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : null}
+                  ) : null}
+                </div>
+
+                <div>
+                  <Label>{t("postReq.level", "Your level")}</Label>
+                  <Select value={form.level} onValueChange={(v) => update("level", v)}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LEVEL_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.level === "other" ? (
+                    <Input
+                      className="mt-2"
+                      value={form.levelOther}
+                      onChange={(e) => update("levelOther", e.target.value)}
+                      placeholder={t("postReq.levelOther", "Specify your level")}
+                    />
+                  ) : null}
+                </div>
+
+                <div>
+                  <Label>{t("postReq.iWant", "I want")}</Label>
+                  <Select
+                    value={form.jobType}
+                    onValueChange={(v) => update("jobType", v as "tutoring" | "assignment")}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tutoring">{t("postReq.tutoring", "Tutoring")}</SelectItem>
+                      <SelectItem value="assignment">
+                        {t("postReq.assignmentHelp", "Assignment help")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <fieldset>
+                  <legend className="mb-2 text-sm font-medium leading-none">
+                    {t("postReq.meetingOptions", "Meeting options")}
+                  </legend>
+                  <div className="space-y-2.5">
+                    {(
+                      [
+                        {
+                          key: "online" as const,
+                          label: t("postReq.meetingOnline", "Online (using Zoom etc)"),
+                        },
+                        {
+                          key: "atMyPlace" as const,
+                          label: t("postReq.meetingAtMyPlace", "At my place (home/institute)"),
+                        },
+                        {
+                          key: "travelToTutor" as const,
+                          label: t("postReq.meetingTravel", "Travel to tutor"),
+                        },
+                      ] as const
+                    ).map(({ key, label }) => (
+                      <label key={key} className="flex cursor-pointer items-center gap-2.5 text-sm">
+                        <Checkbox
+                          checked={form.meetingOptions[key]}
+                          onCheckedChange={(v) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              meetingOptions: { ...prev.meetingOptions, [key]: v === true },
+                            }))
+                          }
+                        />
+                        {label}
+                      </label>
+                    ))}
                   </div>
                 </fieldset>
 
-                <fieldset className="space-y-4 rounded-xl border bg-muted/20 p-4 sm:p-5">
-                  <legend className="mb-1 flex items-center gap-2 px-1 text-sm font-semibold">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <MapPin className="h-3.5 w-3.5" />
-                    </span>
-                    {t("postReq.formatSchedule")}
-                  </legend>
-                  <div className="flex flex-wrap gap-2">
-                    {(
-                      [
-                        { value: "online" as const, label: t("postReq.modeOnline"), icon: Wifi },
-                        { value: "offline" as const, label: t("postReq.modeInPerson"), icon: WifiOff },
-                        { value: "both" as const, label: t("postReq.modeEither"), icon: Users },
-                      ] as const
-                    ).map(({ value, label, icon: Icon }) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => update("mode", value)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition",
-                          form.mode === value
-                            ? "border-primary bg-primary/10 font-medium text-primary"
-                            : "border-border bg-background hover:border-primary/40",
-                        )}
+                <div>
+                  <Label htmlFor="req-budget">{t("postReq.budget", "Budget")}</Label>
+                  <div className="mt-1.5 flex flex-col gap-2 sm:flex-row">
+                    <div className="relative flex-1">
+                      <span className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                        {symbol}
+                      </span>
+                      <Input
+                        id="req-budget"
+                        type="number"
+                        min={0}
+                        value={form.budget}
+                        onChange={(e) => update("budget", e.target.value)}
+                        className="ps-7"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 sm:w-[11rem]">
+                      <span className="text-xs text-muted-foreground">{currency}</span>
+                      <Select
+                        value={form.budgetUnit}
+                        onValueChange={(v) =>
+                          update("budgetUnit", v as CreateRequirementPayload["budgetUnit"])
+                        }
                       >
-                        <Icon className="h-3.5 w-3.5" />
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label>{t("postReq.sessionsPerWeek")}</Label>
-                      <Select value={form.sessionsPerWeek} onValueChange={(v) => update("sessionsPerWeek", v)}>
-                        <SelectTrigger className="mt-1.5">
+                        <SelectTrigger className="flex-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {[1, 2, 3, 4, 5].map((n) => (
-                            <SelectItem key={n} value={String(n)}>
-                              {t("postReq.sessionsN", { n })}
+                          {BUDGET_UNIT_OPTIONS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="req-location">{t("postReq.cityTimezone")}</Label>
-                      <Input
-                        id="req-location"
-                        value={form.location}
-                        onChange={(e) => update("location", e.target.value)}
-                        placeholder={t("postReq.cityPlaceholder")}
-                        className="mt-1.5"
-                      />
-                    </div>
                   </div>
-                </fieldset>
+                </div>
 
-                <fieldset className="space-y-4">
-                  <legend className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <DollarSign className="h-3.5 w-3.5" />
-                    </span>
-                    {t("postReq.budget")}
-                  </legend>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label htmlFor="req-budget">{t("postReq.budgetPerHour", { currency })}</Label>
-                      <div className="relative mt-1.5">
-                        <span className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                          {symbol}
-                        </span>
-                        <Input
-                          id="req-budget"
-                          type="number"
-                          value={form.budget}
-                          onChange={(e) => update("budget", e.target.value)}
-                          min={5}
-                          className="ps-7"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>{t("postReq.duration")}</Label>
-                      <SelectWithOther
-                        mode="enum-other"
-                        className="mt-1.5"
-                        options={durationOptions}
-                        value={form.duration}
-                        customValue={form.durationOther}
-                        onValueChange={(v) => update("duration", v)}
-                        onCustomValueChange={(v) => update("durationOther", v)}
-                        otherPlaceholder={t("postReq.durationOther")}
-                      />
-                    </div>
-                  </div>
-                </fieldset>
+                <div>
+                  <Label>{t("postReq.teacherGender", "Teacher's Gender")}</Label>
+                  <Select
+                    value={form.teacherGender}
+                    onValueChange={(v) =>
+                      update("teacherGender", v as FormState["teacherGender"])
+                    }
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TEACHER_GENDER_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <fieldset className="space-y-4">
-                  <legend className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <FileText className="h-3.5 w-3.5" />
-                    </span>
-                    {t("postReq.details")}
-                  </legend>
-                  <div>
-                    <Label htmlFor="req-details">
-                      {t("postReq.detailsLabel")} <span className="text-destructive">*</span>
-                    </Label>
-                    <Textarea
-                      id="req-details"
-                      value={form.details}
-                      onChange={(e) => update("details", e.target.value)}
-                      required
-                      placeholder={t("postReq.detailsPlaceholder")}
-                      className="mt-1.5 min-h-[140px] resize-y"
+                <div>
+                  <Label>{t("postReq.timeCommitment", "I need someone")}</Label>
+                  <Select
+                    value={form.timeCommitment}
+                    onValueChange={(v) =>
+                      update("timeCommitment", v as FormState["timeCommitment"])
+                    }
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIME_COMMITMENT_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>{t("postReq.languages", "Languages")}</Label>
+                  <LanguageMultiSelect
+                    className="mt-1.5"
+                    value={form.languages}
+                    onChange={(languages) => update("languages", languages)}
+                  />
+                </div>
+
+                <div>
+                  <Label>{t("postReq.tutorOrigin", "Get tutors from")}</Label>
+                  <Select value={form.tutorOrigin || "__none"} onValueChange={(v) => update("tutorOrigin", v === "__none" ? "" : v)}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="-- Select --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TUTOR_ORIGIN_OPTIONS.map((o) => (
+                        <SelectItem key={o.value || "__none"} value={o.value || "__none"}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="req-files">{t("postReq.uploadFiles", "Upload files")}</Label>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <Input
+                      id="req-files"
+                      type="file"
+                      multiple
+                      onChange={(e) => void handleFileChange(e)}
+                      disabled={uploading || form.attachments.length >= 10}
+                      className="cursor-pointer"
                     />
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {t("postReq.detailsTip")}
-                    </p>
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
                   </div>
-                </fieldset>
+                  {form.attachments.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5">
+                      {form.attachments.map((file) => (
+                        <li
+                          key={file.url}
+                          className="flex items-center justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm"
+                        >
+                          <span className="inline-flex min-w-0 items-center gap-1.5 truncate">
+                            <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <span className="truncate">{file.name}</span>
+                          </span>
+                          <button
+                            type="button"
+                            className="rounded-full p-0.5 hover:bg-muted"
+                            onClick={() => removeAttachment(file.url)}
+                            aria-label={t("postReq.removeFile", "Remove file")}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+
+                <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+                  <Checkbox
+                    checked={form.acceptedTerms}
+                    onCheckedChange={(v) => update("acceptedTerms", v === true)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    {t("postReq.acceptTermsPrefix", "I accept")}{" "}
+                    <Link to="/terms" className="font-medium text-primary hover:underline">
+                      {t("postReq.termsAndConditions", "Terms and conditions")}
+                    </Link>
+                  </span>
+                </label>
 
                 <Button
                   type="submit"
                   size="lg"
                   variant="gradient"
                   className="w-full shadow-md"
-                  disabled={createMut.isPending}
+                  disabled={createMut.isPending || uploading}
                 >
-                  <Send className="me-2 h-4 w-4" />
+                  {createMut.isPending ? (
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="me-2 h-4 w-4" />
+                  )}
                   {createMut.isPending ? t("postReq.submitting") : t("postReq.submit")}
                 </Button>
-
-                <p className="text-center text-xs text-muted-foreground">
-                  {t("postReq.agreeTerms")}
-                </p>
               </div>
             </form>
           </div>
         </div>
       </div>
+
+      <StudentConfirmDialog
+        open={studentDialogOpen}
+        onOpenChange={setStudentDialogOpen}
+        onContinueAsStudent={() => {
+          setConfirmedStudent(true);
+          void submitRequirement();
+        }}
+      />
+
+      <RequirementVerifyDialog
+        open={verifyOpen}
+        onOpenChange={setVerifyOpen}
+        phoneCountryCode={verifyPhone.countryCode}
+        phone={verifyPhone.phone}
+        emailSent={verifyEmailSent}
+      />
     </div>
   );
 }

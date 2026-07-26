@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@/lib/navigation";
 import { canonicalUrl } from "@/lib/site-config";
 import {
@@ -25,6 +26,7 @@ import type { WorkshopDetail } from "@/types/workshop";
 import { toast } from "sonner";
 
 function WorkshopDetailPage() {
+  const { t } = useTranslation("common");
   const { id } = useParams();
   const { formatLocalizedPrice } = useCurrency();
   const { role, user } = useApp();
@@ -40,11 +42,11 @@ function WorkshopDetailPage() {
       setWorkshop(data);
       setRegistered(Boolean(data.registered));
     } catch (e) {
-      toast.error(formatApiErrorMessage(e, "Workshop not found"));
+      toast.error(formatApiErrorMessage(e, t("workshopDetail.notFound", "Workshop not found")));
     } finally {
       setLoading(false);
     }
-  }, [id, user]);
+  }, [id, user, t]);
 
   useEffect(() => {
     load();
@@ -52,17 +54,17 @@ function WorkshopDetailPage() {
 
   const onRegister = async () => {
     if (role !== "student") {
-      toast.error("Please log in as a student to register");
+      toast.error(t("workshopDetail.toastStudentLogin", "Please log in as a student to register"));
       return;
     }
     setRegistering(true);
     try {
       await registerForWorkshop(id);
       setRegistered(true);
-      toast.success("You're registered! Check your email for details.");
+      toast.success(t("workshopDetail.toastRegistered", "You're registered! Check your email for details."));
       load();
     } catch (e) {
-      toast.error(formatApiErrorMessage(e, "Registration failed"));
+      toast.error(formatApiErrorMessage(e, t("workshopDetail.toastRegistrationFailed", "Registration failed")));
     } finally {
       setRegistering(false);
     }
@@ -72,7 +74,7 @@ function WorkshopDetailPage() {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading workshop…
+        {t("workshopDetail.loading", "Loading workshop…")}
       </div>
     );
   }
@@ -80,9 +82,9 @@ function WorkshopDetailPage() {
   if (!workshop) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-xl font-semibold">Workshop not found</h1>
+        <h1 className="text-xl font-semibold">{t("workshopDetail.notFound", "Workshop not found")}</h1>
         <Button asChild variant="outline" className="mt-4">
-          <Link to="/workshops">Back to workshops</Link>
+          <Link to="/workshops">{t("workshopDetail.backToWorkshops", "Back to workshops")}</Link>
         </Button>
       </div>
     );
@@ -96,7 +98,7 @@ function WorkshopDetailPage() {
       <Button variant="ghost" size="sm" asChild className="-ml-2 mb-6 text-muted-foreground">
         <Link to="/workshops">
           <ArrowLeft className="mr-1 h-4 w-4" />
-          All workshops
+          {t("workshopDetail.allWorkshops", "All workshops")}
         </Link>
       </Button>
 
@@ -112,16 +114,18 @@ function WorkshopDetailPage() {
             )}
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
-            <Badge variant="secondary">{workshop.category}</Badge>
-            <Badge variant="outline" className="capitalize">{workshop.mode}</Badge>
+            <Badge variant="secondary">{t(`category.${workshop.category}`, workshop.category)}</Badge>
+            <Badge variant="outline" className="capitalize">
+              {workshop.mode === "online" ? t("workshops.online") : t("workshops.offline")}
+            </Badge>
             {workshop.isFree ? (
-              <Badge className="bg-emerald-600">Free</Badge>
+              <Badge className="bg-emerald-600">{t("workshops.free")}</Badge>
             ) : (
               <Badge>{formatLocalizedPrice(workshop.price, workshop.currency || "USD")}</Badge>
             )}
           </div>
           <h1 className="mt-4 font-display text-3xl font-bold">{workshop.title}</h1>
-          <p className="mt-2 text-muted-foreground">Hosted by {workshop.teacherName}</p>
+          <p className="mt-2 text-muted-foreground">{t("workshopDetail.hostedBy", "Hosted by {{name}}", { name: workshop.teacherName })}</p>
           <div className="prose prose-sm dark:prose-invert mt-6 max-w-none">
             <p className="whitespace-pre-wrap text-foreground/90">{workshop.description}</p>
           </div>
@@ -129,7 +133,7 @@ function WorkshopDetailPage() {
 
         <aside className="lg:col-span-2">
           <div className="sticky top-24 rounded-2xl border bg-card p-6 shadow-sm">
-            <h2 className="font-semibold">Schedule & registration</h2>
+            <h2 className="font-semibold">{t("workshopDetail.scheduleRegistration", "Schedule & registration")}</h2>
             <ul className="mt-4 space-y-3 text-sm">
               <li className="flex items-start gap-3">
                 <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -158,26 +162,31 @@ function WorkshopDetailPage() {
                       rel="noreferrer"
                       className="text-primary underline break-all"
                     >
-                      Join meeting link
+                      {t("workshopDetail.joinMeeting", "Join meeting link")}
                     </a>
                   ) : (
-                    "Link shared after registration"
+                    t("workshopDetail.linkAfterRegistration", "Link shared after registration")
                   )
                 ) : (
-                  workshop.location || "TBA"
+                  workshop.location || t("workshopDetail.tba", "TBA")
                 )}
               </li>
               <li className="flex items-start gap-3">
                 <Users className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 {full ? (
-                  <span className="text-destructive font-medium">Workshop full</span>
+                  <span className="text-destructive font-medium">{t("workshopDetail.workshopFull", "Workshop full")}</span>
                 ) : (
                   <>
                     <span>
-                      {workshop.spotsLeft} spot{workshop.spotsLeft === 1 ? "" : "s"} left
+                      {workshop.spotsLeft === 1
+                        ? t("workshopDetail.spotsLeftOne", "{{count}} spot left", { count: workshop.spotsLeft })
+                        : t("workshopDetail.spotsLeft", "{{count}} spots left", { count: workshop.spotsLeft })}
                     </span>
                     <span className="text-muted-foreground">
-                      ({workshop.enrolledStudents}/{workshop.maxStudents} enrolled)
+                      {t("workshopDetail.enrolledCount", "({{enrolled}}/{{max}} enrolled)", {
+                        enrolled: workshop.enrolledStudents,
+                        max: workshop.maxStudents,
+                      })}
                     </span>
                   </>
                 )}
@@ -186,22 +195,23 @@ function WorkshopDetailPage() {
 
             {registered ? (
               <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
-                You&apos;re registered{user?.name ? `, ${user.name.split(" ")[0]}` : ""}! We&apos;ll
-                send a reminder before the session.
+                {t("workshopDetail.registeredBanner", "You're registered{{name}}! We'll send a reminder before the session.", {
+                  name: user?.name ? `, ${user.name.split(" ")[0]}` : "",
+                })}
               </div>
             ) : role && role !== "student" ? (
               <p className="mt-6 text-sm text-muted-foreground">
-                Only student accounts can register for workshops.
+                {t("workshopDetail.studentsOnly", "Only student accounts can register for workshops.")}
               </p>
             ) : !role ? (
               <div className="mt-6 space-y-2">
                 <Button asChild size="lg" variant="gradient" className="w-full">
                   <Link to="/login" search={{ redirect: `/workshops/${id}` }}>
-                    Log in to register
+                    {t("workshopDetail.loginToRegister", "Log in to register")}
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="w-full">
-                  <Link to="/role-select">Create student account</Link>
+                  <Link to="/role-select">{t("workshopDetail.createStudentAccount", "Create student account")}</Link>
                 </Button>
               </div>
             ) : (
@@ -215,12 +225,12 @@ function WorkshopDetailPage() {
                 {registering ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Registering…
+                    {t("workshopDetail.registering", "Registering…")}
                   </>
                 ) : full ? (
-                  "Workshop full"
+                  t("workshopDetail.workshopFull", "Workshop full")
                 ) : (
-                  "Register / Schedule workshop"
+                  t("workshopDetail.register", "Register / Schedule workshop")
                 )}
               </Button>
             )}

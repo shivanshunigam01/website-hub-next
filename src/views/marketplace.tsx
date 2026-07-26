@@ -42,6 +42,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useApp } from "@/hooks/use-app";
 import { afterAuthPath } from "@/lib/auth-redirect";
 import { PostExchangeListingDialog } from "@/components/marketplace/PostExchangeListingDialog";
+import { AppImage } from "@/components/AppImage";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_ICON: Record<ListingCategory, typeof BookOpen> = {
@@ -314,11 +315,12 @@ function ListingCard({ listing, onOpen }: { listing: Listing; onOpen: () => void
     >
       <div className="relative aspect-video overflow-hidden bg-muted">
         {listing.imageUrl ? (
-          <img
+          <AppImage
             src={listing.imageUrl}
             alt={listing.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition group-hover:scale-105"
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="transition group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">
@@ -389,7 +391,14 @@ function ListingDetailDialog({ listing, onClose }: { listing: Listing | null; on
         <div className="grid gap-5 sm:grid-cols-[1.2fr_1fr]">
           <div>
             {listing.imageUrl ? (
-              <img src={listing.imageUrl} alt={listing.title} className="aspect-video w-full rounded-xl object-cover" />
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl">
+                <AppImage
+                  src={listing.imageUrl}
+                  alt={listing.title}
+                  fill
+                  sizes="(max-width: 768px) 90vw, 480px"
+                />
+              </div>
             ) : (
               <div className="flex aspect-video items-center justify-center rounded-xl bg-muted">
                 <Icon className="h-12 w-12 text-muted-foreground" />

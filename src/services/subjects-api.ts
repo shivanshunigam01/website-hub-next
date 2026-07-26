@@ -8,6 +8,7 @@ export type SubjectItem = {
   aliases?: string[];
   isPopular?: boolean;
   isActive?: boolean;
+  approvalStatus?: "approved" | "pending";
   sortOrder?: number;
 };
 
@@ -31,10 +32,16 @@ export async function fetchPopularSubjects(limit = 12): Promise<SubjectItem[]> {
 }
 
 /** Add or return an existing subject when the user enters a valid new name. */
-export async function ensureSubject(name: string): Promise<SubjectItem> {
+export async function ensureSubject(
+  name: string,
+  opts?: { pendingApproval?: boolean },
+): Promise<SubjectItem> {
   return apiPublic<SubjectItem>("/subjects/ensure", {
     method: "POST",
-    body: JSON.stringify({ name: name.trim() }),
+    body: JSON.stringify({
+      name: name.trim(),
+      pendingApproval: Boolean(opts?.pendingApproval),
+    }),
   });
 }
 
@@ -42,6 +49,7 @@ export type AdminSubjectFilters = {
   q?: string;
   group?: string;
   status?: "active" | "inactive" | "all";
+  approval?: "pending" | "approved" | "all";
   page?: number;
   limit?: number;
 };
@@ -51,6 +59,7 @@ export async function fetchAdminSubjects(filters: AdminSubjectFilters = {}): Pro
   if (filters.q?.trim()) p.set("q", filters.q.trim());
   if (filters.group) p.set("group", filters.group);
   if (filters.status) p.set("status", filters.status);
+  if (filters.approval && filters.approval !== "all") p.set("approval", filters.approval);
   p.set("page", String(filters.page ?? 1));
   p.set("limit", String(filters.limit ?? 50));
   return api<SubjectListResponse>(`/admin/subjects?${p.toString()}`);

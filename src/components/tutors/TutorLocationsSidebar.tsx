@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { MapPin } from "lucide-react";
 import { BROWSE_COUNTRIES, ONLINE_LOCATION_LABEL } from "@/data/tutor-locations";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ export function TutorLocationsSidebar({
   onClear,
   className,
 }: TutorLocationsSidebarProps) {
+  const { t } = useTranslation("common");
   const activeKey = selectedLocation.trim().toLowerCase();
   const tutorCountryKeys = useMemo(
     () => new Set(countriesWithTutors.map((c) => c.toLowerCase())),
@@ -53,7 +55,7 @@ export function TutorLocationsSidebar({
         <div className="border-b px-4 py-3">
           <h3 className="flex items-center gap-2 font-display text-base font-semibold text-foreground">
             <MapPin className="h-4 w-4 text-primary" />
-            Locations
+            {t("search.locations")}
           </h3>
           {activeKey ? (
             <button
@@ -61,14 +63,14 @@ export function TutorLocationsSidebar({
               onClick={onClear}
               className="mt-1 text-xs text-muted-foreground hover:text-primary hover:underline"
             >
-              Show all tutors
+              {t("locationFilter.showAllTutors", "Show all tutors")}
             </button>
           ) : null}
         </div>
 
         <nav
           className="max-h-[min(70vh,640px)] overflow-y-auto px-4 py-3"
-          aria-label="Browse tutors by location"
+          aria-label={t("search.browseByLocation")}
         >
           <ul className="space-y-0.5">
             <li>
@@ -77,14 +79,14 @@ export function TutorLocationsSidebar({
                 onClick={() => onSelect(ONLINE_LOCATION_LABEL)}
                 className={linkClass(activeKey === "online", true)}
               >
-                {ONLINE_LOCATION_LABEL}
+                {t("search.modeOnline")}
               </button>
             </li>
 
             {regionLinks.length > 0 && (
               <>
                 <li className="pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Regions
+                  {t("locationFilter.regions", "Regions")}
                 </li>
                 {regionLinks.map((loc) => (
                   <li key={loc}>
@@ -101,7 +103,7 @@ export function TutorLocationsSidebar({
             )}
 
             <li className="pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Countries
+              {t("stats.countries")}
             </li>
             {BROWSE_COUNTRIES.map((country) => {
               const hasTutors = tutorCountryKeys.has(country.toLowerCase());
@@ -111,7 +113,11 @@ export function TutorLocationsSidebar({
                     type="button"
                     onClick={() => onSelect(country)}
                     className={linkClass(activeKey === country.toLowerCase(), hasTutors)}
-                    title={hasTutors ? `Tutors in ${country}` : `Browse tutors in ${country}`}
+                    title={
+                      hasTutors
+                        ? t("locationFilter.tutorsIn", "Tutors in {{country}}", { country })
+                        : t("locationFilter.browseIn", "Browse tutors in {{country}}", { country })
+                    }
                   >
                     {country}
                   </button>

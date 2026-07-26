@@ -101,7 +101,6 @@ export const ROUTE_METADATA: Record<string, RouteMetaEntry> = {
       url: "/marketplace",
     },
   },
-  "/messages": { title: "Messages · TeacherPoint" },
   "/offline": {
     title: "You're offline · TeacherPoint",
     description: "No internet connection — your cached content is still available.",
@@ -115,6 +114,8 @@ export const ROUTE_METADATA: Record<string, RouteMetaEntry> = {
     title: "Online Tutors · TeacherPoint",
     description: "Learn live from verified online tutors over video — flexible schedules, every subject.",
   },
+  "/messages": { title: "Messages · TeacherPoint", noIndex: true },
+  "/my-posts": { title: "My Posts · TeacherPoint", noIndex: true },
   "/parent": { title: "Parent Dashboard · TeacherPoint", noIndex: true },
   "/payments": { title: "Payments · TeacherPoint", noIndex: true },
   "/post-requirement": {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ type TutorReviewDialogProps = {
 };
 
 export function TutorReviewDialog({ tutorId, tutorName, open, onOpenChange }: TutorReviewDialogProps) {
+  const { t } = useTranslation("common");
   const submitReview = useSubmitReview();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -33,7 +35,7 @@ export function TutorReviewDialog({ tutorId, tutorName, open, onOpenChange }: Tu
   const submit = async () => {
     const trimmed = comment.trim();
     if (trimmed.length < 5) {
-      toast.error("Please write at least a few words.");
+      toast.error(t("tutorReview.minWords", "Please write at least a few words."));
       return;
     }
     setSubmitting(true);
@@ -42,9 +44,9 @@ export function TutorReviewDialog({ tutorId, tutorName, open, onOpenChange }: Tu
       setComment("");
       setRating(5);
       onOpenChange(false);
-      toast.success("Thanks for your review!");
+      toast.success(t("reviews.toastThanks"));
     } catch (e) {
-      toast.error(formatApiErrorMessage(e, "Could not post review"));
+      toast.error(formatApiErrorMessage(e, t("tutorReview.postFailed", "Could not post review")));
     } finally {
       setSubmitting(false);
     }
@@ -56,21 +58,27 @@ export function TutorReviewDialog({ tutorId, tutorName, open, onOpenChange }: Tu
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
             <Star className="h-5 w-5 text-amber-500" />
-            Review {tutorName}
+            {t("tutorReview.title", "Review {{name}}", { name: tutorName })}
           </DialogTitle>
           <DialogDescription>
-            Share your experience to help other students choose the right tutor.
+            {t(
+              "tutorReview.description",
+              "Share your experience to help other students choose the right tutor.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <p className="mb-2 text-sm font-medium">Your rating</p>
+            <p className="mb-2 text-sm font-medium">{t("tutorReview.yourRating", "Your rating")}</p>
             <RatingStars value={rating} size={5} onChange={setRating} />
           </div>
           <Textarea
             rows={4}
-            placeholder="What was it like learning with this tutor?"
+            placeholder={t(
+              "tutorReview.placeholder",
+              "What was it like learning with this tutor?",
+            )}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             maxLength={600}
@@ -79,11 +87,11 @@ export function TutorReviewDialog({ tutorId, tutorName, open, onOpenChange }: Tu
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" size="default" onClick={() => onOpenChange(false)} disabled={submitting}>
-            Cancel
+            {t("tutorReview.cancel", "Cancel")}
           </Button>
           <Button size="default" variant="gradient" onClick={submit} disabled={submitting}>
             {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Post review
+            {t("tutorReview.post", "Post review")}
           </Button>
         </DialogFooter>
       </DialogContent>

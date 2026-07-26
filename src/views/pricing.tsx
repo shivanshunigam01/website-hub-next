@@ -2,15 +2,21 @@
 
 import { useTranslation } from "react-i18next";
 import { Check } from "lucide-react";
+import { Link } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PAYMENT_PLANS } from "@/data/mock";
-import { canonicalUrl } from "@/lib/site-config";
 
 const PLAN_KEY: Record<string, string> = {
   Free: "free",
   Pro: "pro",
   Premium: "premium",
+};
+
+const PLAN_HREF: Record<string, string> = {
+  Free: "/role-select",
+  Pro: "/register",
+  Premium: "/register",
 };
 
 function Pricing() {
@@ -24,6 +30,7 @@ function Pricing() {
       <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {PAYMENT_PLANS.map((p) => {
           const key = PLAN_KEY[p.name];
+          const href = PLAN_HREF[p.name] ?? "/role-select";
           return (
           <div key={p.name} className={`rounded-3xl border p-8 ${p.highlight ? "bg-gradient-primary text-primary-foreground border-transparent shadow-card scale-105" : "bg-card"}`}>
             {p.highlight && <Badge className="bg-white/20 mb-2">{t("pricing.mostPopular")}</Badge>}
@@ -37,7 +44,14 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <Button className={`mt-6 w-full ${p.highlight ? "bg-white text-primary hover:bg-white/90" : ""}`} size="lg" variant={p.highlight ? "secondary" : "gradient"}>{key ? t(`pricing.plan.${key}.cta`) : p.cta}</Button>
+            <Button
+              asChild
+              className={`mt-6 w-full ${p.highlight ? "bg-white text-primary hover:bg-white/90" : ""}`}
+              size="lg"
+              variant={p.highlight ? "secondary" : "gradient"}
+            >
+              <Link to={href as "/role-select"}>{key ? t(`pricing.plan.${key}.cta`) : p.cta}</Link>
+            </Button>
           </div>
           );
         })}

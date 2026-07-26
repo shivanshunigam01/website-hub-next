@@ -1,12 +1,13 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
-import { MapPin, BookOpen, Wifi, Home, ClipboardList, ShieldCheck, Send } from "lucide-react";
+import { MapPin, BookOpen, Wifi, Home, ClipboardList, ShieldCheck, Send, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Requirement } from "@/types/requirement";
 import {
   jobTypeLabel,
   postedByLine,
+  posterPhoneLine,
   requirementModeLabel,
 } from "@/lib/tutor-jobs-utils";
 import { useCurrency } from "@/hooks/use-currency";
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 export function TutorJobCard({ job, className }: { job: Requirement; className?: string }) {
   const { formatLocalizedPrice } = useCurrency();
   const ModeIcon = job.mode === "offline" ? Home : Wifi;
+  const phoneLine = posterPhoneLine(job);
 
   return (
     <Link
@@ -76,21 +78,35 @@ export function TutorJobCard({ job, className }: { job: Requirement; className?:
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          {jobTypeLabel(job.jobType)} · {postedByLine(job)}
-          {job.posterVerified ? (
-            <span className="ms-1 inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="h-3 w-3" />
-              Verified
-            </span>
+        <div className="min-w-0 space-y-0.5 text-xs text-muted-foreground">
+          <p>
+            {jobTypeLabel(job.jobType)} · {postedByLine(job)}
+            {job.posterVerified ? (
+              <span className="ms-1 inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+                <ShieldCheck className="h-3 w-3" />
+                Verified
+              </span>
+            ) : null}
+            {" · "}
+            {new Date(job.createdAt).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </p>
+          {phoneLine ? (
+            <p
+              className={`inline-flex items-center gap-1 ${
+                job.posterPhoneVerified
+                  ? "font-medium text-emerald-700 dark:text-emerald-300"
+                  : ""
+              }`}
+            >
+              <Phone className="h-3 w-3" />
+              {phoneLine}
+            </p>
           ) : null}
-          {" · "}
-          {new Date(job.createdAt).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </p>
+        </div>
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
           <Send className="h-3 w-3" />
           Apply

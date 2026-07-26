@@ -18,6 +18,7 @@ function jobsQueryParams(filters: TutorJobsFilters, page = 1, limit = 24): strin
   if (filters.location?.trim()) p.set("location", filters.location.trim());
   if (filters.mode && filters.mode !== "all") p.set("mode", filters.mode);
   if (filters.jobType && filters.jobType !== "all") p.set("jobType", filters.jobType);
+  if (filters.level && filters.level !== "all") p.set("level", filters.level);
   return p.toString();
 }
 

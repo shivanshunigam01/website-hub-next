@@ -1,18 +1,19 @@
 "use client";
 
-const TUTOR_BANNER_VIDEO = "/tutor-hero-video.mp4";
+import { DeferredBackgroundVideo } from "@/components/DeferredBackgroundVideo";
+
+const TUTOR_BANNER_VIDEO = "/tutor-hero-video.mp4?v=2";
+const TUTOR_BANNER_POSTER = "/tutor-hero-video-poster.jpg?v=2";
 
 export function TutorPageBannerBackground() {
   return (
     <>
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <video
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden bg-primary">
+        <DeferredBackgroundVideo
           src={TUTOR_BANNER_VIDEO}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 h-full w-full object-cover"
+          poster={TUTOR_BANNER_POSTER}
+          desktopDelayMs={1500}
+          mobileDelayMs={4000}
         />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-primary/55 to-indigo-950/65" />
         <div className="absolute inset-0 bg-black/15" />

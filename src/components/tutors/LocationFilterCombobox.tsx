@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, ChevronsUpDown, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,17 +13,11 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BROWSE_COUNTRIES, ONLINE_LOCATION_LABEL } from "@/data/tutor-locations";
+import { BROWSE_COUNTRIES } from "@/data/tutor-locations";
 import { cn } from "@/lib/utils";
 
 const ALL_VALUE = "__all__";
 const ONLINE_VALUE = "online";
-
-function displayLabel(value: string): string {
-  if (value === ALL_VALUE || !value) return "All locations";
-  if (value.toLowerCase() === ONLINE_VALUE) return "Online tutors";
-  return value;
-}
 
 type Props = {
   value: string;
@@ -41,8 +36,15 @@ export function LocationFilterCombobox({
   className,
   variant = "default",
 }: Props) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const isHero = variant === "hero";
+
+  const displayLabel = (locValue: string): string => {
+    if (locValue === ALL_VALUE || !locValue) return t("tutorJobs.allLocations");
+    if (locValue.toLowerCase() === ONLINE_VALUE) return t("tutorsPage.titleOnline");
+    return locValue;
+  };
 
   const regionOptions = useMemo(() => {
     const countryKeys = new Set(BROWSE_COUNTRIES.map((c) => c.toLowerCase()));
@@ -59,7 +61,9 @@ export function LocationFilterCombobox({
     return list.sort((a, b) => a.localeCompare(b));
   }, [extraLocations]);
 
-  const selectedLabel = loading ? "Loading locations…" : displayLabel(value);
+  const selectedLabel = loading
+    ? t("locationFilter.loading", "Loading locations…")
+    : displayLabel(value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -69,7 +73,7 @@ export function LocationFilterCombobox({
           variant={isHero ? "ghost" : "outline"}
           role="combobox"
           aria-expanded={open}
-          aria-label="Search location"
+          aria-label={t("locationFilter.searchAria", "Search location")}
           className={cn(
             "relative w-full justify-between ps-9 font-normal",
             isHero
@@ -85,11 +89,13 @@ export function LocationFilterCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-[min(100vw-2rem,22rem)] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Search country or city…" />
+          <CommandInput
+            placeholder={t("locationFilter.placeholder", "Search country or city…")}
+          />
           <CommandList className="max-h-[min(60vh,320px)]">
-            <CommandEmpty>No location found.</CommandEmpty>
+            <CommandEmpty>{t("locationFilter.noResults", "No location found.")}</CommandEmpty>
 
-            <CommandGroup heading="Quick picks">
+            <CommandGroup heading={t("locationFilter.quickPicks", "Quick picks")}>
               <CommandItem
                 value="all locations worldwide"
                 onSelect={() => {
@@ -98,7 +104,7 @@ export function LocationFilterCombobox({
                 }}
               >
                 <Check className={cn("h-4 w-4", value === ALL_VALUE ? "opacity-100" : "opacity-0")} />
-                All locations
+                {t("tutorJobs.allLocations")}
               </CommandItem>
               <CommandItem
                 value="online tutors remote"
@@ -113,11 +119,11 @@ export function LocationFilterCombobox({
                     value.toLowerCase() === ONLINE_VALUE ? "opacity-100" : "opacity-0",
                   )}
                 />
-                Online tutors
+                {t("tutorsPage.titleOnline")}
               </CommandItem>
             </CommandGroup>
 
-            <CommandGroup heading="Countries">
+            <CommandGroup heading={t("stats.countries")}>
               {BROWSE_COUNTRIES.map((country) => (
                 <CommandItem
                   key={country}
@@ -139,7 +145,7 @@ export function LocationFilterCombobox({
             </CommandGroup>
 
             {regionOptions.length > 0 ? (
-              <CommandGroup heading="Cities & regions">
+              <CommandGroup heading={t("locationFilter.citiesRegions", "Cities & regions")}>
                 {regionOptions.map((loc) => (
                   <CommandItem
                     key={loc}

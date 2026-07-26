@@ -16,6 +16,7 @@ import { useLocationContext } from "@/hooks/use-user-location";
 import { useAdminStore, type Accommodation } from "@/hooks/use-admin-store";
 import { filterAccommodationsByUserCountry } from "@/lib/accommodation-location";
 import { ONBOARDING_POPUPS_ENABLED } from "@/lib/popup-sequence";
+import { AppImage } from "@/components/AppImage";
 
 const LS_KEY = "tp.accommodationPrompted";
 
@@ -91,12 +92,16 @@ export function AccommodationLocationDialog() {
         <div className="space-y-3 p-6">
           {preview.map((a) => (
             <div key={a.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
-              <img
-                src={a.imageUrl}
-                alt={a.name}
-                className="h-14 w-20 rounded-lg object-cover"
-                loading="lazy"
-              />
+              <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
+                {a.imageUrl ? (
+                  <AppImage
+                    src={a.imageUrl}
+                    alt={a.name}
+                    fill
+                    sizes="80px"
+                  />
+                ) : null}
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <h4 className="truncate font-semibold text-sm">{a.name}</h4>

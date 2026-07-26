@@ -33,6 +33,7 @@ import { PhoneNumberField } from "@/components/PhoneNumberField";
 import { WhatsappPhoneNotice } from "@/components/auth/WhatsappPhoneNotice";
 import { formatApiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
+import { DeferredBackgroundVideo } from "@/components/DeferredBackgroundVideo";
 
 type TeacherGender = "male" | "female" | "other";
 
@@ -365,18 +366,14 @@ function ProfileSetup() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative hidden overflow-hidden rounded-3xl border bg-gradient-to-br from-primary/90 via-primary to-primary/70 p-8 text-primary-foreground shadow-2xl lg:flex lg:flex-col lg:justify-between"
         >
-          {/* Looping background video */}
-          <video
-            className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            poster="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=60"
-          >
-            <source src="/videos/profile-hero.mp4" type="video/mp4" />
-          </video>
+          {/* Looping background video — deferred, desktop only (panel is lg+) */}
+          <DeferredBackgroundVideo
+            src="/videos/profile-hero.mp4?v=2"
+            poster="/videos/profile-hero-poster.jpg?v=2"
+            className="opacity-60 mix-blend-overlay"
+            desktopDelayMs={1500}
+            requireMediaQuery="(min-width: 1024px)"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-primary/70 via-primary/25 to-transparent" />
 
           <div className="relative">

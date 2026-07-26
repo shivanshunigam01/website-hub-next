@@ -4,6 +4,7 @@ import { MapPin, Star, Wifi, Utensils, ShieldCheck, BedDouble } from "lucide-rea
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Accommodation } from "@/hooks/use-admin-store";
+import { AppImage } from "@/components/AppImage";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80&auto=format&fit=crop";
@@ -26,11 +27,13 @@ export function AccommodationCard({
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border bg-card transition hover:-translate-y-1 hover:shadow-card">
       <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-        <img
+        <AppImage
           src={a.imageUrl || FALLBACK_IMG}
           alt={a.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition group-hover:scale-105"
+          fill
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="transition group-hover:scale-105"
+          fallbackSrc={FALLBACK_IMG}
         />
         <div className="absolute left-3 top-3 flex gap-1.5">
           <Badge className={TYPE_COLORS[a.type] ?? "bg-secondary"}>{a.type}</Badge>

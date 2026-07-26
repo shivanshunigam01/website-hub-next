@@ -15,6 +15,8 @@ export default function robots(): MetadataRoute.Robots {
           "/lms",
           "/payments",
           "/messages",
+          "/my-posts",
+          "/profile",
           "/role-select",
           "/verify-email",
           "/offline",

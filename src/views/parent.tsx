@@ -9,6 +9,7 @@ import {
   BookOpen,
   User,
   Search,
+  ClipboardList,
 } from "lucide-react";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { AccountSecurityPanel } from "@/components/auth/AccountSecurityPanel";
@@ -18,9 +19,17 @@ import { DashboardProfileCard } from "@/components/dashboard/DashboardProfileCar
 import { useApp } from "@/hooks/use-app";
 import { useTutors } from "@/hooks/use-catalog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useMyRequirements } from "@/hooks/use-requirements-api";
+import {
+  jobTypeLabel,
+  requirementStatusClass,
+  requirementStatusLabel,
+} from "@/lib/tutor-jobs-utils";
 
 const ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "my-posts", label: "My Posts", icon: ClipboardList },
   { id: "children", label: "Children", icon: BookOpen },
   { id: "tutors", label: "Find Tutors", icon: Heart },
   { id: "payments", label: "Payments", icon: CreditCard },
@@ -31,6 +40,8 @@ const ITEMS = [
 function Parent() {
   const { user } = useApp();
   const { data: tutors = [] } = useTutors();
+  const { data: myPosts = [], isLoading: postsLoading } = useMyRequirements(true);
+  const approvedPosts = myPosts.filter((p) => p.status === "approved");
   const firstName = user?.name?.split(" ")[0] || "there";
   const children = user?.parentProfile?.children ?? [];
 
@@ -51,9 +62,9 @@ function Parent() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard label="Children on profile" value={String(children.length)} icon={BookOpen} />
             <StatCard
-              label="Profile"
-              value="Complete"
-              icon={User}
+              label="Approved posts"
+              value={String(approvedPosts.length)}
+              icon={ClipboardList}
               color="from-emerald-400 to-teal-600"
             />
             <StatCard
@@ -68,9 +79,67 @@ function Parent() {
               <Link to="/post-requirement">Post a tutoring requirement</Link>
             </Button>
             <Button asChild variant="outline">
+              <Link to="/my-posts">My Posts</Link>
+            </Button>
+            <Button asChild variant="outline">
               <Link to="/tutors">Browse tutors</Link>
             </Button>
           </div>
+        </DashboardSection>
+
+        <DashboardSection
+          id="my-posts"
+          title="My Posts"
+          description="Your tutoring requirements — approved posts go live on the tutor jobs board."
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link to="/my-posts">Open My Posts →</Link>
+            </Button>
+          }
+        >
+          {postsLoading ? (
+            <p className="text-sm text-muted-foreground">Loading your posts…</p>
+          ) : myPosts.length === 0 ? (
+            <div className="rounded-2xl border border-dashed bg-muted/20 px-6 py-10 text-center">
+              <p className="text-sm text-muted-foreground">You haven&apos;t posted any requirements yet.</p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Button asChild>
+                  <Link to="/post-requirement">Post a requirement</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/tutors">Find teachers</Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {(approvedPosts.length ? approvedPosts : myPosts).slice(0, 5).map((post) => (
+                <div
+                  key={post.id}
+                  className="flex flex-wrap items-start justify-between gap-3 rounded-xl border bg-card px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium">{post.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {post.subject} · {jobTypeLabel(post.jobType)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className={requirementStatusClass(post.status)}>
+                      {requirementStatusLabel(post.status)}
+                    </Badge>
+                    {post.status === "approved" ? (
+                      <Button asChild size="sm" variant="outline">
+                        <Link to="/tutor-jobs/$id" params={{ id: post.id }}>
+                          View live
+                        </Link>
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </DashboardSection>
 
         <DashboardSection id="children" title="Your children" description="Details saved on your parent profile.">

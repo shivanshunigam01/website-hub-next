@@ -1,22 +1,16 @@
 "use client";
 
 import { Link, useNavigate, useSearch } from "@/lib/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { canonicalUrl } from "@/lib/site-config";
 import {
   Briefcase,
-  Home,
-  Wifi,
   ArrowRight,
-  ShieldCheck,
   Search,
-  Filter,
   Loader2,
-  ClipboardList,
+  MapPin,
   X,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SubjectAutocomplete } from "@/components/tutors/SubjectAutocomplete";
 import { TutorJobCard } from "@/components/tutors/TutorJobCard";
 import { useRequirementFacets, useTutorJobs } from "@/hooks/use-requirements-api";
 import {
@@ -33,6 +28,7 @@ import {
   parseTutorJobMode,
   type TutorJobMode,
 } from "@/lib/tutor-jobs-utils";
+import type { TutorJobsFilters } from "@/types/requirement";
 import { cn } from "@/lib/utils";
 
 type TutorJobsSearch = {
@@ -41,48 +37,92 @@ type TutorJobsSearch = {
   skill?: string;
   location?: string;
   jobType?: string;
+  level?: string;
   q?: string;
 };
 
+type CategoryTab = "all" | "online" | "home" | "assignment";
+
+const LEVEL_OPTIONS: { value: NonNullable<TutorJobsFilters["level"]>; labelKey: string; fallback: string }[] = [
+  { value: "all", labelKey: "tutorJobs.levelAny", fallback: "Level" },
+  { value: "elem", labelKey: "tutorJobs.levelElem", fallback: "Elementary" },
+  { value: "middle", labelKey: "tutorJobs.levelMiddle", fallback: "Middle school" },
+  { value: "high", labelKey: "tutorJobs.levelHigh", fallback: "High school" },
+  { value: "college", labelKey: "tutorJobs.levelCollege", fallback: "College / University" },
+  { value: "pro", labelKey: "tutorJobs.levelPro", fallback: "Professional" },
+];
+
+function activeCategory(mode: TutorJobMode, jobType: TutorJobsFilters["jobType"]): CategoryTab {
+  if (jobType === "assignment") return "assignment";
+  if (mode === "online") return "online";
+  if (mode === "home") return "home";
+  return "all";
+}
+
 function TutorJobsPage() {
   const { t } = useTranslation("common");
-  const MODE_TABS: { id: TutorJobMode; label: string; icon: typeof Briefcase }[] = [
-    { id: "all", label: t("tutorJobs.tabAll"), icon: Briefcase },
-    { id: "online", label: t("tutorJobs.tabOnline"), icon: Wifi },
-    { id: "home", label: t("tutorJobs.tabHome"), icon: Home },
-  ];
-  const jobModeLabel = (m: TutorJobMode) =>
-    m === "online"
-      ? t("tutorJobs.titleOnline")
-      : m === "home"
-        ? t("tutorJobs.titleHome")
-        : t("tutorJobs.titleAll");
   const navigate = useNavigate();
   const urlSearch = useSearch<TutorJobsSearch>();
-  const mode = parseTutorJobMode(urlSearch.mode);
   const filters = useMemo(() => filtersFromSearch(urlSearch), [urlSearch]);
+  const mode = parseTutorJobMode(urlSearch.mode);
+  const category = activeCategory(mode, filters.jobType);
 
   const { data: facets } = useRequirementFacets();
   const { data, isLoading, isError } = useTutorJobs(filters);
   const jobs = data?.jobs ?? [];
+  const total = data?.total ?? jobs.length;
 
-  const [localQ, setLocalQ] = useState(urlSearch.q ?? "");
+  const [draftSubject, setDraftSubject] = useState(urlSearch.subject ?? urlSearch.q ?? "");
+  const [draftLocation, setDraftLocation] = useState(urlSearch.location ?? "");
 
-  const updateSearch = (patch: Partial<TutorJobsSearch>) => {
+  useEffect(() => {
+    setDraftSubject(urlSearch.subject ?? urlSearch.q ?? "");
+    setDraftLocation(urlSearch.location ?? "");
+  }, [urlSearch.subject, urlSearch.q, urlSearch.location]);
+
+  const facetSubjects = useMemo(() => {
+    const set = new Set<string>([...(facets?.subjects ?? []), ...(facets?.skills ?? [])]);
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [facets?.subjects, facets?.skills]);
+
+  const updateSearch = (patch: Partial<TutorJobsSearch>, replace = true) => {
     navigate({
       search: (prev) => {
         const next = { ...prev, ...patch };
         for (const k of Object.keys(next) as (keyof TutorJobsSearch)[]) {
-          if (!next[k]) delete next[k];
+          if (!next[k] || next[k] === "all") delete next[k];
         }
         return next;
       },
-      replace: true,
+      replace,
     });
   };
 
+  const runSearch = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    updateSearch({
+      subject: draftSubject.trim() || undefined,
+      location: draftLocation.trim() || undefined,
+      q: undefined,
+      skill: undefined,
+    });
+  };
+
+  const setCategory = (tab: CategoryTab) => {
+    if (tab === "all") {
+      updateSearch({ mode: undefined, jobType: undefined });
+      return;
+    }
+    if (tab === "assignment") {
+      updateSearch({ mode: undefined, jobType: "assignment" });
+      return;
+    }
+    updateSearch({ mode: tab, jobType: undefined });
+  };
+
   const clearFilters = () => {
-    setLocalQ("");
+    setDraftSubject("");
+    setDraftLocation("");
     navigate({ search: {}, replace: true });
   };
 
@@ -92,165 +132,145 @@ function TutorJobsPage() {
     !!filters.location ||
     !!filters.q ||
     (filters.jobType && filters.jobType !== "all") ||
+    (filters.level && filters.level !== "all") ||
     mode !== "all";
+
+  const heading =
+    category === "online"
+      ? t("tutorJobs.headingOnline", "Online tutor jobs")
+      : category === "home"
+        ? t("tutorJobs.headingHome", "Home tutor jobs")
+        : category === "assignment"
+          ? t("tutorJobs.headingAssignment", "Assignment tutor jobs")
+          : filters.location
+            ? t("tutorJobs.headingInLocation", "Tutor jobs in {{location}}", {
+                location: filters.location,
+              })
+            : t("tutorJobs.headingAllCountries", "Tutor jobs from all countries");
+
+  const resultsLabel = filters.location
+    ? t("tutorJobs.resultsInLocation", "{{formattedCount}} tutor jobs in {{location}} found", {
+        count: total,
+        location: filters.location,
+        formattedCount: total.toLocaleString(),
+      })
+    : t("tutorJobs.resultsAllCountries", "{{formattedCount}} tutor jobs from all countries found", {
+        count: total,
+        formattedCount: total.toLocaleString(),
+      });
+
+  const CATEGORY_TABS: { id: CategoryTab; label: string }[] = [
+    { id: "all", label: t("tutorJobs.tabAll", "All") },
+    { id: "online", label: t("tutorJobs.tabOnline", "Online") },
+    { id: "home", label: t("tutorJobs.tabHome", "Home") },
+    { id: "assignment", label: t("tutorJobs.tabAssignment", "Assignment") },
+  ];
 
   return (
     <>
-      <div className="relative overflow-hidden border-b">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-600 via-primary to-indigo-700" aria-hidden />
-        <div className="container relative mx-auto px-4 py-10 sm:px-6 sm:py-12">
-          <Badge className="mb-4 border-white/25 bg-white/15 text-white hover:bg-white/15">
-            <ShieldCheck className="me-1 h-3 w-3" />
-            {t("tutorJobs.badge")}
-          </Badge>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            {jobModeLabel(mode)}
-          </h1>
-          <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">
-            {t("tutorJobs.subtitle")}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {MODE_TABS.map(({ id, label, icon: Icon }) => (
-              <Link
-                key={id}
-                to="/tutor-jobs"
-                search={{
-                  ...urlSearch,
-                  mode: id === "all" ? undefined : id,
-                }}
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition",
-                  mode === id
-                    ? "border-white bg-white text-primary shadow-md"
-                    : "border-white/30 bg-white/10 text-white hover:bg-white/20",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
+      <section className="border-b bg-gradient-to-b from-primary/[0.06] via-background to-background">
+        <div className="container mx-auto px-4 py-10 sm:px-6 sm:py-12 lg:py-14">
+          <div className="mx-auto max-w-4xl text-center">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+              {heading}
+            </h1>
 
-      <section className="container mx-auto px-4 py-8 sm:px-6 lg:py-10">
-        {/* Filters */}
-        <div className="mb-8 rounded-2xl border bg-card p-4 sm:p-5">
-          <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
-            <Filter className="h-4 w-4 text-primary" />
-            {t("tutorJobs.filterHeading")}
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <form
-              className="relative lg:col-span-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                updateSearch({ q: localQ.trim() || undefined });
-              }}
+              onSubmit={runSearch}
+              className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-center"
             >
-              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={localQ}
-                onChange={(e) => setLocalQ(e.target.value)}
-                placeholder={t("tutorJobs.searchPlaceholder")}
-                className="ps-9"
-              />
-            </form>
-            <Select
-              value={filters.subject ?? "all"}
-              onValueChange={(v) => updateSearch({ subject: v === "all" ? undefined : v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t("tutorJobs.subject", "Subject")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("tutorJobs.allSubjects")}</SelectItem>
-                {(facets?.subjects ?? []).map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={filters.skill ?? "all"}
-              onValueChange={(v) => updateSearch({ skill: v === "all" ? undefined : v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t("tutorJobs.skill", "Skill")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("tutorJobs.allSkills")}</SelectItem>
-                {(facets?.skills ?? []).map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={filters.location ?? "all"}
-              onValueChange={(v) => updateSearch({ location: v === "all" ? undefined : v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t("tutorJobs.location", "Location")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("tutorJobs.allLocations")}</SelectItem>
-                {(facets?.locations ?? []).map((loc) => (
-                  <SelectItem key={loc} value={loc}>
-                    {loc}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">{t("tutorJobs.type")}</span>
-            {(
-              [
-                { id: "all", label: t("tutorJobs.typeAll") },
-                { id: "tutoring", label: t("tutorJobs.typeTutoring"), icon: Briefcase },
-                { id: "assignment", label: t("tutorJobs.typeAssignment"), icon: ClipboardList },
-              ] as const
-            ).map((item) => {
-              const { id, label } = item;
-              const Icon = "icon" in item ? item.icon : undefined;
-              return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => updateSearch({ jobType: id === "all" ? undefined : id })}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                  (filters.jobType ?? "all") === id
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border hover:border-primary/40",
-                )}
-              >
-                {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
-                {label}
-              </button>
-            );
-            })}
-            {hasActiveFilters && (
-              <Button type="button" variant="ghost" size="sm" onClick={clearFilters} className="ms-auto">
-                <X className="me-1 h-3.5 w-3.5" />
-                {t("tutorJobs.clearFilters")}
+              <div className="min-w-0 flex-1 sm:max-w-xs">
+                <SubjectAutocomplete
+                  value={draftSubject}
+                  onChange={setDraftSubject}
+                  placeholder={t("tutorJobs.subjectSkillPlaceholder", "Subject / Skill")}
+                  extraOptions={facetSubjects}
+                  showIcon={false}
+                  inputClassName="h-12 rounded-xl border-border bg-card text-base shadow-sm"
+                />
+              </div>
+              <div className="relative min-w-0 flex-1 sm:max-w-xs">
+                <MapPin className="pointer-events-none absolute start-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={draftLocation}
+                  onChange={(e) => setDraftLocation(e.target.value)}
+                  placeholder={t("tutorJobs.locationPlaceholder", "Location")}
+                  list="tutor-jobs-locations"
+                  className="h-12 rounded-xl border-border bg-card ps-9 text-base shadow-sm"
+                />
+                <datalist id="tutor-jobs-locations">
+                  {(facets?.locations ?? []).map((loc) => (
+                    <option key={loc} value={loc} />
+                  ))}
+                </datalist>
+              </div>
+              <Button type="submit" size="lg" variant="gradient" className="h-12 shrink-0 rounded-xl px-6">
+                <Search className="me-2 h-4 w-4" />
+                {t("tutorJobs.search", "Search")}
               </Button>
-            )}
-          </div>
-        </div>
+            </form>
 
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="font-display text-xl font-bold sm:text-2xl">
-              {isLoading ? t("tutorJobs.loading") : t("tutorJobs.resultsTitle", { count: data?.total ?? jobs.length })}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("tutorJobs.resultsHint")}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
+              <nav
+                className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
+                aria-label={t("tutorJobs.filterHeading", "Filter tutor jobs")}
+              >
+                {CATEGORY_TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setCategory(tab.id)}
+                    className={cn(
+                      "relative pb-1.5 text-sm font-semibold transition-colors",
+                      category === tab.id
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {tab.label}
+                    {category === tab.id ? (
+                      <span className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-primary" />
+                    ) : null}
+                  </button>
+                ))}
+              </nav>
+
+              <Select
+                value={filters.level ?? "all"}
+                onValueChange={(v) =>
+                  updateSearch({ level: v === "all" ? undefined : v })
+                }
+              >
+                <SelectTrigger className="h-9 w-auto min-w-[7.5rem] rounded-lg border-border bg-card px-3 text-sm shadow-sm">
+                  <SelectValue placeholder={t("tutorJobs.levelAny", "Level")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {LEVEL_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {t(opt.labelKey, opt.fallback)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters ? (
+                <Button type="button" variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+                  <X className="me-1 h-3.5 w-3.5" />
+                  {t("tutorJobs.clearFilters", "Clear filters")}
+                </Button>
+              ) : null}
+            </div>
+
+            <p className="mt-6 text-sm text-muted-foreground sm:text-base">
+              {isLoading ? t("tutorJobs.loading", "Loading jobs…") : resultsLabel}
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-8 sm:px-6 lg:py-10">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">{t("tutorJobs.resultsHint")}</p>
           <Button asChild variant="outline" size="sm">
             <Link to="/post-requirement">
               {t("tutorJobs.postCta")}
