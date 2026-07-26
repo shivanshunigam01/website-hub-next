@@ -2,6 +2,7 @@
 
 import { Link, useNavigate, useSearch } from "@/lib/navigation";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { canonicalUrl } from "@/lib/site-config";
 import {
   Briefcase,
@@ -29,7 +30,6 @@ import { TutorJobCard } from "@/components/tutors/TutorJobCard";
 import { useRequirementFacets, useTutorJobs } from "@/hooks/use-requirements-api";
 import {
   filtersFromSearch,
-  jobModeLabel,
   parseTutorJobMode,
   type TutorJobMode,
 } from "@/lib/tutor-jobs-utils";
@@ -44,13 +44,19 @@ type TutorJobsSearch = {
   q?: string;
 };
 
-const MODE_TABS: { id: TutorJobMode; label: string; icon: typeof Briefcase }[] = [
-  { id: "all", label: "All", icon: Briefcase },
-  { id: "online", label: "Online", icon: Wifi },
-  { id: "home", label: "Home", icon: Home },
-];
-
 function TutorJobsPage() {
+  const { t } = useTranslation("common");
+  const MODE_TABS: { id: TutorJobMode; label: string; icon: typeof Briefcase }[] = [
+    { id: "all", label: t("tutorJobs.tabAll"), icon: Briefcase },
+    { id: "online", label: t("tutorJobs.tabOnline"), icon: Wifi },
+    { id: "home", label: t("tutorJobs.tabHome"), icon: Home },
+  ];
+  const jobModeLabel = (m: TutorJobMode) =>
+    m === "online"
+      ? t("tutorJobs.titleOnline")
+      : m === "home"
+        ? t("tutorJobs.titleHome")
+        : t("tutorJobs.titleAll");
   const navigate = useNavigate();
   const urlSearch = useSearch<TutorJobsSearch>();
   const mode = parseTutorJobMode(urlSearch.mode);
@@ -95,14 +101,13 @@ function TutorJobsPage() {
         <div className="container relative mx-auto px-4 py-10 sm:px-6 sm:py-12">
           <Badge className="mb-4 border-white/25 bg-white/15 text-white hover:bg-white/15">
             <ShieldCheck className="me-1 h-3 w-3" />
-            Admin-verified student requests
+            {t("tutorJobs.badge")}
           </Badge>
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             {jobModeLabel(mode)}
           </h1>
           <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">
-            Students post tutoring or assignment help needs; our team approves each request before it
-            appears here. Apply directly and start teaching.
+            {t("tutorJobs.subtitle")}
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             {MODE_TABS.map(({ id, label, icon: Icon }) => (
@@ -133,7 +138,7 @@ function TutorJobsPage() {
         <div className="mb-8 rounded-2xl border bg-card p-4 sm:p-5">
           <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <Filter className="h-4 w-4 text-primary" />
-            Filter tutor jobs
+            {t("tutorJobs.filterHeading")}
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <form
@@ -147,7 +152,7 @@ function TutorJobsPage() {
               <Input
                 value={localQ}
                 onChange={(e) => setLocalQ(e.target.value)}
-                placeholder="Search title or details…"
+                placeholder={t("tutorJobs.searchPlaceholder")}
                 className="ps-9"
               />
             </form>
@@ -156,10 +161,10 @@ function TutorJobsPage() {
               onValueChange={(v) => updateSearch({ subject: v === "all" ? undefined : v })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Subject" />
+                <SelectValue placeholder={t("tutorJobs.subject", "Subject")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All subjects</SelectItem>
+                <SelectItem value="all">{t("tutorJobs.allSubjects")}</SelectItem>
                 {(facets?.subjects ?? []).map((s) => (
                   <SelectItem key={s} value={s}>
                     {s}
@@ -172,10 +177,10 @@ function TutorJobsPage() {
               onValueChange={(v) => updateSearch({ skill: v === "all" ? undefined : v })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Skill" />
+                <SelectValue placeholder={t("tutorJobs.skill", "Skill")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All skills</SelectItem>
+                <SelectItem value="all">{t("tutorJobs.allSkills")}</SelectItem>
                 {(facets?.skills ?? []).map((s) => (
                   <SelectItem key={s} value={s}>
                     {s}
@@ -188,10 +193,10 @@ function TutorJobsPage() {
               onValueChange={(v) => updateSearch({ location: v === "all" ? undefined : v })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Location" />
+                <SelectValue placeholder={t("tutorJobs.location", "Location")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All locations</SelectItem>
+                <SelectItem value="all">{t("tutorJobs.allLocations")}</SelectItem>
                 {(facets?.locations ?? []).map((loc) => (
                   <SelectItem key={loc} value={loc}>
                     {loc}
@@ -201,12 +206,12 @@ function TutorJobsPage() {
             </Select>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Type:</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("tutorJobs.type")}</span>
             {(
               [
-                { id: "all", label: "All types" },
-                { id: "tutoring", label: "Tutoring", icon: Briefcase },
-                { id: "assignment", label: "Assignment help", icon: ClipboardList },
+                { id: "all", label: t("tutorJobs.typeAll") },
+                { id: "tutoring", label: t("tutorJobs.typeTutoring"), icon: Briefcase },
+                { id: "assignment", label: t("tutorJobs.typeAssignment"), icon: ClipboardList },
               ] as const
             ).map((item) => {
               const { id, label } = item;
@@ -231,7 +236,7 @@ function TutorJobsPage() {
             {hasActiveFilters && (
               <Button type="button" variant="ghost" size="sm" onClick={clearFilters} className="ms-auto">
                 <X className="me-1 h-3.5 w-3.5" />
-                Clear filters
+                {t("tutorJobs.clearFilters")}
               </Button>
             )}
           </div>
@@ -240,15 +245,15 @@ function TutorJobsPage() {
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="font-display text-xl font-bold sm:text-2xl">
-              {isLoading ? "Loading jobs…" : `${data?.total ?? jobs.length} open job${(data?.total ?? jobs.length) === 1 ? "" : "s"}`}
+              {isLoading ? t("tutorJobs.loading") : t("tutorJobs.resultsTitle", { count: data?.total ?? jobs.length })}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Only requirements approved by TeacherPoint are shown to tutors.
+              {t("tutorJobs.resultsHint")}
             </p>
           </div>
           <Button asChild variant="outline" size="sm">
             <Link to="/post-requirement">
-              Student? Post a requirement
+              {t("tutorJobs.postCta")}
               <ArrowRight className="ms-1 h-4 w-4" />
             </Link>
           </Button>
@@ -260,19 +265,18 @@ function TutorJobsPage() {
           </div>
         ) : isError ? (
           <div className="rounded-2xl border border-dashed bg-muted/20 px-6 py-16 text-center">
-            <p className="text-sm text-muted-foreground">Could not load tutor jobs. Please try again.</p>
+            <p className="text-sm text-muted-foreground">{t("tutorJobs.loadError")}</p>
           </div>
         ) : jobs.length === 0 ? (
           <div className="rounded-2xl border border-dashed bg-muted/20 px-6 py-16 text-center">
             <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/40" />
-            <h3 className="mt-4 font-display text-lg font-bold">No jobs match your filters</h3>
+            <h3 className="mt-4 font-display text-lg font-bold">{t("tutorJobs.emptyTitle")}</h3>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              Try adjusting filters or check back soon. New student requests appear here after admin
-              approval.
+              {t("tutorJobs.emptyDesc")}
             </p>
             {hasActiveFilters && (
               <Button variant="outline" className="mt-5" onClick={clearFilters}>
-                Clear filters
+                {t("tutorJobs.clearFilters")}
               </Button>
             )}
           </div>

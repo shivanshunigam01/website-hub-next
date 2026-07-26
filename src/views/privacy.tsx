@@ -1,11 +1,13 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
+import { useTranslation } from "react-i18next";
 import { Eye, Lock, Database, Mail, FileText } from "lucide-react";
 
 type Section = {
   id: string;
-  title: string;
+  titleKey: string;
+  titleDefault: string;
   icon: typeof Eye;
   items: React.ReactNode[];
 };
@@ -13,7 +15,8 @@ type Section = {
 const sections: Section[] = [
   {
     id: "overview",
-    title: "Overview",
+    titleKey: "legal.privacy.section.overview",
+    titleDefault: "Overview",
     icon: Eye,
     items: [
       "TeacherPoint (“we”, “us”, “our”) operates an online marketplace connecting students, parents, and tutors for courses, tutoring sessions, and related services.",
@@ -23,7 +26,8 @@ const sections: Section[] = [
   },
   {
     id: "collection",
-    title: "Information we collect",
+    titleKey: "legal.privacy.section.collection",
+    titleDefault: "Information we collect",
     icon: Database,
     items: [
       "Account details: name, email address, phone number (including WhatsApp), password hash, profile photo, role (student, tutor, parent), and preferences.",
@@ -35,7 +39,8 @@ const sections: Section[] = [
   },
   {
     id: "use",
-    title: "How we use your information",
+    titleKey: "legal.privacy.section.use",
+    titleDefault: "How we use your information",
     icon: Lock,
     items: [
       "Provide and improve the platform: authentication, tutor matching, course enrollment, messaging, and customer support.",
@@ -47,7 +52,8 @@ const sections: Section[] = [
   },
   {
     id: "sharing",
-    title: "When we share information",
+    titleKey: "legal.privacy.section.sharing",
+    titleDefault: "When we share information",
     icon: Mail,
     items: [
       "With tutors or students when you book a session, enroll in a course, or unlock contact details after payment — only the information needed to deliver the service.",
@@ -58,7 +64,8 @@ const sections: Section[] = [
   },
   {
     id: "rights",
-    title: "Your rights & retention",
+    titleKey: "legal.privacy.section.rights",
+    titleDefault: "Your rights & retention",
     icon: FileText,
     items: [
       "You may access, correct, or delete your profile data from your account settings or by contacting support.",
@@ -77,6 +84,7 @@ const sections: Section[] = [
 ];
 
 function PrivacyPage() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16 max-w-4xl">
       <div className="flex items-start gap-4">
@@ -84,9 +92,14 @@ function PrivacyPage() {
           <Lock className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight">Privacy Policy</h1>
+          <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight">
+            {t("legal.privacy.title")}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Last updated · June 2026. Applies to all TeacherPoint users worldwide.
+            {t(
+              "legal.privacy.updated",
+              "Last updated · June 2026. Applies to all TeacherPoint users worldwide.",
+            )}
           </p>
         </div>
       </div>
@@ -98,13 +111,13 @@ function PrivacyPage() {
             href={`#${s.id}`}
             className="text-xs font-medium px-3 py-1.5 rounded-full border border-border bg-card hover:border-foreground/20 hover:bg-muted transition-colors"
           >
-            {s.title}
+            {t(s.titleKey, s.titleDefault)}
           </a>
         ))}
       </nav>
 
       <div className="mt-10 space-y-10">
-        {sections.map(({ id, title, icon: Icon, items }) => (
+        {sections.map(({ id, titleKey, titleDefault, icon: Icon, items }) => (
           <article
             key={id}
             id={id}
@@ -114,7 +127,9 @@ function PrivacyPage() {
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
                 <Icon className="h-4 w-4" />
               </span>
-              <h2 className="font-display font-semibold text-xl md:text-2xl">{title}</h2>
+              <h2 className="font-display font-semibold text-xl md:text-2xl">
+                {t(titleKey, titleDefault)}
+              </h2>
             </header>
             <ul className="space-y-3">
               {items.map((node, i) => (

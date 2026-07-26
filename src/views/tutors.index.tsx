@@ -2,6 +2,7 @@
 
 import { Link, useNavigate, useSearch } from "@/lib/navigation";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { canonicalUrl } from "@/lib/site-config";
 import {
   ArrowRight,
@@ -37,13 +38,13 @@ type TutorsSearch = {
   sortBy?: string;
 };
 
-const MODE_TABS = [
-  { id: "all" as const, label: "All tutors", icon: Users },
-  { id: "online" as const, label: "Online", icon: Wifi },
-  { id: "in-person" as const, label: "Home tutors", icon: Home },
-];
-
 function TutorsPage() {
+  const { t } = useTranslation("common");
+  const MODE_TABS = [
+    { id: "all" as const, label: t("tutorsPage.tabAll"), icon: Users },
+    { id: "online" as const, label: t("tutorsPage.tabOnline"), icon: Wifi },
+    { id: "in-person" as const, label: t("tutorsPage.tabHome"), icon: Home },
+  ];
   const navigate = useNavigate();
   const urlSearch = useSearch();
   const initial = useMemo(
@@ -65,17 +66,17 @@ function TutorsPage() {
   const mode = initial.mode ?? "all";
   const title =
     mode === "online"
-      ? "Online tutors"
+      ? t("tutorsPage.titleOnline")
       : mode === "in-person"
-        ? "Home tutors near you"
-        : "Find your perfect tutor";
+        ? t("tutorsPage.titleHome")
+        : t("tutorsPage.titleAll");
 
   const subtitle =
     mode === "online"
-      ? "Live video sessions with verified experts — flexible schedules, every subject."
+      ? t("tutorsPage.subtitleOnline")
       : mode === "in-person"
-        ? "Trusted local tutors for in-person sessions at your home or a nearby location."
-        : "Search by subject, city, rating and price. Compare profiles and book the right mentor.";
+        ? t("tutorsPage.subtitleHome")
+        : t("tutorsPage.subtitleAll");
 
   const syncUrl = (filters: TutorSearchFilters) => {
     navigate({ to: "/tutors", search: tutorSearchToUrl(filters), replace: true });
@@ -100,7 +101,7 @@ function TutorsPage() {
           <div className="max-w-3xl">
             <Badge className="mb-4 border-white/25 bg-white/15 text-white hover:bg-white/15">
               <Sparkles className="me-1 h-3 w-3" />
-              Tutor directory
+              {t("tutorsPage.badge")}
             </Badge>
             <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
               {title}
@@ -110,30 +111,30 @@ function TutorsPage() {
             <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/90">
               <span className="inline-flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
-                {(facets?.totalTutors ?? 0).toLocaleString()}+ tutors
+                {t("tutorsPage.tutorsCount", { count: (facets?.totalTutors ?? 0).toLocaleString() })}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <GraduationCap className="h-4 w-4" />
-                {(facets?.subjects?.length ?? 100)}+ subjects
+                {t("tutorsPage.subjectsCount", { count: facets?.subjects?.length ?? 100 })}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4" />
-                Verified profiles
+                {t("tutorsPage.verifiedProfiles")}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Star className="h-4 w-4 fill-amber-300 text-amber-300" />
-                Rated & reviewed
+                {t("tutorsPage.ratedReviewed")}
               </span>
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button asChild size="lg" variant="secondary" className="shadow-lg">
                 <Link to="/post-requirement">
-                  Request a tutor
+                  {t("tutorsPage.requestTutor")}
                   <ArrowRight className="ms-1 h-4 w-4" />
                 </Link>
               </Button>
-              <span className="text-sm text-white/75">Free to browse · No signup required</span>
+              <span className="text-sm text-white/75">{t("tutorsPage.freeBrowse")}</span>
             </div>
           </div>
 

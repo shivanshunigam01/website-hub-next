@@ -2,6 +2,7 @@
 
 import { Link, useNavigate } from "@/lib/navigation";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { canonicalUrl } from "@/lib/site-config";
 import {
   ArrowRight,
@@ -54,7 +55,19 @@ const CATEGORY_ICON: Record<ListingCategory, typeof BookOpen> = {
   other: Package,
 };
 
+const CATEGORY_KEY: Record<ListingCategory, string> = {
+  books: "marketplace.cat.books",
+  notes: "marketplace.cat.notes",
+  electronics: "marketplace.cat.electronics",
+  services: "marketplace.cat.services",
+  rideshare: "marketplace.cat.rideshare",
+  accommodation: "marketplace.cat.accommodation",
+  tutoring: "marketplace.cat.tutoring",
+  other: "marketplace.cat.other",
+};
+
 function Market() {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const { role, user } = useApp();
   const { listings, incrementViews } = useMarketplace();
@@ -85,12 +98,12 @@ function Market() {
 
   const openPost = () => {
     if (role !== "student" || !user) {
-      toast.info("Log in with your student account to post on Student Exchange");
+      toast.info(t("marketplace.loginToPost", "Log in with your student account to post on Student Exchange"));
       navigate({ to: "/login" });
       return;
     }
     if (!user.profileComplete) {
-      toast.info("Complete your profile registration before posting.");
+      toast.info(t("marketplace.completeProfile", "Complete your profile registration before posting."));
       navigate({ to: afterAuthPath("student", false, user.isVerified !== false) });
       return;
     }
@@ -109,42 +122,41 @@ function Market() {
           <div className="max-w-3xl">
             <Badge className="mb-4 border-white/25 bg-white/15 text-white hover:bg-white/15">
               <Sparkles className="me-1 h-3 w-3" />
-              Student Exchange · Buy · Sell · Share
+              {t("marketplace.badge")}
             </Badge>
             <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-              The student marketplace
+              {t("marketplace.title")}
             </h1>
             <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">
-              Buy and sell textbooks, notes, devices, ride shares and more — posted by verified students,
-              approved by our team before going live.
+              {t("marketplace.subtitle")}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/90">
               <span className="inline-flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
-                Student sellers only
+                {t("marketplace.trustSellers")}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4" />
-                Admin-approved listings
+                {t("marketplace.trustApproved")}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Package className="h-4 w-4" />
-                {activeListings.length} live posts
+                {t("marketplace.livePosts", { count: activeListings.length })}
               </span>
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button size="lg" variant="secondary" className="shadow-lg" onClick={openPost}>
                 <Plus className="me-2 h-5 w-5" />
-                Post a listing
+                {t("marketplace.postListing")}
               </Button>
               {role === "student" ? (
                 <Button asChild size="lg" variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-                  <Link to="/student">Manage my posts</Link>
+                  <Link to="/student">{t("marketplace.managePosts")}</Link>
                 </Button>
               ) : (
-                <span className="text-sm text-white/75">Students only · Free to post</span>
+                <span className="text-sm text-white/75">{t("marketplace.studentsOnly")}</span>
               )}
             </div>
           </div>
@@ -155,13 +167,13 @@ function Market() {
         {/* Category chips */}
         <div className="mb-6 overflow-x-auto -mx-1">
           <div className="flex min-w-max gap-2 px-1 pb-1">
-            <CategoryChip active={cat === "all"} onClick={() => setCat("all")} label="All" icon={Package} />
+            <CategoryChip active={cat === "all"} onClick={() => setCat("all")} label={t("marketplace.all")} icon={Package} />
             {(Object.keys(CATEGORY_LABELS) as ListingCategory[]).map((c) => (
               <CategoryChip
                 key={c}
                 active={cat === c}
                 onClick={() => setCat(c)}
-                label={CATEGORY_LABELS[c]}
+                label={t(CATEGORY_KEY[c])}
                 icon={CATEGORY_ICON[c]}
               />
             ))}
@@ -173,7 +185,7 @@ function Market() {
           <div className="relative sm:col-span-2">
             <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search books, NEET notes, MacBook…"
+              placeholder={t("marketplace.searchPlaceholder")}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="ps-9"
@@ -187,42 +199,42 @@ function Market() {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All cities</SelectItem>
+              <SelectItem value="all">{t("marketplace.allCities")}</SelectItem>
               {cities.map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Input type="number" placeholder={`Max price (${symbol})`} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
+          <Input type="number" placeholder={t("marketplace.maxPrice", { symbol })} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
         </div>
 
         {/* Results header */}
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-xl font-bold sm:text-2xl">
-              {filtered.length} listing{filtered.length === 1 ? "" : "s"}
+              {t("marketplace.listingsCount", { count: filtered.length })}
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
               <Filter className="me-1 inline h-3.5 w-3.5" />
-              Approved student listings only
+              {t("marketplace.approvedOnly")}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={openPost}>
             <Plus className="me-2 h-4 w-4" />
-            Sell something
+            {t("marketplace.sellSomething")}
           </Button>
         </div>
 
         {filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed bg-muted/20 px-6 py-16 text-center">
             <Package className="mx-auto h-12 w-12 text-muted-foreground/40" />
-            <h3 className="mt-4 font-display text-lg font-bold">No listings match</h3>
+            <h3 className="mt-4 font-display text-lg font-bold">{t("marketplace.emptyTitle")}</h3>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              Try different filters, or be the first student to post in this category.
+              {t("marketplace.emptyDesc")}
             </p>
             <Button size="lg" variant="gradient" className="mt-5" onClick={openPost}>
               <Plus className="me-2 h-4 w-4" />
-              Post a listing
+              {t("marketplace.postListing")}
             </Button>
           </div>
         ) : (
@@ -241,17 +253,17 @@ function Market() {
         )}
 
         <div className="mt-12 rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-fuchsia-500/5 p-6 text-center sm:p-8">
-          <h3 className="font-display text-lg font-bold">Want to sell to other students?</h3>
+          <h3 className="font-display text-lg font-bold">{t("marketplace.ctaSellTitle")}</h3>
           <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
-            Log in with your student account, submit a listing, and our admin team will review it before it goes live.
+            {t("marketplace.ctaSellDesc")}
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <Button size="lg" variant="gradient" onClick={openPost}>
-              Post on Student Exchange
+              {t("marketplace.postExchange")}
               <ArrowRight className="ms-1 h-4 w-4" />
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link to="/student">Student dashboard</Link>
+              <Link to="/student">{t("marketplace.studentDashboard")}</Link>
             </Button>
           </div>
         </div>
@@ -292,6 +304,7 @@ function CategoryChip({
 }
 
 function ListingCard({ listing, onOpen }: { listing: Listing; onOpen: () => void }) {
+  const { t } = useTranslation("common");
   const { formatLocalizedPrice } = useCurrency();
   const Icon = CATEGORY_ICON[listing.category];
   return (
@@ -314,10 +327,10 @@ function ListingCard({ listing, onOpen }: { listing: Listing; onOpen: () => void
         )}
         <Badge className="absolute start-2 top-2 border bg-background/90 text-foreground">
           <Icon className="me-1 h-3 w-3" />
-          {CATEGORY_LABELS[listing.category]}
+          {t(CATEGORY_KEY[listing.category])}
         </Badge>
         {listing.negotiable && (
-          <Badge className="absolute end-2 top-2 bg-emerald-600 text-white">Negotiable</Badge>
+          <Badge className="absolute end-2 top-2 bg-emerald-600 text-white">{t("marketplace.negotiable")}</Badge>
         )}
       </div>
       <div className="p-4">
@@ -336,7 +349,7 @@ function ListingCard({ listing, onOpen }: { listing: Listing; onOpen: () => void
           </span>
         </div>
         <div className="mt-3 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
-          <span>By {listing.sellerName}</span>
+          <span>{t("marketplace.bySeller", { name: listing.sellerName })}</span>
           <Badge variant="outline" className="capitalize">
             {listing.sellerRole}
           </Badge>
@@ -347,6 +360,7 @@ function ListingCard({ listing, onOpen }: { listing: Listing; onOpen: () => void
 }
 
 function ListingDetailDialog({ listing, onClose }: { listing: Listing | null; onClose: () => void }) {
+  const { t } = useTranslation("common");
   const { sendMessage } = useMarketplace();
   const { formatLocalizedPrice } = useCurrency();
   const [msg, setMsg] = useState("");
@@ -357,9 +371,9 @@ function ListingDetailDialog({ listing, onClose }: { listing: Listing | null; on
   const Icon = CATEGORY_ICON[listing.category];
 
   const send = () => {
-    if (!name || !email || !msg.trim()) return toast.error("Fill all fields");
+    if (!name || !email || !msg.trim()) return toast.error(t("marketplace.fillAllFields", "Fill all fields"));
     sendMessage({ listingId: listing.id, fromName: name, fromEmail: email, message: msg.trim() });
-    toast.success(`Message sent to ${listing.sellerName}`);
+    toast.success(t("marketplace.messageSent", "Message sent to {{name}}", { name: listing.sellerName }));
     setMsg("");
     setName("");
     setEmail("");
@@ -384,26 +398,26 @@ function ListingDetailDialog({ listing, onClose }: { listing: Listing | null; on
             <div className="mt-3 flex flex-wrap gap-2">
               <Badge>
                 <Icon className="me-1 h-3 w-3" />
-                {CATEGORY_LABELS[listing.category]}
+                {t(CATEGORY_KEY[listing.category])}
               </Badge>
               {listing.condition && <Badge variant="outline" className="capitalize">{listing.condition}</Badge>}
-              {listing.negotiable && <Badge className="bg-emerald-600 text-white">Negotiable</Badge>}
+              {listing.negotiable && <Badge className="bg-emerald-600 text-white">{t("marketplace.negotiable")}</Badge>}
               <Badge variant="outline">
                 <MapPin className="me-1 h-3 w-3" />
                 {listing.city}, {listing.country}
               </Badge>
               <Badge variant="outline">
                 <Eye className="me-1 h-3 w-3" />
-                {listing.views} views
+                {t("marketplace.viewsCount", "{{count}} views", { count: listing.views })}
               </Badge>
             </div>
             <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">{listing.description}</p>
             {listing.category === "rideshare" && (
               <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border bg-muted/40 p-3 text-sm">
-                <div><span className="text-muted-foreground">From:</span> {listing.rideFrom}</div>
-                <div><span className="text-muted-foreground">To:</span> {listing.rideTo}</div>
-                <div><span className="text-muted-foreground">Schedule:</span> {listing.rideDate}</div>
-                <div><span className="text-muted-foreground">Seats:</span> {listing.rideSeats}</div>
+                <div><span className="text-muted-foreground">{t("marketplace.rideFrom", "From:")}</span> {listing.rideFrom}</div>
+                <div><span className="text-muted-foreground">{t("marketplace.rideTo", "To:")}</span> {listing.rideTo}</div>
+                <div><span className="text-muted-foreground">{t("marketplace.rideSchedule", "Schedule:")}</span> {listing.rideDate}</div>
+                <div><span className="text-muted-foreground">{t("marketplace.rideSeats", "Seats:")}</span> {listing.rideSeats}</div>
               </div>
             )}
           </div>
@@ -418,29 +432,40 @@ function ListingDetailDialog({ listing, onClose }: { listing: Listing | null; on
               <div className="mt-3 text-sm">
                 <div className="font-medium">{listing.sellerName}</div>
                 <div className="text-xs text-muted-foreground">
-                  Posted {new Date(listing.createdAt).toLocaleDateString()}
+                  {t("marketplace.posted", "Posted {{date}}", {
+                    date: new Date(listing.createdAt).toLocaleDateString(),
+                  })}
                 </div>
               </div>
               <div className="mt-4 space-y-3 border-t pt-4">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <MessageCircle className="h-4 w-4" />
-                  Contact seller
+                  {t("marketplace.contactSeller", "Contact seller")}
                 </div>
-                <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
-                <Input type="email" placeholder="Your email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Input
+                  placeholder={t("marketplace.yourName", "Your name")}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <Input
+                  type="email"
+                  placeholder={t("marketplace.yourEmail", "Your email")}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
                 <Textarea
-                  placeholder="Hi, is this still available?"
+                  placeholder={t("marketplace.messagePlaceholder", "Hi, is this still available?")}
                   value={msg}
                   onChange={(e) => setMsg(e.target.value)}
                   className="min-h-[90px]"
                 />
                 <Button size="lg" variant="gradient" className="w-full" onClick={send}>
                   <Send className="me-2 h-4 w-4" />
-                  Send message
+                  {t("contact.send")}
                 </Button>
                 <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
                   <ShieldCheck className="h-3 w-3" />
-                  Never pay in advance for items you haven&apos;t seen.
+                  {t("marketplace.neverPayAdvance", "Never pay in advance for items you haven't seen.")}
                 </p>
               </div>
             </div>

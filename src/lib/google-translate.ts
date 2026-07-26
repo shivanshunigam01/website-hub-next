@@ -8,6 +8,7 @@ export type GTLanguage = {
   flag: string;
 };
 
+/** Only languages with bundled i18next locales — avoid silent English fallback. */
 export const GT_LANGUAGES: GTLanguage[] = [
   { code: "en", native: "English", english: "English", flag: "🇬🇧" },
   { code: "hi", native: "हिन्दी", english: "Hindi", flag: "🇮🇳" },
@@ -17,14 +18,6 @@ export const GT_LANGUAGES: GTLanguage[] = [
   { code: "de", native: "Deutsch", english: "German", flag: "🇩🇪" },
   { code: "es", native: "Español", english: "Spanish", flag: "🇪🇸" },
   { code: "it", native: "Italiano", english: "Italian", flag: "🇮🇹" },
-  { code: "pt", native: "Português", english: "Portuguese", flag: "🇵🇹" },
-  { code: "ru", native: "Русский", english: "Russian", flag: "🇷🇺" },
-  { code: "ja", native: "日本語", english: "Japanese", flag: "🇯🇵" },
-  { code: "ko", native: "한국어", english: "Korean", flag: "🇰🇷" },
-  { code: "tr", native: "Türkçe", english: "Turkish", flag: "🇹🇷" },
-  { code: "id", native: "Bahasa Indonesia", english: "Indonesian", flag: "🇮🇩" },
-  { code: "vi", native: "Tiếng Việt", english: "Vietnamese", flag: "🇻🇳" },
-  { code: "th", native: "ไทย", english: "Thai", flag: "🇹🇭" },
 ];
 
 export const GT_INCLUDED = GT_LANGUAGES.filter((l) => l.code !== "en")
@@ -61,14 +54,15 @@ export function suggestLanguageForLocation(location: UserLocation | null): strin
   )
     return "es";
   if (country === "it" || country === "sm" || country === "va") return "it";
-  if (country === "pt" || country === "br") return "pt";
-  if (country === "ru" || ["by", "kz", "kg", "tj"].includes(country)) return "ru";
-  if (country === "jp") return "ja";
-  if (country === "kr") return "ko";
-  if (country === "tr") return "tr";
-  if (country === "id") return "id";
-  if (country === "vn") return "vi";
-  if (country === "th") return "th";
+  // Unsupported locales fall back to English (no bundled i18n resources).
+  if (country === "pt" || country === "br") return "en";
+  if (country === "ru" || ["by", "kz", "kg", "tj"].includes(country)) return "en";
+  if (country === "jp") return "en";
+  if (country === "kr") return "en";
+  if (country === "tr") return "en";
+  if (country === "id") return "en";
+  if (country === "vn") return "en";
+  if (country === "th") return "en";
 
   return "en";
 }
@@ -302,8 +296,13 @@ export function resolveAutoLanguageForLocation(location: UserLocation | null): {
   const stored = readStoredLanguageChoice();
   const manual = hasManualLanguageOverride();
   const geoLang = suggestLanguageForLocation(location);
+  const storedGeoCountry =
+    typeof window !== "undefined" ? (localStorage.getItem(LS_KEYS.geoCountry) ?? "").toUpperCase() : "";
 
-  if (manual && stored) {
+  // Manual override only applies for the same country; clear it when geo country changes.
+  if (manual && stored && countryCode && storedGeoCountry && storedGeoCountry !== countryCode) {
+    localStorage.removeItem(LS_KEYS.manualOverride);
+  } else if (manual && stored) {
     return {
       shouldApplyGt: stored !== currentGt,
       targetLang: stored,

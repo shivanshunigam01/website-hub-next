@@ -12,6 +12,7 @@ import {
 import { useLocationContext } from "@/hooks/use-user-location";
 import {
   applyManualLanguage,
+  canApplyViaI18n,
   GT_LANGUAGES,
   suggestLanguageForLocation,
 } from "@/lib/google-translate";
@@ -27,11 +28,12 @@ export function LanguageSwitcher() {
   const { recommended, others } = useMemo(() => {
     const loc = isLoading || !hasLocationAccess ? null : location;
     const suggested = suggestLanguageForLocation(loc);
+    const bundled = GT_LANGUAGES.filter((l) => canApplyViaI18n(l.code));
     const recCodes = new Set<string>(["en"]);
-    if (suggested !== "en") recCodes.add(suggested);
+    if (suggested !== "en" && canApplyViaI18n(suggested)) recCodes.add(suggested);
 
-    const rec = GT_LANGUAGES.filter((l) => recCodes.has(l.code));
-    const oth = GT_LANGUAGES.filter((l) => !recCodes.has(l.code));
+    const rec = bundled.filter((l) => recCodes.has(l.code));
+    const oth = bundled.filter((l) => !recCodes.has(l.code));
     return { recommended: rec, others: oth };
   }, [location, isLoading, hasLocationAccess]);
 
@@ -96,7 +98,7 @@ export function LanguageSwitcher() {
       >
         {recommended.length > 0 && (
           <div className="mb-4">
-            <SectionLabel>Suggested</SectionLabel>
+            <SectionLabel>{t("lang.suggested")}</SectionLabel>
             <div className="grid grid-cols-2 gap-2">
               {recommended.map(renderPill)}
             </div>
@@ -105,7 +107,7 @@ export function LanguageSwitcher() {
 
         <div>
           <SectionLabel icon={<Globe className="h-3.5 w-3.5 text-primary" />}>
-            All Languages
+            {t("lang.allLanguages")}
           </SectionLabel>
           <div className="grid grid-cols-2 gap-2">
             {others.map(renderPill)}

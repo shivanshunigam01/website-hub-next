@@ -1,30 +1,65 @@
 "use client";
 
-
+import { useTranslation } from "react-i18next";
 import { Video } from "lucide-react";
 import { SectionLanding } from "@/components/landing/SectionLanding";
 
-
-
 function Page() {
+  const { t } = useTranslation("common");
   return (
     <SectionLanding
-      eyebrow="Live · 1-on-1 · Anywhere"
-      title="Online tutors,"
-      highlight="on your schedule."
-      description="Connect over high-quality video with vetted tutors across 100+ subjects. Book by the hour, no long contracts."
+      eyebrow={t("onlineTutors.eyebrow")}
+      title={t("onlineTutors.title")}
+      highlight={t("onlineTutors.highlight")}
+      description={t("onlineTutors.description")}
       icon={Video}
       accent="primary"
       features={[
-        { title: "HD video classes", description: "Built-in classroom with whiteboard, screen-share, and recordings." },
-        { title: "Flexible booking", description: "Single sessions or weekly plans — reschedule anytime up to 12h before." },
-        { title: "Verified profiles", description: "Every tutor is ID-checked with reviews from real students." },
-        { title: "Try-before-you-buy", description: "Most tutors offer a free 20-min intro call." },
-        { title: "Pay per session", description: "No subscriptions. Refund guarantee on first session." },
-        { title: "Global timezone match", description: "Filter by your local hours and language." },
+        {
+          title: t("onlineTutors.f1.title", "HD video classes"),
+          description: t(
+            "onlineTutors.f1.desc",
+            "Built-in classroom with whiteboard, screen-share, and recordings.",
+          ),
+        },
+        {
+          title: t("onlineTutors.f2.title", "Flexible booking"),
+          description: t(
+            "onlineTutors.f2.desc",
+            "Single sessions or weekly plans — reschedule anytime up to 12h before.",
+          ),
+        },
+        {
+          title: t("onlineTutors.f3.title", "Verified profiles"),
+          description: t(
+            "onlineTutors.f3.desc",
+            "Every tutor is ID-checked with reviews from real students.",
+          ),
+        },
+        {
+          title: t("onlineTutors.f4.title", "Try-before-you-buy"),
+          description: t(
+            "onlineTutors.f4.desc",
+            "Most tutors offer a free 20-min intro call.",
+          ),
+        },
+        {
+          title: t("onlineTutors.f5.title", "Pay per session"),
+          description: t(
+            "onlineTutors.f5.desc",
+            "No subscriptions. Refund guarantee on first session.",
+          ),
+        },
+        {
+          title: t("onlineTutors.f6.title", "Global timezone match"),
+          description: t(
+            "onlineTutors.f6.desc",
+            "Filter by your local hours and language.",
+          ),
+        },
       ]}
-      primaryCta={{ label: "Browse online tutors", to: "/tutors" }}
-      secondaryCta={{ label: "Post a requirement", to: "/post-requirement" }}
+      primaryCta={{ label: t("onlineTutors.ctaPrimary"), to: "/tutors" }}
+      secondaryCta={{ label: t("onlineTutors.ctaSecondary"), to: "/post-requirement" }}
     />
   );
 }

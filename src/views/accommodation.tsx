@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearch } from "@/lib/navigation";
 import { Building2, Globe2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -26,6 +26,7 @@ import { canonicalUrl } from "@/lib/site-config";
 type Search = { city?: string; enquiry?: string };
 
 function AccommodationPage() {
+  const { t } = useTranslation("common");
   const { accommodations } = useAdminStore();
   const { location, hasLocationAccess, isLoading: locationLoading } = useLocationContext();
   const search = useSearch<Search>();
@@ -85,14 +86,13 @@ function AccommodationPage() {
       <header className="mb-8">
         <div className="inline-flex items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium text-primary">
           <Building2 className="h-3.5 w-3.5" />
-          Student accommodation
+          {t("accommodation.badge")}
         </div>
         <h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">
-          Find a verified PG or hostel near you
+          {t("accommodation.title")}
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Safe, student-friendly stays in {cities.length}+ cities. Filter by type, budget and amenities,
-          and contact owners directly through TeacherPoint.
+          {t("accommodation.subtitle", { count: cities.length })}
         </p>
       </header>
 
@@ -101,24 +101,22 @@ function AccommodationPage() {
           <div className="flex items-center gap-2 text-sm">
             <Globe2 className="h-4 w-4 text-primary" />
             <span>
-              Showing PGs and hostels in{" "}
-              <Badge variant="secondary" className="mx-1 align-middle">
-                {countryLabel}
-              </Badge>
-              based on your location
+              {t("accommodation.showingIn", { country: countryLabel })}
             </span>
           </div>
           <Button variant="outline" size="sm" onClick={() => setShowAllCountries(true)}>
-            Show all countries
+            {t("accommodation.showAllCountries")}
           </Button>
         </div>
       ) : null}
 
       {showAllCountries && hasLocationAccess ? (
         <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span>Showing stays worldwide.</span>
+          <span>{t("accommodation.showingWorldwide")}</span>
           <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setShowAllCountries(false)}>
-            Back to {countryLabel ?? "my country"}
+            {t("accommodation.backToCountry", {
+              country: countryLabel ?? t("accommodation.myCountry", "my country"),
+            })}
           </Button>
         </div>
       ) : null}
@@ -129,32 +127,32 @@ function AccommodationPage() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by city, country, or PG name…"
+            placeholder={t("accommodation.searchPlaceholder")}
             className="ps-10"
             maxLength={120}
           />
         </div>
         <Select value={type} onValueChange={setType}>
           <SelectTrigger>
-            <SelectValue placeholder="All types" />
+            <SelectValue placeholder={t("accommodation.allTypes")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            <SelectItem value="PG">PG</SelectItem>
-            <SelectItem value="Hostel">Hostel</SelectItem>
-            <SelectItem value="Apartment">Apartment</SelectItem>
-            <SelectItem value="Shared Room">Shared Room</SelectItem>
+            <SelectItem value="all">{t("accommodation.allTypes")}</SelectItem>
+            <SelectItem value="PG">{t("accommodation.typePG")}</SelectItem>
+            <SelectItem value="Hostel">{t("accommodation.typeHostel")}</SelectItem>
+            <SelectItem value="Apartment">{t("accommodation.typeApartment")}</SelectItem>
+            <SelectItem value="Shared Room">{t("accommodation.typeShared")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={gender} onValueChange={setGender}>
           <SelectTrigger>
-            <SelectValue placeholder="All students" />
+            <SelectValue placeholder={t("accommodation.allStudents")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All students</SelectItem>
-            <SelectItem value="boys">Boys</SelectItem>
-            <SelectItem value="girls">Girls</SelectItem>
-            <SelectItem value="co-ed">Co-ed</SelectItem>
+            <SelectItem value="all">{t("accommodation.allStudents")}</SelectItem>
+            <SelectItem value="boys">{t("accommodation.boys")}</SelectItem>
+            <SelectItem value="girls">{t("accommodation.girls")}</SelectItem>
+            <SelectItem value="co-ed">{t("accommodation.coed")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -162,11 +160,11 @@ function AccommodationPage() {
       {list.length === 0 ? (
         <div className="rounded-2xl border bg-card p-10 text-center">
           <Building2 className="mx-auto h-10 w-10 text-muted-foreground" />
-          <h3 className="mt-3 font-display text-lg font-bold">No matching stays</h3>
+          <h3 className="mt-3 font-display text-lg font-bold">{t("accommodation.emptyTitle")}</h3>
           <p className="text-sm text-muted-foreground">
             {geoScoped
-              ? `No listings in ${countryLabel} match your filters yet. Try another city or browse all countries.`
-              : "Try a different city or clear your filters."}
+              ? t("accommodation.emptyGeo", { country: countryLabel })
+              : t("accommodation.emptyGeneric")}
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <Button
@@ -178,11 +176,11 @@ function AccommodationPage() {
                 setGender("all");
               }}
             >
-              Clear filters
+              {t("accommodation.clearFilters")}
             </Button>
             {geoScoped ? (
               <Button size="sm" onClick={() => setShowAllCountries(true)}>
-                Show all countries
+                {t("accommodation.showAllCountries")}
               </Button>
             ) : null}
           </div>

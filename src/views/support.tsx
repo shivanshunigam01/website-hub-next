@@ -1,7 +1,7 @@
 "use client";
 
-
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, LifeBuoy, Send, Mail, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,6 @@ import { toast } from "sonner";
 import { usePlatformStore, type TicketCategory, type TicketPriority, type TicketAuthorRole, type SupportTicket } from "@/hooks/use-platform-store";
 import { useApp } from "@/hooks/use-app";
 
-
-
 const STATUS_TONE: Record<string, string> = {
   open: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
   in_progress: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
@@ -26,7 +24,23 @@ const STATUS_TONE: Record<string, string> = {
   closed: "bg-muted text-muted-foreground",
 };
 
+const CATEGORY_KEYS: { value: TicketCategory; key: string }[] = [
+  { value: "account", key: "support.cat.account" },
+  { value: "payments", key: "support.cat.payments" },
+  { value: "course", key: "support.cat.course" },
+  { value: "tutor", key: "support.cat.tutor" },
+  { value: "technical", key: "support.cat.technical" },
+];
+
+const PRIORITY_KEYS: { value: TicketPriority; key: string }[] = [
+  { value: "low", key: "support.priority.low" },
+  { value: "medium", key: "support.priority.medium" },
+  { value: "high", key: "support.priority.high" },
+  { value: "urgent", key: "support.priority.urgent" },
+];
+
 function Support() {
+  const { t } = useTranslation("common");
   const { tickets, createTicket, replyTicket } = usePlatformStore();
   const { role } = useApp();
   const [open, setOpen] = useState<SupportTicket | null>(null);
@@ -48,28 +62,38 @@ function Support() {
 
   const myTickets = useMemo(() => {
     if (!form.requesterEmail) return tickets.slice(0, 6);
-    return tickets.filter((t) => t.requesterEmail === form.requesterEmail);
+    return tickets.filter((tk) => tk.requesterEmail === form.requesterEmail);
   }, [tickets, form.requesterEmail]);
 
-  const live = open ? tickets.find((t) => t.id === open.id) ?? null : null;
+  const live = open ? tickets.find((tk) => tk.id === open.id) ?? null : null;
+
+  const categoryOptions = CATEGORY_KEYS.map((c) => ({
+    value: c.value,
+    label: t(c.key),
+  }));
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.subject || !form.description || !form.requesterName || !form.requesterEmail) {
-      toast.error("Fill in all fields");
+      toast.error(t("support.fillAllFields", "Fill in all fields"));
       return;
     }
     if (form.category === "other" && !form.categoryOther.trim()) {
-      toast.error("Please specify the category");
+      toast.error(t("support.specifyCategory", "Please specify the category"));
       return;
     }
-    const t = createTicket({
+    const created = createTicket({
       ...form,
       categoryOther: form.category === "other" ? form.categoryOther.trim() : undefined,
       requesterRole: myRole,
       firstMessage: form.description,
     });
-    toast.success(`Ticket ${t.id} created — we'll email you at ${t.requesterEmail}`);
+    toast.success(
+      t("support.ticketCreated", "Ticket {{id}} created — we'll email you at {{email}}", {
+        id: created.id,
+        email: created.requesterEmail,
+      }),
+    );
     setForm({ ...form, subject: "", description: "" });
   };
 
@@ -79,31 +103,62 @@ function Support() {
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-primary text-white">
           <LifeBuoy className="h-5 w-5" />
         </span>
-        <h1 className="font-display font-extrabold text-3xl">Support center</h1>
+        <h1 className="font-display font-extrabold text-3xl">{t("support.title")}</h1>
       </div>
-      <p className="text-muted-foreground">Submit issues, track tickets, and chat with our team. We typically respond in under 4 hours.</p>
+      <p className="text-muted-foreground">{t("support.subtitle")}</p>
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-6 mt-8">
         <div className="bg-card border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <h2 className="font-display font-bold flex items-center gap-2"><Mail className="h-4 w-4" /> Tickets</h2>
-            <Badge variant="outline">{myTickets.length} ticket(s)</Badge>
+            <h2 className="font-display font-bold flex items-center gap-2">
+              <Mail className="h-4 w-4" /> {t("support.tickets")}
+            </h2>
+            <Badge variant="outline">{t("support.ticketCount", { count: myTickets.length })}</Badge>
           </div>
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Subject</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead></TableHead></TableRow></TableHeader>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("support.colId")}</TableHead>
+                  <TableHead>{t("support.colSubject")}</TableHead>
+                  <TableHead>{t("support.colPriority")}</TableHead>
+                  <TableHead>{t("support.colStatus")}</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
-                {myTickets.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">No tickets yet.</TableCell></TableRow>}
-                {myTickets.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-mono text-xs">{t.id}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">{t.subject}</div>
-                      <div className="text-xs text-muted-foreground capitalize">{t.category}</div>
+                {myTickets.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                      {t("support.empty")}
                     </TableCell>
-                    <TableCell><Badge variant="outline" className="capitalize">{t.priority}</Badge></TableCell>
-                    <TableCell><Badge className={STATUS_TONE[t.status]}>{t.status.replace("_", " ")}</Badge></TableCell>
-                    <TableCell><Button size="sm" variant="ghost" onClick={() => { setOpen(t); setReply(""); }}>View</Button></TableCell>
+                  </TableRow>
+                )}
+                {myTickets.map((tk) => (
+                  <TableRow key={tk.id}>
+                    <TableCell className="font-mono text-xs">{tk.id}</TableCell>
+                    <TableCell>
+                      <div className="font-medium">{tk.subject}</div>
+                      <div className="text-xs text-muted-foreground capitalize">{tk.category}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">{tk.priority}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={STATUS_TONE[tk.status]}>{tk.status.replace("_", " ")}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setOpen(tk);
+                          setReply("");
+                        }}
+                      >
+                        {t("support.view")}
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -112,48 +167,78 @@ function Support() {
         </div>
 
         <form className="bg-card border rounded-2xl p-5 h-fit" onSubmit={submit}>
-          <h2 className="font-display font-bold mb-4 flex items-center gap-2"><Plus className="h-4 w-4" />New ticket</h2>
+          <h2 className="font-display font-bold mb-4 flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            {t("support.newTicket")}
+          </h2>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              <div><Label>Your name</Label><Input required value={form.requesterName} onChange={(e) => setForm({ ...form, requesterName: e.target.value })} /></div>
-              <div><Label>Email</Label><Input required type="email" value={form.requesterEmail} onChange={(e) => setForm({ ...form, requesterEmail: e.target.value })} /></div>
+              <div>
+                <Label>{t("support.yourName")}</Label>
+                <Input
+                  required
+                  value={form.requesterName}
+                  onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>{t("support.email")}</Label>
+                <Input
+                  required
+                  type="email"
+                  value={form.requesterEmail}
+                  onChange={(e) => setForm({ ...form, requesterEmail: e.target.value })}
+                />
+              </div>
             </div>
-            <div><Label>Subject</Label><Input required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} /></div>
+            <div>
+              <Label>{t("support.subject")}</Label>
+              <Input required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Category</Label>
+                <Label>{t("support.category")}</Label>
                 <SelectWithOther
                   mode="enum-other"
-                  options={[
-                    { value: "account", label: "Account" },
-                    { value: "payments", label: "Payments" },
-                    { value: "course", label: "Course" },
-                    { value: "tutor", label: "Tutor" },
-                    { value: "technical", label: "Technical" },
-                  ]}
+                  options={categoryOptions}
                   value={form.category}
                   customValue={form.categoryOther}
                   onValueChange={(v) => setForm({ ...form, category: v as TicketCategory })}
                   onCustomValueChange={(v) => setForm({ ...form, categoryOther: v })}
-                  otherPlaceholder="Specify category"
+                  otherPlaceholder={t("support.specifyCategoryPlaceholder", "Specify category")}
                 />
               </div>
               <div>
-                <Label>Priority</Label>
+                <Label>{t("support.priority")}</Label>
                 <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as TicketPriority })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    {PRIORITY_KEYS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {t(p.key)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div><Label>Description</Label><Textarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="min-h-[120px]" /></div>
-            <Button type="submit" size="lg" variant="gradient" className="w-full"><Send className="h-4 w-4" /> Submit ticket</Button>
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> You'll receive updates by email.</p>
+            <div>
+              <Label>{t("support.description")}</Label>
+              <Textarea
+                required
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className="min-h-[120px]"
+              />
+            </div>
+            <Button type="submit" size="lg" variant="gradient" className="w-full">
+              <Send className="h-4 w-4" /> {t("support.submit")}
+            </Button>
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" /> {t("support.emailUpdates")}
+            </p>
           </div>
         </form>
       </div>
@@ -176,25 +261,45 @@ function Support() {
               <div className="space-y-3 max-h-72 overflow-auto border rounded-xl p-3 bg-muted/30">
                 <div className="text-sm whitespace-pre-wrap">{live.description}</div>
                 {live.messages.map((m) => (
-                  <div key={m.id} className={`text-sm p-3 rounded-lg border ${m.authorRole === "admin" ? "bg-primary/5 border-primary/30" : "bg-background"}`}>
-                    <div className="text-[11px] text-muted-foreground mb-1 capitalize">{m.author} · {m.authorRole}</div>
+                  <div
+                    key={m.id}
+                    className={`text-sm p-3 rounded-lg border ${m.authorRole === "admin" ? "bg-primary/5 border-primary/30" : "bg-background"}`}
+                  >
+                    <div className="text-[11px] text-muted-foreground mb-1 capitalize">
+                      {m.author} · {m.authorRole}
+                    </div>
                     <div className="whitespace-pre-wrap">{m.message}</div>
                   </div>
                 ))}
               </div>
               {live.status !== "closed" && (
                 <>
-                  <Textarea placeholder="Add a reply..." value={reply} onChange={(e) => setReply(e.target.value)} className="min-h-[80px]" />
-                  <Button onClick={() => {
-                    if (!reply.trim()) return toast.error("Type a message");
-                    replyTicket(live.id, { author: form.requesterName || live.requesterName, authorRole: myRole, message: reply.trim() });
-                    setReply("");
-                    toast.success("Reply added");
-                  }}><Send className="h-4 w-4" /> Reply</Button>
+                  <Textarea
+                    placeholder={t("support.replyPlaceholder")}
+                    value={reply}
+                    onChange={(e) => setReply(e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                  <Button
+                    onClick={() => {
+                      if (!reply.trim()) return toast.error(t("support.typeMessage", "Type a message"));
+                      replyTicket(live.id, {
+                        author: form.requesterName || live.requesterName,
+                        authorRole: myRole,
+                        message: reply.trim(),
+                      });
+                      setReply("");
+                      toast.success(t("support.replyAdded", "Reply added"));
+                    }}
+                  >
+                    <Send className="h-4 w-4" /> {t("support.reply")}
+                  </Button>
                 </>
               )}
               {live.status === "resolved" && (
-                <div className="text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> This ticket has been resolved.</div>
+                <div className="text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" /> {t("support.resolved")}
+                </div>
               )}
             </>
           )}

@@ -1,46 +1,48 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
+import { useTranslation } from "react-i18next";
 import { GraduationCap, BookOpen, Users } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 
 const ROLES = [
   {
     id: "student" as const,
-    title: "I'm a Student",
-    desc: "Find tutors, take courses, earn certificates.",
+    titleKey: "roleSelect.studentTitle",
+    descKey: "roleSelect.studentDesc",
     icon: GraduationCap,
     color: "from-sky-400 to-blue-600",
   },
   {
     id: "teacher" as const,
-    title: "I'm a Tutor",
-    desc: "Create courses, mentor students, earn money.",
+    titleKey: "roleSelect.tutorTitle",
+    descKey: "roleSelect.tutorDesc",
     icon: BookOpen,
     color: "from-purple-400 to-fuchsia-600",
   },
   {
     id: "parent" as const,
-    title: "I'm a Parent",
-    desc: "Find tutors for your child and track their learning.",
+    titleKey: "roleSelect.parentTitle",
+    descKey: "roleSelect.parentDesc",
     icon: Users,
     color: "from-emerald-400 to-teal-600",
   },
 ];
 
 function RoleSelect() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-16 max-w-4xl">
       <div className="mb-8 flex justify-center">
         <BrandLogo size="login" />
       </div>
       <div className="text-center mb-10">
-        <h1 className="font-display font-extrabold text-3xl md:text-4xl">Create your account</h1>
-        <p className="mt-3 text-muted-foreground">Choose how you will use TeacherPoint.</p>
+        <h1 className="font-display font-extrabold text-3xl md:text-4xl">{t("roleSelect.title")}</h1>
+        <p className="mt-3 text-muted-foreground">{t("roleSelect.subtitle")}</p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Already have an account?{" "}
+          {t("roleSelect.haveAccount")}{" "}
           <Link to="/login" className="text-primary font-semibold">
-            Log in
+            {t("roleSelect.login")}
           </Link>
         </p>
       </div>
@@ -58,9 +60,9 @@ function RoleSelect() {
             >
               <r.icon className="h-7 w-7" />
             </div>
-            <h3 className="font-display font-bold text-xl">{r.title}</h3>
-            <p className="text-sm text-muted-foreground mt-2">{r.desc}</p>
-            <p className="text-sm text-primary font-semibold mt-4">Continue →</p>
+            <h3 className="font-display font-bold text-xl">{t(r.titleKey)}</h3>
+            <p className="text-sm text-muted-foreground mt-2">{t(r.descKey)}</p>
+            <p className="text-sm text-primary font-semibold mt-4">{t("roleSelect.continue")}</p>
           </Link>
         ))}
       </div>

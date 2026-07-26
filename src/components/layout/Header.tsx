@@ -48,6 +48,7 @@ function TutorsNavDropdown({
   navClass: (active: boolean) => string;
   label: string;
 }) {
+  const { t } = useTranslation("common");
   const active = path.startsWith("/tutors") || path.startsWith("/post-requirement");
   return (
     <DropdownMenu modal={false}>
@@ -58,19 +59,19 @@ function TutorsNavDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuItem asChild>
-          <Link to="/post-requirement">Request a tutor</Link>
+          <Link to="/post-requirement">{t("nav.requestTutor")}</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/tutors">All Tutors</Link>
+          <Link to="/tutors">{t("nav.allTutors")}</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/tutors" search={{ mode: "online", online: "true" } as any}>
-            Online Tutors
+            {t("nav.onlineTutors")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/tutors" search={{ mode: "in-person", online: "false" } as any}>
-            Home Tutors
+            {t("nav.homeTutors")}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -214,13 +215,13 @@ export function Header() {
         translate="no"
       >
         <div className="container relative mx-auto flex h-16 min-h-16 items-center px-4 sm:px-6">
-          <Link to="/" className="relative z-10 flex shrink-0 items-center" aria-label="TeacherPoint home">
+          <Link to="/" className="relative z-10 flex shrink-0 items-center" aria-label={t("nav.ariaHome")}>
             <BrandLogo size="header" priority />
           </Link>
 
           <nav
             className="pointer-events-none absolute inset-x-0 hidden justify-center lg:flex"
-            aria-label="Main"
+            aria-label={t("nav.ariaMain")}
           >
             <div className="pointer-events-auto flex max-w-[calc(100%-18rem)] flex-nowrap items-center justify-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <DesktopNavLinks path={path} navLabel={navLabel} tc={tc} t={t} />
@@ -267,7 +268,7 @@ export function Header() {
                   </DropdownMenuItem>
                   {(role === "student" || role === "teacher" || role === "parent") && (
                     <DropdownMenuItem asChild>
-                      <Link to="/profile">Edit profile</Link>
+                      <Link to="/profile">{t("nav.editProfile")}</Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
@@ -362,14 +363,14 @@ export function Header() {
                       onClick={() => setMobileOpen(false)}
                       className={`block ${navItemClass(path.startsWith("/post-requirement"))}`}
                     >
-                      Request a tutor
+                      {t("nav.requestTutor")}
                     </Link>
                     <Link
                       to="/tutors"
                       onClick={() => setMobileOpen(false)}
                       className={`block ${navItemClass(path.startsWith("/tutors"))}`}
                     >
-                      All Tutors
+                      {t("nav.allTutors")}
                     </Link>
                     <Link
                       to="/tutors"
@@ -377,7 +378,7 @@ export function Header() {
                       onClick={() => setMobileOpen(false)}
                       className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
-                      Online Tutors
+                      {t("nav.onlineTutors")}
                     </Link>
                     <Link
                       to="/tutors"
@@ -385,7 +386,7 @@ export function Header() {
                       onClick={() => setMobileOpen(false)}
                       className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
-                      Home Tutors
+                      {t("nav.homeTutors")}
                     </Link>
                   </div>
                 ) : (

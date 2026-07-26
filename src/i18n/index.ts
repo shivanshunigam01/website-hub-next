@@ -35,6 +35,12 @@ void i18n
     defaultNS: "common",
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
+    saveMissing: process.env.NODE_ENV === "development",
+    missingKeyHandler: (lngs, _ns, key) => {
+      if (process.env.NODE_ENV === "development") {
+        console.warn(`[i18n] missing key "${key}" for: ${lngs.join(", ")}`);
+      }
+    },
   });
 
 export default i18n;

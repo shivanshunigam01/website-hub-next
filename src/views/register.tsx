@@ -16,8 +16,10 @@ import { useGoogleAuth } from "@/hooks/use-google-auth";
 import { afterAuthPath } from "@/lib/auth-redirect";
 import { formatApiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 function Register() {
+  const { t } = useTranslation();
   const { registerWithPassword } = useApp();
   const nav = useNavigate();
   const { role: roleParam } = useSearch<{ role?: "student" | "teacher" | "parent" }>();
@@ -36,10 +38,10 @@ function Register() {
     return (
       <section className="container mx-auto max-w-lg px-4 py-16 text-center">
         <BrandLogo size="login" className="mx-auto mb-6" />
-        <h1 className="font-display text-2xl font-bold">Choose how you will use TeacherPoint</h1>
-        <p className="mt-2 text-muted-foreground">Pick student, tutor, or parent to continue.</p>
+        <h1 className="font-display text-2xl font-bold">{t("register.chooseRoleTitle")}</h1>
+        <p className="mt-2 text-muted-foreground">{t("register.chooseRoleSubtitle")}</p>
         <Button className="mt-6" asChild>
-          <Link to="/role-select">Select role</Link>
+          <Link to="/role-select">{t("register.selectRole")}</Link>
         </Button>
       </section>
     );
@@ -49,18 +51,14 @@ function Register() {
     <section className="container mx-auto grid max-w-6xl items-center gap-8 px-4 py-6 lg:grid-cols-2 lg:gap-12 lg:py-8">
       <div className="hidden lg:block">
         <BrandLogo size="login" className="mb-5" />
-        <h1 className="font-display text-4xl font-extrabold leading-tight">
-          Join <span className="text-gradient-primary">TeacherPoint</span>
-        </h1>
-        <p className="mt-3 max-w-md text-muted-foreground">
-          Create your free {roleLabel} account in seconds — use Google, WhatsApp, or email.
-        </p>
+        <h1 className="font-display text-4xl font-extrabold leading-tight">{t("register.joinTitle")}</h1>
+        <p className="mt-3 max-w-md text-muted-foreground">{t("register.joinSubtitle", { role: roleLabel })}</p>
         <p className="mt-4 max-w-md rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
           {role === "teacher"
-            ? "Tutors verify email, complete their profile, then receive a welcome email with courses."
+            ? t("register.hintTeacher")
             : role === "parent"
-              ? "Parents verify email, complete their profile (phone or child details), then receive a welcome email."
-              : "Students verify email, complete their profile, then receive a welcome email with popular courses."}
+              ? t("register.hintParent")
+              : t("register.hintStudent")}
         </p>
       </div>
 
@@ -71,11 +69,14 @@ function Register() {
 
         <div className="rounded-2xl border bg-card p-5 shadow-soft sm:p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <h2 className="font-display text-xl font-bold sm:text-2xl">Create your account</h2>
+            <h2 className="font-display text-xl font-bold sm:text-2xl">{t("register.title")}</h2>
             <p className="text-sm text-muted-foreground">
-              As <span className="font-semibold capitalize text-foreground">{roleLabel}</span> ·{" "}
+              <span className="font-semibold capitalize text-foreground">
+                {t("register.asRole", { role: roleLabel })}
+              </span>{" "}
+              ·{" "}
               <Link to="/role-select" className="font-semibold text-primary">
-                Change
+                {t("register.change")}
               </Link>
             </p>
           </div>
@@ -93,19 +94,19 @@ function Register() {
                 onError={handleGoogleError}
                 disabled={submitting}
                 loading={googleLoading}
-                label={`Google · ${roleLabel}`}
+                label={t("register.google", { role: roleLabel })}
                 className="col-span-1"
               />
             ) : null}
             <WhatsAppAuthButton
               onClick={() => setWhatsappOpen(true)}
               disabled={submitting || googleLoading}
-              label="WhatsApp"
+              label={t("register.whatsapp")}
               className={showGoogle ? "col-span-1" : "sm:col-span-2"}
             />
           </div>
 
-          <AuthDivider label="or sign up with email" className="my-4" />
+          <AuthDivider label={t("register.orEmail")} className="my-4" />
 
           <form
             className="space-y-3"
@@ -121,16 +122,19 @@ function Register() {
                   password: String(fd.get("password")),
                   role: role,
                 });
-                toast.success("Account created — you are now signed in!");
+                toast.success(t("register.createdToast", "Account created — you are now signed in!"));
 
                 if (session.verificationEmailSent || session.devOtp) {
-                  toast.success(`Verification code sent to ${email}. Check your inbox.`, {
+                  toast.success(t("register.verificationSent", "Verification code sent to {{email}}. Check your inbox.", { email }), {
                     duration: 8000,
                   });
                 } else if (session.verificationEmailError) {
                   toast.warning(
                     session.verificationEmailError ||
-                      "Could not send verification email. Use Resend on the next screen.",
+                      t(
+                        "register.verificationEmailFailed",
+                        "Could not send verification email. Use Resend on the next screen.",
+                      ),
                     { duration: 8000 },
                   );
                 }
@@ -143,7 +147,7 @@ function Register() {
                   ),
                 });
               } catch (err) {
-                toast.error(formatApiErrorMessage(err, "Registration failed"));
+                toast.error(formatApiErrorMessage(err, t("register.failed", "Registration failed")));
               } finally {
                 setSubmitting(false);
               }
@@ -151,7 +155,7 @@ function Register() {
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label htmlFor="name">Full name</Label>
+                <Label htmlFor="name">{t("register.fullName")}</Label>
                 <div className="relative mt-1">
                   <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -160,12 +164,12 @@ function Register() {
                     required
                     minLength={2}
                     className="pl-10"
-                    placeholder="Jane Doe"
+                    placeholder={t("register.namePlaceholder")}
                   />
                 </div>
               </div>
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("register.email")}</Label>
                 <div className="relative mt-1">
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -175,14 +179,14 @@ function Register() {
                     required
                     autoComplete="email"
                     className="pl-10"
-                    placeholder="you@email.com"
+                    placeholder={t("login.emailPlaceholder")}
                   />
                 </div>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("register.password")}</Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -193,7 +197,7 @@ function Register() {
                   minLength={8}
                   autoComplete="new-password"
                   className="pl-10"
-                  placeholder="At least 8 characters"
+                  placeholder={t("register.passwordPlaceholder")}
                 />
               </div>
             </div>
@@ -205,13 +209,9 @@ function Register() {
                 required
                 className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-primary"
               />
-              <span>
-                I agree to the{" "}
-                <Link to="/terms" className="font-semibold text-primary hover:underline">
-                  Terms and Conditions
-                </Link>{" "}
-                for {role === "teacher" ? "tutors" : role === "parent" ? "parents" : "students"}.
-              </span>
+              <Link to="/terms" className="hover:underline">
+                {t("register.agree", { role: roleLabel })}
+              </Link>
             </label>
 
             <Button
@@ -221,18 +221,18 @@ function Register() {
               className="w-full"
               disabled={submitting || googleLoading}
             >
-              {submitting ? "Creating account…" : "Create account"}
+              {submitting ? t("register.creating") : t("register.submit")}
             </Button>
           </form>
 
           <p className="mt-4 text-center text-xs text-muted-foreground sm:text-sm">
-            Already have an account?{" "}
+            {t("register.haveAccount")}{" "}
             <Link to="/login" className="font-semibold text-primary">
-              Log in
+              {t("register.login")}
             </Link>
             <span className="mx-2 text-border">·</span>
             <Link to="/forgot-password" className="font-semibold text-primary hover:underline">
-              Forgot password?
+              {t("register.forgot")}
             </Link>
           </p>
 

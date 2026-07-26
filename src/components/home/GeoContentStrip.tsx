@@ -46,17 +46,18 @@ function Media({ ad }: { ad: RegionalAd }) {
 }
 
 function AdCard({ ad }: { ad: RegionalAd }) {
+  const { t } = useTranslation("common");
   return (
     <article className="group relative isolate overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:shadow-lg">
       <div className="relative aspect-[16/7] w-full">
         <Media ad={ad} />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/50 to-slate-900/10 dark:from-slate-950/90 dark:via-slate-900/60" />
         <div className="relative z-10 flex h-full max-w-full flex-col justify-center gap-2 p-4 sm:max-w-[62%] sm:p-7">
-          <Badge variant="secondary" className="w-fit border-primary/20 bg-primary/10 text-primary">
-            <Sparkles className="me-1 h-3 w-3" /> Featured
+          <Badge variant="secondary" className="w-fit border-white/30 bg-white/15 text-white">
+            <Sparkles className="me-1 h-3 w-3" /> {t("geo.featured")}
           </Badge>
-          <h3 className="font-display text-lg font-bold sm:text-2xl">{ad.title}</h3>
-          <p className="line-clamp-2 text-sm text-muted-foreground sm:text-base">{ad.description}</p>
+          <h3 className="font-display text-lg font-bold text-white sm:text-2xl">{ad.title}</h3>
+          <p className="line-clamp-2 text-sm text-white/85 sm:text-base">{ad.description}</p>
           <div className="pt-1">
             <Button asChild size="sm" className="shadow">
               <Link to={ad.ctaLink as "/"}>
@@ -88,7 +89,7 @@ export function GeoContentStrip({
 }: Props) {
   const { location, isLoading, hasLocationAccess } = useLocationContext();
   const { regionalAds } = useRegionalAds();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation("common");
 
   const ads = useMemo(
     () =>
@@ -108,10 +109,10 @@ export function GeoContentStrip({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Globe2 className="h-4 w-4 text-primary" />
-            <span className="font-semibold text-foreground">Featured for you</span>
+            <span className="font-semibold text-foreground">{t("geo.featuredForYou")}</span>
           </div>
           <span className="text-xs text-muted-foreground">
-            Language: <span className="font-medium uppercase text-foreground">{i18n.language}</span>
+            {t("geo.language")} <span className="font-medium uppercase text-foreground">{i18n.language}</span>
           </span>
         </div>
       )}

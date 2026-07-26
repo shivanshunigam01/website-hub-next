@@ -1,7 +1,7 @@
 "use client";
 
 import { Link, useNavigate } from "@/lib/navigation";
-import { canonicalUrl } from "@/lib/site-config";
+import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
   BookOpen,
@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/select";
 import { SelectWithOther } from "@/components/ui/SelectWithOther";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/hooks/use-app";
 import { useCreateRequirement, useMyRequirements } from "@/hooks/use-requirements-api";
 import { useCurrency } from "@/hooks/use-currency";
@@ -51,55 +51,47 @@ import { SubjectAutocomplete } from "@/components/tutors/SubjectAutocomplete";
 import { normalizeSubjectName } from "@/lib/subject-name";
 import { cn } from "@/lib/utils";
 
-const LEVEL_OPTIONS = [
-  { value: "elem", label: "Elementary" },
-  { value: "middle", label: "Middle school" },
-  { value: "high", label: "High school" },
-  { value: "college", label: "College / University" },
-  { value: "pro", label: "Professional" },
-];
+const LEVEL_OPTION_KEYS = [
+  { value: "elem", key: "postReq.level.elem" },
+  { value: "middle", key: "postReq.level.middle" },
+  { value: "high", key: "postReq.level.high" },
+  { value: "college", key: "postReq.level.college" },
+  { value: "pro", key: "postReq.level.pro" },
+] as const;
 
-const DURATION_OPTIONS = [
-  { value: "once", label: "One-time session" },
-  { value: "month", label: "About a month" },
-  { value: "semester", label: "One semester" },
-  { value: "ongoing", label: "Ongoing" },
-];
+const DURATION_OPTION_KEYS = [
+  { value: "once", key: "postReq.duration.once" },
+  { value: "month", key: "postReq.duration.month" },
+  { value: "semester", key: "postReq.duration.semester" },
+  { value: "ongoing", key: "postReq.duration.ongoing" },
+] as const;
 
-const QUICK_TITLES = [
+const QUICK_TITLE_KEYS = [
+  "postReq.quick1",
+  "postReq.quick2",
+  "postReq.quick3",
+  "postReq.quick4",
+] as const;
+
+const QUICK_TITLE_DEFAULTS = [
   "Class 10 Math tutor for board exams",
   "IELTS speaking practice",
   "Python for beginners",
   "NEET Biology crash course",
-];
+] as const;
 
-const STEPS = [
-  {
-    step: "01",
-    title: "Describe what you need",
-    desc: "Subject, level, and goals — the more detail, the better the match.",
-    icon: FileText,
-  },
-  {
-    step: "02",
-    title: "Set your preferences",
-    desc: "Budget, online or in-person, and how often you want to meet.",
-    icon: Calendar,
-  },
-  {
-    step: "03",
-    title: "Get matched fast",
-    desc: "Verified tutors apply within hours. You pick who fits best.",
-    icon: MessageCircle,
-  },
-];
+const STEP_KEYS = [
+  { titleKey: "postReq.step1.title", descKey: "postReq.step1.desc", icon: FileText },
+  { titleKey: "postReq.step2.title", descKey: "postReq.step2.desc", icon: Calendar },
+  { titleKey: "postReq.step3.title", descKey: "postReq.step3.desc", icon: MessageCircle },
+] as const;
 
-const PERKS = [
-  { icon: ShieldCheck, text: "Background-checked tutors only" },
-  { icon: Clock, text: "Typical response in under 4 hours" },
-  { icon: Users, text: "12,500+ active tutors worldwide" },
-  { icon: Sparkles, text: "Free to post — pay only when you book" },
-];
+const PERK_KEYS = [
+  { icon: ShieldCheck, key: "postReq.perk1" },
+  { icon: Clock, key: "postReq.perk2" },
+  { icon: Users, key: "postReq.perk3" },
+  { icon: Sparkles, key: "postReq.perk4" },
+] as const;
 
 type FormState = {
   title: string;
@@ -136,6 +128,7 @@ const INITIAL_FORM: FormState = {
 };
 
 function Post() {
+  const { t } = useTranslation("common");
   const { user, role, loading: authLoading, profileComplete } = useApp();
   const createMut = useCreateRequirement();
   const { data: myPosts = [], refetch: refetchMine } = useMyRequirements(
@@ -148,6 +141,19 @@ function Post() {
   const nav = useNavigate();
 
   const canPost = role === "student" || role === "parent";
+
+  const levelOptions = useMemo(
+    () => LEVEL_OPTION_KEYS.map((o) => ({ value: o.value, label: t(o.key) })),
+    [t],
+  );
+  const durationOptions = useMemo(
+    () => DURATION_OPTION_KEYS.map((o) => ({ value: o.value, label: t(o.key) })),
+    [t],
+  );
+  const quickTitles = useMemo(
+    () => QUICK_TITLE_KEYS.map((key, i) => t(key, QUICK_TITLE_DEFAULTS[i])),
+    [t],
+  );
 
   useEffect(() => {
     if (authLoading || !user || !canPost) return;
@@ -182,32 +188,32 @@ function Post() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !canPost) {
-      toast.error("Please sign in as a student or parent to post a requirement.");
+      toast.error(t("postReq.toastSignIn", "Please sign in as a student or parent to post a requirement."));
       return;
     }
     if (!profileComplete) {
-      toast.error("Complete your profile registration before posting a requirement.");
+      toast.error(t("postReq.toastCompleteProfile", "Complete your profile registration before posting a requirement."));
       void nav({ to: afterAuthPath(role!, false, true) });
       return;
     }
     if (!form.subject.trim()) {
-      toast.error("Please choose a subject.");
+      toast.error(t("postReq.toastSubject", "Please choose a subject."));
       return;
     }
     if (!form.title.trim() || !form.details.trim()) {
-      toast.error("Please fill in the title and details.");
+      toast.error(t("postReq.toastTitleDetails", "Please fill in the title and details."));
       return;
     }
     if (form.details.trim().length < 20) {
-      toast.error("Please add more detail (at least 20 characters).");
+      toast.error(t("postReq.toastMoreDetail", "Please add more detail (at least 20 characters)."));
       return;
     }
     if (form.level === "other" && !form.levelOther.trim()) {
-      toast.error("Please specify the level.");
+      toast.error(t("postReq.toastLevel", "Please specify the level."));
       return;
     }
     if (form.duration === "other" && !form.durationOther.trim()) {
-      toast.error("Please specify the duration.");
+      toast.error(t("postReq.toastDuration", "Please specify the duration."));
       return;
     }
     try {
@@ -232,10 +238,10 @@ function Post() {
       setForm(INITIAL_FORM);
       setSkillDraft("");
       refetchMine();
-      toast.success("Requirement submitted! Pending admin approval.");
+      toast.success(t("postReq.toastSubmitted", "Requirement submitted! Pending admin approval."));
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      toast.error(formatApiErrorMessage(err, "Could not submit requirement"));
+      toast.error(formatApiErrorMessage(err, t("postReq.toastSubmitFailed", "Could not submit requirement")));
     }
   };
 
@@ -258,20 +264,19 @@ function Post() {
                 <LogIn className="h-8 w-8" />
               </div>
               <h1 className="font-display text-3xl font-extrabold text-white sm:text-4xl">
-                Sign in to post a requirement
+                {t("postReq.signInTitle")}
               </h1>
               <p className="mt-4 text-base text-white/85">
-                You need a free student account to submit a tutoring or assignment help request.
-                After admin approval, your post goes live on Tutor Jobs.
+                {t("postReq.signInSubtitle")}
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Button asChild size="lg" variant="secondary">
                   <Link to="/login" search={{ redirect: "/post-requirement" }}>
-                    Sign in
+                    {t("postReq.signIn")}
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-                  <Link to="/register">Create account</Link>
+                  <Link to="/register">{t("postReq.createAccount")}</Link>
                 </Button>
               </div>
             </div>
@@ -284,16 +289,16 @@ function Post() {
   if (!canPost) {
     return (
       <div className="container mx-auto px-4 py-16 text-center sm:px-6">
-        <h1 className="font-display text-2xl font-bold">Students only</h1>
+        <h1 className="font-display text-2xl font-bold">{t("postReq.studentsOnlyTitle")}</h1>
         <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-          Tutoring requirements can be posted by students and parents. Browse tutor jobs or find tutors instead.
+          {t("postReq.studentsOnlyDesc")}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button asChild variant="outline">
-            <Link to="/tutor-jobs">Browse tutor jobs</Link>
+            <Link to="/tutor-jobs">{t("postReq.browseJobs")}</Link>
           </Button>
           <Button asChild>
-            <Link to="/tutors">Find tutors</Link>
+            <Link to="/tutors">{t("postReq.findTutors")}</Link>
           </Button>
         </div>
       </div>
@@ -302,7 +307,6 @@ function Post() {
 
   return (
     <div className="min-h-full">
-      {/* Hero */}
       <div className="relative overflow-hidden border-b">
         <TutorPageBannerBackground />
 
@@ -310,40 +314,39 @@ function Post() {
           <div className="max-w-3xl">
             <Badge className="mb-4 border-white/25 bg-white/15 text-white hover:bg-white/15">
               <Sparkles className="me-1 h-3 w-3" />
-              Free to post
+              {t("postReq.badge")}
             </Badge>
             <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Post a tutoring requirement
+              {t("postReq.title")}
             </h1>
             <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">
-              Tell us what you&apos;re looking for — verified tutors will reach out with tailored offers,
-              usually within a few hours.
+              {t("postReq.subtitle")}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/90">
               <span className="inline-flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4" />
-                No commitment until you book
+                {t("postReq.trustNoCommit")}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
-                Avg. 4h first response
+                {t("postReq.trustResponse")}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4" />
-                Verified tutors only
+                {t("postReq.trustVerified")}
               </span>
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button asChild size="lg" variant="secondary" className="shadow-lg">
                 <a href="#requirement-form">
-                  Start your post
+                  {t("postReq.startPost")}
                   <ArrowRight className="ms-1 h-4 w-4" />
                 </a>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-                <Link to="/tutors">Browse tutors instead</Link>
+                <Link to="/tutors">{t("postReq.browseInstead")}</Link>
               </Button>
             </div>
           </div>
@@ -354,9 +357,9 @@ function Post() {
         <div className="container mx-auto px-4 pt-6 sm:px-6">
           <div className="rounded-2xl border bg-card p-5 sm:p-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-lg font-bold">Your requirements</h2>
+              <h2 className="font-display text-lg font-bold">{t("postReq.yourRequirements")}</h2>
               <Button asChild variant="outline" size="sm">
-                <Link to="/tutor-jobs">View tutor jobs</Link>
+                <Link to="/tutor-jobs">{t("postReq.viewTutorJobs")}</Link>
               </Button>
             </div>
             <div className="space-y-3">
@@ -368,7 +371,8 @@ function Post() {
                   <div className="min-w-0">
                     <p className="font-medium">{post.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {post.subject} · {post.jobType === "assignment" ? "Assignment help" : "Tutoring"}
+                      {post.subject} ·{" "}
+                      {post.jobType === "assignment" ? t("postReq.assignmentHelp") : t("postReq.tutoring")}
                     </p>
                   </div>
                   <Badge className={requirementStatusClass(post.status)}>
@@ -389,21 +393,17 @@ function Post() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-display font-bold text-emerald-900 dark:text-emerald-100">
-                Requirement submitted — pending review
+                {t("postReq.submittedTitle")}
               </p>
               <p className="mt-1 text-sm text-emerald-800/80 dark:text-emerald-200/80">
-                Once an admin approves your post, it will appear on{" "}
-                <Link to="/tutor-jobs" className="font-medium underline underline-offset-2">
-                  Tutor Jobs
-                </Link>
-                . You&apos;ll receive an email at {user.email} when approved.
+                {t("postReq.submittedDesc")}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline" className="border-emerald-300 bg-white dark:bg-transparent">
-                  <Link to="/tutors">Browse tutors while you wait</Link>
+                  <Link to="/tutors">{t("postReq.browseWhileWait")}</Link>
                 </Button>
                 <Button size="sm" variant="ghost" className="text-emerald-800 dark:text-emerald-200" onClick={() => setSubmitted(false)}>
-                  Post another requirement
+                  {t("postReq.postAnother")}
                 </Button>
               </div>
             </div>
@@ -413,17 +413,16 @@ function Post() {
 
       <div className="container mx-auto px-4 py-10 sm:px-6 md:py-14">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,500px)] lg:gap-14">
-          {/* Left — trust & steps */}
           <div className="space-y-8 lg:sticky lg:top-24">
             <div>
-              <h2 className="font-display text-xl font-bold sm:text-2xl">How it works</h2>
+              <h2 className="font-display text-xl font-bold sm:text-2xl">{t("postReq.howTitle")}</h2>
               <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-                Three simple steps from posting to your first lesson.
+                {t("postReq.howSubtitle")}
               </p>
               <ol className="relative mt-8 space-y-0">
-                {STEPS.map((s, i) => (
-                  <li key={s.step} className="relative flex gap-4 pb-8 last:pb-0">
-                    {i < STEPS.length - 1 && (
+                {STEP_KEYS.map((s, i) => (
+                  <li key={s.titleKey} className="relative flex gap-4 pb-8 last:pb-0">
+                    {i < STEP_KEYS.length - 1 && (
                       <span className="absolute start-5 top-11 h-[calc(100%-2.75rem)] w-px bg-border" aria-hidden />
                     )}
                     <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-4 ring-background">
@@ -431,10 +430,10 @@ function Post() {
                     </div>
                     <div className="min-w-0 pt-0.5">
                       <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                        Step {s.step}
+                        {t("postReq.stepLabel", { n: i + 1 })}
                       </span>
-                      <h3 className="mt-0.5 font-display font-bold">{s.title}</h3>
-                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+                      <h3 className="mt-0.5 font-display font-bold">{t(s.titleKey)}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t(s.descKey)}</p>
                     </div>
                   </li>
                 ))}
@@ -442,15 +441,15 @@ function Post() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              {PERKS.map((p) => (
+              {PERK_KEYS.map((p) => (
                 <div
-                  key={p.text}
+                  key={p.key}
                   className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3.5 text-sm shadow-sm"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <p.icon className="h-4 w-4" />
                   </div>
-                  {p.text}
+                  {t(p.key)}
                 </div>
               ))}
             </div>
@@ -462,33 +461,31 @@ function Post() {
                 ))}
               </div>
               <p className="mt-3 font-display text-lg font-bold leading-snug">
-                &ldquo;Found an IELTS tutor in 2 hours — exactly my budget.&rdquo;
+                &ldquo;{t("postReq.quote")}&rdquo;
               </p>
-              <footer className="mt-3 text-sm text-muted-foreground">— Priya S., student</footer>
+              <footer className="mt-3 text-sm text-muted-foreground">{t("postReq.quoteAuthor")}</footer>
             </blockquote>
           </div>
 
-          {/* Right — form */}
           <div id="requirement-form" className="scroll-mt-24">
             <form
               onSubmit={handleSubmit}
               className="overflow-hidden rounded-2xl border bg-card shadow-lg"
             >
               <div className="border-b bg-muted/30 px-6 py-5 sm:px-8">
-                <h2 className="font-display text-xl font-bold">Your requirement</h2>
+                <h2 className="font-display text-xl font-bold">{t("postReq.formTitle")}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Fill in the details below. Fields marked <span className="text-destructive">*</span> are required.
+                  {t("postReq.formHint")}
                 </p>
               </div>
 
               <div className="space-y-8 p-6 sm:p-8">
-                {/* Quick picks */}
                 <div>
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Quick examples
+                    {t("postReq.quickExamples")}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {QUICK_TITLES.map((title) => (
+                    {quickTitles.map((title) => (
                       <button
                         key={title}
                         type="button"
@@ -504,14 +501,13 @@ function Post() {
                   </div>
                 </div>
 
-                {/* Post type */}
                 <fieldset className="space-y-3">
-                  <legend className="mb-1 text-sm font-semibold">What do you need?</legend>
+                  <legend className="mb-1 text-sm font-semibold">{t("postReq.whatNeed")}</legend>
                   <div className="flex flex-wrap gap-2">
                     {(
                       [
-                        { value: "tutoring" as const, label: "Ongoing tutoring", icon: Briefcase },
-                        { value: "assignment" as const, label: "Assignment help", icon: ClipboardList },
+                        { value: "tutoring" as const, label: t("postReq.ongoingTutoring"), icon: Briefcase },
+                        { value: "assignment" as const, label: t("postReq.assignmentHelp"), icon: ClipboardList },
                       ] as const
                     ).map(({ value, label, icon: Icon }) => (
                       <button
@@ -532,55 +528,54 @@ function Post() {
                   </div>
                 </fieldset>
 
-                {/* Basics */}
                 <fieldset className="space-y-4">
                   <legend className="mb-3 flex items-center gap-2 text-sm font-semibold">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <BookOpen className="h-3.5 w-3.5" />
                     </span>
-                    Basics
+                    {t("postReq.basics")}
                   </legend>
                   <div>
                     <Label htmlFor="req-title">
-                      Title <span className="text-destructive">*</span>
+                      {t("postReq.titleLabel")} <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="req-title"
                       value={form.title}
                       onChange={(e) => update("title", e.target.value)}
-                      placeholder="e.g. Class 10 Math tutor for board exams"
+                      placeholder={t("postReq.titlePlaceholder")}
                       required
                       className="mt-1.5"
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <Label>Subject</Label>
+                      <Label>{t("postReq.subject")}</Label>
                       <SubjectAutocomplete
                         className="mt-1.5"
                         value={form.subject}
                         onChange={(v) => update("subject", v)}
-                        placeholder="Search or add a subject (e.g. Maths, Python)"
+                        placeholder={t("postReq.subjectPlaceholder")}
                       />
                     </div>
                     <div>
-                      <Label>Level</Label>
+                      <Label>{t("postReq.level")}</Label>
                       <SelectWithOther
                         mode="enum-other"
                         className="mt-1.5"
-                        options={LEVEL_OPTIONS}
+                        options={levelOptions}
                         value={form.level}
                         customValue={form.levelOther}
                         onValueChange={(v) => update("level", v)}
                         onCustomValueChange={(v) => update("levelOther", v)}
-                        otherPlaceholder="Describe the level"
+                        otherPlaceholder={t("postReq.levelOther")}
                       />
                     </div>
                   </div>
                   <div>
-                    <Label>Skills (optional)</Label>
+                    <Label>{t("postReq.skills")}</Label>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Add skills from the master list, or type a new one to grow the catalog.
+                      {t("postReq.skillsHint")}
                     </p>
                     <div className="mt-1.5 flex gap-2">
                       <SubjectAutocomplete
@@ -588,7 +583,7 @@ function Post() {
                         showIcon={false}
                         value={skillDraft}
                         onChange={setSkillDraft}
-                        placeholder="e.g. Algebra, DBMS, IELTS"
+                        placeholder={t("postReq.skillsPlaceholder")}
                       />
                       <Button
                         type="button"
@@ -596,7 +591,7 @@ function Post() {
                         onClick={() => addSkill(skillDraft)}
                         disabled={!skillDraft.trim()}
                       >
-                        Add
+                        {t("postReq.add")}
                       </Button>
                     </div>
                     {form.skills.length > 0 ? (
@@ -608,7 +603,7 @@ function Post() {
                               type="button"
                               className="rounded-full p-0.5 hover:bg-muted"
                               onClick={() => removeSkill(skill)}
-                              aria-label={`Remove ${skill}`}
+                              aria-label={t("postReq.removeSkill", "Remove {{skill}}", { skill })}
                             >
                               <X className="h-3 w-3" />
                             </button>
@@ -619,20 +614,19 @@ function Post() {
                   </div>
                 </fieldset>
 
-                {/* Format */}
                 <fieldset className="space-y-4 rounded-xl border bg-muted/20 p-4 sm:p-5">
                   <legend className="mb-1 flex items-center gap-2 px-1 text-sm font-semibold">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <MapPin className="h-3.5 w-3.5" />
                     </span>
-                    Format & schedule
+                    {t("postReq.formatSchedule")}
                   </legend>
                   <div className="flex flex-wrap gap-2">
                     {(
                       [
-                        { value: "online" as const, label: "Online", icon: Wifi },
-                        { value: "offline" as const, label: "In-person", icon: WifiOff },
-                        { value: "both" as const, label: "Either", icon: Users },
+                        { value: "online" as const, label: t("postReq.modeOnline"), icon: Wifi },
+                        { value: "offline" as const, label: t("postReq.modeInPerson"), icon: WifiOff },
+                        { value: "both" as const, label: t("postReq.modeEither"), icon: Users },
                       ] as const
                     ).map(({ value, label, icon: Icon }) => (
                       <button
@@ -653,7 +647,7 @@ function Post() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <Label>Sessions per week</Label>
+                      <Label>{t("postReq.sessionsPerWeek")}</Label>
                       <Select value={form.sessionsPerWeek} onValueChange={(v) => update("sessionsPerWeek", v)}>
                         <SelectTrigger className="mt-1.5">
                           <SelectValue />
@@ -661,36 +655,35 @@ function Post() {
                         <SelectContent>
                           {[1, 2, 3, 4, 5].map((n) => (
                             <SelectItem key={n} value={String(n)}>
-                              {n}× per week
+                              {t("postReq.sessionsN", { n })}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="req-location">City / timezone</Label>
+                      <Label htmlFor="req-location">{t("postReq.cityTimezone")}</Label>
                       <Input
                         id="req-location"
                         value={form.location}
                         onChange={(e) => update("location", e.target.value)}
-                        placeholder="e.g. Mumbai · IST"
+                        placeholder={t("postReq.cityPlaceholder")}
                         className="mt-1.5"
                       />
                     </div>
                   </div>
                 </fieldset>
 
-                {/* Budget */}
                 <fieldset className="space-y-4">
                   <legend className="mb-3 flex items-center gap-2 text-sm font-semibold">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <DollarSign className="h-3.5 w-3.5" />
                     </span>
-                    Budget
+                    {t("postReq.budget")}
                   </legend>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <Label htmlFor="req-budget">Budget per hour ({currency})</Label>
+                      <Label htmlFor="req-budget">{t("postReq.budgetPerHour", { currency })}</Label>
                       <div className="relative mt-1.5">
                         <span className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                           {symbol}
@@ -706,43 +699,42 @@ function Post() {
                       </div>
                     </div>
                     <div>
-                      <Label>Duration</Label>
+                      <Label>{t("postReq.duration")}</Label>
                       <SelectWithOther
                         mode="enum-other"
                         className="mt-1.5"
-                        options={DURATION_OPTIONS}
+                        options={durationOptions}
                         value={form.duration}
                         customValue={form.durationOther}
                         onValueChange={(v) => update("duration", v)}
                         onCustomValueChange={(v) => update("durationOther", v)}
-                        otherPlaceholder="Describe the duration"
+                        otherPlaceholder={t("postReq.durationOther")}
                       />
                     </div>
                   </div>
                 </fieldset>
 
-                {/* Details */}
                 <fieldset className="space-y-4">
                   <legend className="mb-3 flex items-center gap-2 text-sm font-semibold">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <FileText className="h-3.5 w-3.5" />
                     </span>
-                    Details
+                    {t("postReq.details")}
                   </legend>
                   <div>
                     <Label htmlFor="req-details">
-                      Tell tutors more <span className="text-destructive">*</span>
+                      {t("postReq.detailsLabel")} <span className="text-destructive">*</span>
                     </Label>
                     <Textarea
                       id="req-details"
                       value={form.details}
                       onChange={(e) => update("details", e.target.value)}
                       required
-                      placeholder="Goals, current level, preferred times, exam dates, teaching style…"
+                      placeholder={t("postReq.detailsPlaceholder")}
                       className="mt-1.5 min-h-[140px] resize-y"
                     />
                     <p className="mt-1.5 text-xs text-muted-foreground">
-                      Tip: mention exam dates, preferred days, and whether you need homework help or concept clarity.
+                      {t("postReq.detailsTip")}
                     </p>
                   </div>
                 </fieldset>
@@ -755,15 +747,11 @@ function Post() {
                   disabled={createMut.isPending}
                 >
                   <Send className="me-2 h-4 w-4" />
-                  {createMut.isPending ? "Submitting…" : "Submit for admin review"}
+                  {createMut.isPending ? t("postReq.submitting") : t("postReq.submit")}
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">
-                  By posting, you agree to our{" "}
-                  <Link to="/terms" className="font-medium text-primary underline-offset-2 hover:underline">
-                    terms
-                  </Link>
-                  . You can edit or remove your post anytime from your dashboard.
+                  {t("postReq.agreeTerms")}
                 </p>
               </div>
             </form>

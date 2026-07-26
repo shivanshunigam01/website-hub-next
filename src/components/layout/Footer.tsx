@@ -70,16 +70,16 @@ export function Footer() {
             </div>
             <p className="text-sm text-slate-400 max-w-sm mb-4">{t("footer.tagline")}</p>
             <div className="flex flex-wrap items-center gap-3 text-slate-400">
-              <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="hover:text-white">
+              <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer" aria-label={t("footer.ariaFacebook")} className="hover:text-white">
                 <Share2 className="h-4 w-4" />
               </a>
-              <a href={SOCIAL_LINKS.twitter} target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="hover:text-white">
+              <a href={SOCIAL_LINKS.twitter} target="_blank" rel="noopener noreferrer" aria-label={t("footer.ariaTwitter")} className="hover:text-white">
                 <Globe className="h-4 w-4" />
               </a>
-              <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-white">
+              <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" aria-label={t("footer.ariaInstagram")} className="hover:text-white">
                 <Share2 className="h-4 w-4" />
               </a>
-              <a href={SOCIAL_LINKS.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="hover:text-white">
+              <a href={SOCIAL_LINKS.linkedin} target="_blank" rel="noopener noreferrer" aria-label={t("footer.ariaLinkedIn")} className="hover:text-white">
                 <Globe className="h-4 w-4" />
               </a>
             </div>

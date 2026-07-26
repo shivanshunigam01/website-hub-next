@@ -1,13 +1,13 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
+import { useTranslation } from "react-i18next";
 import { ShieldCheck, GraduationCap, Users, FileText } from "lucide-react";
-
-
 
 type Section = {
   id: string;
-  title: string;
+  titleKey: string;
+  titleDefault: string;
   icon: typeof ShieldCheck;
   items: React.ReactNode[];
 };
@@ -15,7 +15,8 @@ type Section = {
 const sections: Section[] = [
   {
     id: "general",
-    title: "General",
+    titleKey: "legal.terms.section.general",
+    titleDefault: "General",
     icon: ShieldCheck,
     items: [
       "You may not create multiple accounts. One person should have only one account — failing this may result in all your accounts being banned.",
@@ -29,7 +30,8 @@ const sections: Section[] = [
   },
   {
     id: "students",
-    title: "For Students",
+    titleKey: "legal.terms.section.students",
+    titleDefault: "For Students",
     icon: Users,
     items: [
       "You may not share contact details in a job posting. Accounts that do so are automatically banned.",
@@ -40,7 +42,8 @@ const sections: Section[] = [
   },
   {
     id: "tutors",
-    title: "For Tutors",
+    titleKey: "legal.terms.section.tutors",
+    titleDefault: "For Tutors",
     icon: GraduationCap,
     items: [
       "We do not vet students for credit history or payment record. It is your responsibility to check their credentials and manage payments and refunds.",
@@ -51,24 +54,23 @@ const sections: Section[] = [
 ];
 
 function TermsPage() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16 max-w-4xl">
-      {/* Header */}
       <div className="flex items-start gap-4">
         <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-primary/15 to-accent/15 ring-1 ring-border">
           <FileText className="h-5 w-5 text-primary" />
         </div>
         <div>
           <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight">
-            Terms and Conditions
+            {t("legal.terms.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Last updated · {new Date().getFullYear()}. Please read carefully before continuing.
+            {t("legal.terms.updated", { year: new Date().getFullYear() })}
           </p>
         </div>
       </div>
 
-      {/* TOC */}
       <nav className="mt-8 flex flex-wrap gap-2">
         {sections.map((s) => (
           <a
@@ -76,14 +78,13 @@ function TermsPage() {
             href={`#${s.id}`}
             className="text-xs font-medium px-3 py-1.5 rounded-full border border-border bg-card hover:border-foreground/20 hover:bg-muted transition-colors"
           >
-            {s.title}
+            {t(s.titleKey, s.titleDefault)}
           </a>
         ))}
       </nav>
 
-      {/* Sections */}
       <div className="mt-10 space-y-10">
-        {sections.map(({ id, title, icon: Icon, items }) => (
+        {sections.map(({ id, titleKey, titleDefault, icon: Icon, items }) => (
           <article
             key={id}
             id={id}
@@ -93,7 +94,9 @@ function TermsPage() {
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
                 <Icon className="h-4 w-4" />
               </span>
-              <h2 className="font-display font-semibold text-xl md:text-2xl">{title}</h2>
+              <h2 className="font-display font-semibold text-xl md:text-2xl">
+                {t(titleKey, titleDefault)}
+              </h2>
             </header>
             <ul className="space-y-3">
               {items.map((node, i) => (
@@ -107,7 +110,6 @@ function TermsPage() {
         ))}
       </div>
 
-      {/* Footer note */}
       <div className="mt-10 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
         By creating an account on TeacherPoint, you confirm that you have read and agree to these
         Terms, our{" "}

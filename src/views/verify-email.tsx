@@ -10,26 +10,10 @@ import { useApp } from "@/hooks/use-app";
 import { afterAuthPath } from "@/lib/auth-redirect";
 import { formatApiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
-
-const COPY: Record<"teacher" | "student" | "parent", { badge: string; continueBlurb: string; success: string }> = {
-  teacher: {
-    badge: "Tutor verification",
-    continueBlurb: " continue to your tutor profile setup.",
-    success: "Email verified! Complete your tutor profile next.",
-  },
-  student: {
-    badge: "Student verification",
-    continueBlurb: " start exploring courses and tutors.",
-    success: "Email verified! You can complete your profile next.",
-  },
-  parent: {
-    badge: "Parent verification",
-    continueBlurb: " continue setting up your parent profile.",
-    success: "Email verified! Add your child's details next.",
-  },
-};
+import { useTranslation } from "react-i18next";
 
 function VerifyEmail() {
+  const { t } = useTranslation();
   const { user, loading, verifyEmail, resendVerificationEmail } = useApp();
   const nav = useNavigate();
   const [otp, setOtp] = useState("");
@@ -38,7 +22,23 @@ function VerifyEmail() {
 
   const role =
     user?.role === "teacher" || user?.role === "student" || user?.role === "parent" ? user.role : null;
-  const copy = role ? COPY[role] : COPY.student;
+  const copy = {
+    teacher: {
+      badge: t("verify.badgeTeacher"),
+      continueBlurb: t("verify.blurbTeacher"),
+      success: t("verify.successTeacher", "Email verified! Complete your tutor profile next."),
+    },
+    student: {
+      badge: t("verify.badgeStudent"),
+      continueBlurb: t("verify.blurbStudent"),
+      success: t("verify.successStudent", "Email verified! You can complete your profile next."),
+    },
+    parent: {
+      badge: t("verify.badgeParent"),
+      continueBlurb: t("verify.blurbParent"),
+      success: t("verify.successParent", "Email verified! Add your child's details next."),
+    },
+  }[role ?? "student"];
 
   useEffect(() => {
     if (loading) return;
@@ -56,12 +56,12 @@ function VerifyEmail() {
   }, [loading, user, nav]);
 
   if (loading || !user || !role) {
-    return <div className="container py-20 text-center text-muted-foreground">Loading…</div>;
+    return <div className="container py-20 text-center text-muted-foreground">{t("verify.loading")}</div>;
   }
 
   const submit = async () => {
     if (otp.length !== 6) {
-      toast.error("Enter the 6-digit code from your email");
+      toast.error(t("verify.codeRequired", "Enter the 6-digit code from your email"));
       return;
     }
     setSubmitting(true);
@@ -72,7 +72,7 @@ function VerifyEmail() {
         to: afterAuthPath(user.role, session.profileComplete, true),
       });
     } catch (err) {
-      toast.error(formatApiErrorMessage(err, "Verification failed"));
+      toast.error(formatApiErrorMessage(err, t("verify.failed", "Verification failed")));
     } finally {
       setSubmitting(false);
     }
@@ -82,9 +82,9 @@ function VerifyEmail() {
     setResending(true);
     try {
       await resendVerificationEmail();
-      toast.success(`New code sent to ${user.email}`);
+      toast.success(t("verify.codeSent", "New code sent to {{email}}", { email: user.email }));
     } catch (err) {
-      toast.error(formatApiErrorMessage(err, "Could not resend code"));
+      toast.error(formatApiErrorMessage(err, t("verify.resendFailed", "Could not resend code")));
     } finally {
       setResending(false);
     }
@@ -100,10 +100,9 @@ function VerifyEmail() {
           <ShieldCheck className="h-5 w-5" />
           <span className="text-sm font-semibold uppercase tracking-wide">{copy.badge}</span>
         </div>
-        <h1 className="font-display font-bold text-2xl">Verify your email</h1>
+        <h1 className="font-display font-bold text-2xl">{t("verify.title")}</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          We sent a 6-digit code to{" "}
-          <span className="font-medium text-foreground">{user.email}</span>. Enter it below to
+          {t("verify.sentTo", { email: user.email })}
           {copy.continueBlurb}
         </p>
 
@@ -126,19 +125,19 @@ function VerifyEmail() {
             disabled={submitting || otp.length !== 6}
             onClick={submit}
           >
-            {submitting ? "Verifying…" : "Verify & continue"}
+            {submitting ? t("verify.verifying") : t("verify.submit")}
           </Button>
 
           <Button variant="ghost" size="sm" disabled={resending} onClick={resend}>
             <Mail className="h-4 w-4 mr-2" />
-            {resending ? "Sending…" : "Resend code"}
+            {resending ? t("verify.sending") : t("verify.resend")}
           </Button>
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-6">
-          Wrong account?{" "}
+          {t("verify.wrongAccount")}{" "}
           <Link to="/login" className="text-primary font-semibold">
-            Log in with another email
+            {t("verify.otherEmail")}
           </Link>
         </p>
       </div>

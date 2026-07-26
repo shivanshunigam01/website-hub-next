@@ -10,8 +10,10 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { useApp } from "@/hooks/use-app";
 import { formatApiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 function ResetPassword() {
+  const { t } = useTranslation();
   const { token } = useSearch<{ token?: string }>();
   const { resetPassword } = useApp();
   const nav = useNavigate();
@@ -26,31 +28,21 @@ function ResetPassword() {
     <section className="container mx-auto grid max-w-6xl items-center gap-12 px-4 py-12 lg:grid-cols-2">
       <div className="hidden lg:block">
         <BrandLogo size="login" className="mb-6" />
-        <h1 className="font-display text-4xl font-extrabold leading-tight">
-          Choose a new <span className="text-gradient-primary">password</span>
-        </h1>
-        <p className="mt-4 max-w-md text-muted-foreground">
-          Use a password that is at least 8 characters long and different from passwords you use elsewhere.
-        </p>
+        <h1 className="font-display text-4xl font-extrabold leading-tight">{t("reset.heroTitle")}</h1>
+        <p className="mt-4 max-w-md text-muted-foreground">{t("reset.heroSubtitle")}</p>
       </div>
 
       <div className="mx-auto w-full max-w-md rounded-2xl border bg-card p-8 shadow-soft">
         <Link to="/login" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
           <ArrowLeft className="h-4 w-4" />
-          Back to login
+          {t("reset.back")}
         </Link>
-        <h2 className="font-display text-2xl font-bold">Reset password</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Enter and confirm your new account password.
-        </p>
+        <h2 className="font-display text-2xl font-bold">{t("reset.title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("reset.subtitle")}</p>
 
         {missingToken ? (
           <div className="mt-6 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-            This reset link is missing a token. Please{" "}
-            <Link to="/forgot-password" className="font-semibold underline">
-              request a new password reset email
-            </Link>
-            .
+            {t("reset.missingToken")}
           </div>
         ) : null}
 
@@ -70,22 +62,25 @@ function ResetPassword() {
             const confirmPassword = String(fd.get("confirmPassword") ?? "");
 
             if (password !== confirmPassword) {
-              setFormError("Passwords do not match.");
+              setFormError(t("reset.mismatch"));
               return;
             }
 
             if (!token) {
-              setFormError("Invalid or missing reset link.");
+              setFormError(t("reset.invalidLink", "Invalid or missing reset link."));
               return;
             }
 
             setSubmitting(true);
             try {
               await resetPassword(token, password);
-              toast.success("Password reset successful. Please log in.");
+              toast.success(t("reset.success", "Password reset successful. Please log in."));
               await nav({ to: "/login" });
             } catch (err) {
-              const message = formatApiErrorMessage(err, "Could not reset password.");
+              const message = formatApiErrorMessage(
+                err,
+                t("reset.failed", "Could not reset password."),
+              );
               setFormError(message);
               toast.error(message);
             } finally {
@@ -94,7 +89,7 @@ function ResetPassword() {
           }}
         >
           <div>
-            <Label htmlFor="password">New password</Label>
+            <Label htmlFor="password">{t("reset.newPassword")}</Label>
             <div className="relative mt-1">
               <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -104,7 +99,7 @@ function ResetPassword() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                placeholder="At least 8 characters"
+                placeholder={t("register.passwordPlaceholder")}
                 className="pl-10 pr-10"
                 disabled={missingToken}
               />
@@ -112,14 +107,14 @@ function ResetPassword() {
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                aria-label="Toggle new password visibility"
+                aria-label={t("reset.toggleNewPassword", "Toggle new password visibility")}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
           <div>
-            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <Label htmlFor="confirmPassword">{t("reset.confirmPassword")}</Label>
             <div className="relative mt-1">
               <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -129,7 +124,7 @@ function ResetPassword() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                placeholder="Repeat new password"
+                placeholder={t("reset.confirmPlaceholder")}
                 className="pl-10 pr-10"
                 disabled={missingToken}
               />
@@ -137,14 +132,14 @@ function ResetPassword() {
                 type="button"
                 onClick={() => setShowConfirm((value) => !value)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                aria-label="Toggle confirm password visibility"
+                aria-label={t("reset.toggleConfirmPassword", "Toggle confirm password visibility")}
               >
                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
           <Button type="submit" size="lg" variant="gradient" className="w-full" disabled={submitting || missingToken}>
-            {submitting ? "Resetting..." : "Reset password"}
+            {submitting ? t("reset.resetting") : t("reset.submit")}
           </Button>
         </form>
       </div>

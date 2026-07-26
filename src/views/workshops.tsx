@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Calendar, Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import type { Workshop } from "@/types/workshop";
 import { toast } from "sonner";
 
 function WorkshopsPage() {
+  const { t } = useTranslation("common");
   const [items, setItems] = useState<Workshop[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -37,11 +39,11 @@ function WorkshopsPage() {
       });
       setItems(data.items);
     } catch (e) {
-      toast.error(formatApiErrorMessage(e, "Failed to load workshops"));
+      toast.error(formatApiErrorMessage(e, t("workshops.loadError", "Failed to load workshops")));
     } finally {
       setLoading(false);
     }
-  }, [category, mode, pricing]);
+  }, [category, mode, pricing, t]);
 
   useEffect(() => {
     load();
@@ -68,13 +70,13 @@ function WorkshopsPage() {
       <div className="mx-auto max-w-3xl text-center">
         <span className="inline-flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
           <Calendar className="h-3.5 w-3.5 text-primary" />
-          Live learning sessions
+          {t("workshops.badge")}
         </span>
         <h1 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-          Upcoming workshops
+          {t("workshops.title")}
         </h1>
         <p className="mt-3 text-muted-foreground">
-          Expert-led workshops from verified tutors. Register to save your spot — online or in person.
+          {t("workshops.subtitle")}
         </p>
       </div>
 
@@ -82,7 +84,7 @@ function WorkshopsPage() {
         <div className="relative min-w-0 flex-1 sm:min-w-[200px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search workshops…"
+            placeholder={t("workshops.searchPlaceholder")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="pl-9"
@@ -90,10 +92,10 @@ function WorkshopsPage() {
         </div>
         <Select value={category} onValueChange={setCategory}>
           <SelectTrigger className="w-full sm:w-[160px]">
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder={t("workshops.category")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
+            <SelectItem value="all">{t("workshops.allCategories")}</SelectItem>
             {categories.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
@@ -103,40 +105,40 @@ function WorkshopsPage() {
         </Select>
         <Select value={mode} onValueChange={setMode}>
           <SelectTrigger className="w-full sm:w-[140px]">
-            <SelectValue placeholder="Mode" />
+            <SelectValue placeholder={t("workshops.mode")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All modes</SelectItem>
-            <SelectItem value="online">Online</SelectItem>
-            <SelectItem value="offline">Offline</SelectItem>
+            <SelectItem value="all">{t("workshops.allModes")}</SelectItem>
+            <SelectItem value="online">{t("workshops.online")}</SelectItem>
+            <SelectItem value="offline">{t("workshops.offline")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={pricing} onValueChange={setPricing}>
           <SelectTrigger className="w-full sm:w-[130px]">
-            <SelectValue placeholder="Price" />
+            <SelectValue placeholder={t("workshops.price")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="free">Free</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
+            <SelectItem value="all">{t("workshops.all")}</SelectItem>
+            <SelectItem value="free">{t("workshops.free")}</SelectItem>
+            <SelectItem value="paid">{t("workshops.paid")}</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={load}>
-          Refresh
+          {t("workshops.refresh")}
         </Button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Loading workshops…
+          {t("workshops.loading")}
         </div>
       ) : filtered.length === 0 ? (
         <div className="mx-auto mt-12 max-w-md rounded-2xl border border-dashed bg-muted/20 p-10 text-center">
           <Calendar className="mx-auto h-10 w-10 text-muted-foreground/40" />
-          <h2 className="mt-3 font-semibold">No upcoming workshops</h2>
+          <h2 className="mt-3 font-semibold">{t("workshops.emptyTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Check back soon — tutors are adding new sessions regularly.
+            {t("workshops.emptyDesc")}
           </p>
         </div>
       ) : (

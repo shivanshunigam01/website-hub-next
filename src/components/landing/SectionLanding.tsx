@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, Sparkles, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export function SectionLanding({
   secondaryCta,
   stats,
 }: SectionLandingProps) {
+  const { t } = useTranslation("common");
   const accentText = accent === "primary" ? "text-primary" : "text-accent";
   const accentBg = accent === "primary" ? "bg-primary" : "bg-accent";
   const accentRing =
@@ -136,9 +138,14 @@ export function SectionLanding({
           <div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border bg-card p-8 text-center sm:p-12">
             <div aria-hidden className={`absolute inset-0 bg-gradient-to-br ${accentRing}`} />
             <div className="relative">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to get started?</h2>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                {t("sectionLanding.readyTitle", "Ready to get started?")}
+              </h2>
               <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-                Join thousands already using TeacherPoint to connect, learn, and grow.
+                {t(
+                  "sectionLanding.readyDesc",
+                  "Join thousands already using TeacherPoint to connect, learn, and grow.",
+                )}
               </p>
               <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Button asChild size="lg" variant="gradient" className="w-full gap-2 sm:w-auto">
@@ -148,7 +155,9 @@ export function SectionLanding({
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="ghost" className="w-full sm:w-auto">
-                  <Link to="/register" search={{ role: "student" }}>Create free account</Link>
+                  <Link to="/register" search={{ role: "student" }}>
+                    {t("sectionLanding.createAccount", "Create free account")}
+                  </Link>
                 </Button>
               </div>
             </div>

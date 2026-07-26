@@ -1,11 +1,13 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
+import { useTranslation } from "react-i18next";
 import { RotateCcw, BookOpen, GraduationCap, CreditCard, HelpCircle } from "lucide-react";
 
 type Section = {
   id: string;
-  title: string;
+  titleKey: string;
+  titleDefault: string;
   icon: typeof RotateCcw;
   items: React.ReactNode[];
 };
@@ -13,7 +15,8 @@ type Section = {
 const sections: Section[] = [
   {
     id: "general",
-    title: "General",
+    titleKey: "legal.refund.section.general",
+    titleDefault: "General",
     icon: RotateCcw,
     items: [
       "TeacherPoint facilitates payments between students and tutors or for platform services. Refunds are handled according to the product type and the policy below.",
@@ -23,7 +26,8 @@ const sections: Section[] = [
   },
   {
     id: "courses",
-    title: "Courses",
+    titleKey: "legal.refund.section.courses",
+    titleDefault: "Courses",
     icon: BookOpen,
     items: [
       "Paid courses: full refund within 7 days of purchase if you have completed less than 20% of the course content.",
@@ -34,7 +38,8 @@ const sections: Section[] = [
   },
   {
     id: "tutor-sessions",
-    title: "Tutor sessions",
+    titleKey: "legal.refund.section.tutorSessions",
+    titleDefault: "Tutor sessions",
     icon: GraduationCap,
     items: [
       "Tutor session payments made through Razorpay on a tutor profile may be refunded if the session was not delivered or was cancelled by the tutor.",
@@ -45,7 +50,8 @@ const sections: Section[] = [
   },
   {
     id: "subscriptions",
-    title: "Subscriptions & other purchases",
+    titleKey: "legal.refund.section.subscriptions",
+    titleDefault: "Subscriptions & other purchases",
     icon: CreditCard,
     items: [
       "Monthly Pro or subscription plans: cancel anytime; no refund for the current billing period, but access continues until period end.",
@@ -55,7 +61,8 @@ const sections: Section[] = [
   },
   {
     id: "contact",
-    title: "How to request a refund",
+    titleKey: "legal.refund.section.contact",
+    titleDefault: "How to request a refund",
     icon: HelpCircle,
     items: [
       <>
@@ -72,6 +79,7 @@ const sections: Section[] = [
 ];
 
 function RefundPage() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16 max-w-4xl">
       <div className="flex items-start gap-4">
@@ -80,10 +88,10 @@ function RefundPage() {
         </div>
         <div>
           <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight">
-            Refund & Cancellation Policy
+            {t("legal.refund.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Last updated · June 2026. Applies to purchases made on TeacherPoint via Razorpay or listed payment methods.
+            {t("legal.refund.updated")}
           </p>
         </div>
       </div>
@@ -95,13 +103,13 @@ function RefundPage() {
             href={`#${s.id}`}
             className="text-xs font-medium px-3 py-1.5 rounded-full border border-border bg-card hover:border-foreground/20 hover:bg-muted transition-colors"
           >
-            {s.title}
+            {t(s.titleKey, s.titleDefault)}
           </a>
         ))}
       </nav>
 
       <div className="mt-10 space-y-10">
-        {sections.map(({ id, title, icon: Icon, items }) => (
+        {sections.map(({ id, titleKey, titleDefault, icon: Icon, items }) => (
           <article
             key={id}
             id={id}
@@ -111,7 +119,9 @@ function RefundPage() {
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
                 <Icon className="h-4 w-4" />
               </span>
-              <h2 className="font-display font-semibold text-xl md:text-2xl">{title}</h2>
+              <h2 className="font-display font-semibold text-xl md:text-2xl">
+                {t(titleKey, titleDefault)}
+              </h2>
             </header>
             <ul className="space-y-3">
               {items.map((node, i) => (

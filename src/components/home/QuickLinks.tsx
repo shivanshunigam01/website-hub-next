@@ -1,22 +1,23 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
+import { useTranslation } from "react-i18next";
 import { GraduationCap, Briefcase, ArrowUpRight } from "lucide-react";
 
-type Item = { label: string; to: string };
+type Item = { key: string; to: string };
 
 const teachers: Item[] = [
-  { label: "Teachers", to: "/tutors" },
-  { label: "Online Teachers", to: "/online-tutors" },
-  { label: "Home Teachers", to: "/home-tutors" },
-  { label: "Assignment Help", to: "/assignment-help" },
+  { key: "quickLinks.teachers", to: "/tutors" },
+  { key: "quickLinks.onlineTeachers", to: "/online-tutors" },
+  { key: "quickLinks.homeTeachers", to: "/home-tutors" },
+  { key: "quickLinks.assignmentHelp", to: "/assignment-help" },
 ];
 
 const jobs: Item[] = [
-  { label: "Teaching Jobs", to: "/teaching-jobs" },
-  { label: "Online Teaching", to: "/online-teaching" },
-  { label: "Home Teaching", to: "/home-teaching" },
-  { label: "Assignment Jobs", to: "/assignment-jobs" },
+  { key: "quickLinks.teachingJobs", to: "/teaching-jobs" },
+  { key: "quickLinks.onlineTeaching", to: "/online-teaching" },
+  { key: "quickLinks.homeTeaching", to: "/home-teaching" },
+  { key: "quickLinks.assignmentJobs", to: "/assignment-jobs" },
 ];
 
 function Group({
@@ -24,11 +25,13 @@ function Group({
   icon: Icon,
   items,
   accent,
+  t,
 }: {
   title: string;
   icon: typeof GraduationCap;
   items: Item[];
   accent: "primary" | "accent";
+  t: (key: string) => string;
 }) {
   const ring =
     accent === "primary"
@@ -49,14 +52,14 @@ function Group({
 
       <div className="grid grid-cols-2 gap-3">
         {items.map((it) => (
-          <div key={it.label}>
+          <div key={it.to}>
             <Link
               to={it.to as string}
               className="group relative flex items-center justify-between overflow-hidden rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md"
             >
               <span className="flex items-center gap-2.5">
                 <span className={`h-1.5 w-1.5 rounded-full ${dot} opacity-70 transition-opacity group-hover:opacity-100`} />
-                {it.label}
+                {t(it.key)}
               </span>
               <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               <span className={`pointer-events-none absolute inset-x-0 -bottom-px h-px bg-gradient-to-r ${ring}`} />
@@ -69,12 +72,13 @@ function Group({
 }
 
 export function QuickLinks() {
+  const { t } = useTranslation("common");
   return (
     <section className="py-16 sm:py-20">
       <div className="container mx-auto px-4">
         <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-2 md:gap-14">
-          <Group title="Teachers" icon={GraduationCap} items={teachers} accent="primary" />
-          <Group title="Teaching Jobs" icon={Briefcase} items={jobs} accent="primary" />
+          <Group title={t("quickLinks.teachersGroup")} icon={GraduationCap} items={teachers} accent="primary" t={t} />
+          <Group title={t("quickLinks.jobsGroup")} icon={Briefcase} items={jobs} accent="primary" t={t} />
         </div>
       </div>
     </section>

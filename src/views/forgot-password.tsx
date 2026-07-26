@@ -10,8 +10,10 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { useApp } from "@/hooks/use-app";
 import { formatApiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 function ForgotPassword() {
+  const { t } = useTranslation();
   const { requestPasswordReset } = useApp();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -24,31 +26,33 @@ function ForgotPassword() {
     <section className="container mx-auto grid max-w-6xl items-center gap-12 px-4 py-12 lg:grid-cols-2">
       <div className="hidden lg:block">
         <BrandLogo size="login" className="mb-6" />
-        <h1 className="font-display text-4xl font-extrabold leading-tight">
-          Reset your <span className="text-gradient-primary">TeacherPoint</span> password
-        </h1>
-        <p className="mt-4 max-w-md text-muted-foreground">
-          Students, tutors, and parents can request a secure password reset link using the email on their account.
-        </p>
+        <h1 className="font-display text-4xl font-extrabold leading-tight">{t("forgot.heroTitle")}</h1>
+        <p className="mt-4 max-w-md text-muted-foreground">{t("forgot.heroSubtitle")}</p>
       </div>
 
       <div className="mx-auto w-full max-w-md rounded-2xl border bg-card p-8 shadow-soft">
         <Link to="/login" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
           <ArrowLeft className="h-4 w-4" />
-          Back to login
+          {t("forgot.back")}
         </Link>
-        <h2 className="font-display text-2xl font-bold">Forgot password</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Enter your email and we will send instructions to reset your password.
-        </p>
+        <h2 className="font-display text-2xl font-bold">{t("forgot.title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("forgot.subtitle")}</p>
 
         {submittedEmail ? (
           <div className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
-            <p className="font-semibold text-foreground">Check your email</p>
+            <p className="font-semibold text-foreground">{t("forgot.checkEmail")}</p>
             <p className="mt-1 text-muted-foreground">
               {deliveredTo
-                ? `Password reset instructions were sent to ${deliveredTo}.`
-                : `If an account exists for ${submittedEmail}, a reset link has been sent to that address.`}
+                ? t(
+                    "forgot.sentTo",
+                    "Password reset instructions were sent to {{email}}.",
+                    { email: deliveredTo },
+                  )
+                : t(
+                    "forgot.sentIfExists",
+                    "If an account exists for {{email}}, a reset link has been sent to that address.",
+                    { email: submittedEmail },
+                  )}
             </p>
             {devResetToken ? (
               <Link
@@ -56,7 +60,7 @@ function ForgotPassword() {
                 search={{ token: devResetToken }}
                 className="mt-3 inline-flex text-sm font-semibold text-primary hover:underline"
               >
-                Open development reset link
+                {t("forgot.openDevLink", "Open development reset link")}
               </Link>
             ) : null}
           </div>
@@ -77,7 +81,7 @@ function ForgotPassword() {
             setDeliveredTo("");
             const normalizedEmail = email.trim().toLowerCase();
             if (!normalizedEmail) {
-              setFormError("Please enter your email address.");
+              setFormError(t("forgot.emailRequired", "Please enter your email address."));
               return;
             }
 
@@ -90,20 +94,35 @@ function ForgotPassword() {
               if (result.sent === false && result.emailError) {
                 const message =
                   result.emailError ||
-                  "Could not send the reset email. Check SMTP settings or try again later.";
+                  t(
+                    "forgot.emailSendFailed",
+                    "Could not send the reset email. Check SMTP settings or try again later.",
+                  );
                 setFormError(message);
                 toast.error(message, { duration: 8000 });
               } else if (result.sent && result.deliveredTo) {
-                toast.success(`Password reset link sent to ${result.deliveredTo}`);
+                toast.success(
+                  t("forgot.linkSent", "Password reset link sent to {{email}}", {
+                    email: result.deliveredTo,
+                  }),
+                );
               } else if (result.sent) {
-                toast.success("Password reset instructions sent — check your inbox.");
+                toast.success(
+                  t("forgot.instructionsSent", "Password reset instructions sent — check your inbox."),
+                );
               } else {
                 toast.message(
-                  "If an account exists for that email, reset instructions were sent when applicable.",
+                  t(
+                    "forgot.sentWhenApplicable",
+                    "If an account exists for that email, reset instructions were sent when applicable.",
+                  ),
                 );
               }
             } catch (err) {
-              const message = formatApiErrorMessage(err, "Could not send reset instructions.");
+              const message = formatApiErrorMessage(
+                err,
+                t("forgot.requestFailed", "Could not send reset instructions."),
+              );
               setFormError(message);
               toast.error(message);
             } finally {
@@ -112,7 +131,7 @@ function ForgotPassword() {
           }}
         >
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("login.email")}</Label>
             <div className="relative mt-1">
               <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -121,7 +140,7 @@ function ForgotPassword() {
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="you@email.com"
+                placeholder={t("login.emailPlaceholder")}
                 className="pl-10"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -129,7 +148,7 @@ function ForgotPassword() {
             </div>
           </div>
           <Button type="submit" size="lg" variant="gradient" className="w-full" disabled={submitting}>
-            {submitting ? "Sending..." : "Send reset link"}
+            {submitting ? t("forgot.sending") : t("forgot.send")}
           </Button>
         </form>
       </div>

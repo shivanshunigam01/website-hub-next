@@ -102,10 +102,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    const timer = window.setTimeout(start, 2000);
+    const timer = setTimeout(start, 2000);
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
+      clearTimeout(timer);
     };
   }, [attempt, runDetect]);
 

@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "@/lib/navigation";
-import { Building2, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/SectionHeading";
 import { useAdminStore, type Accommodation } from "@/hooks/use-admin-store";
@@ -12,6 +13,7 @@ import { AccommodationCard } from "@/components/accommodation/AccommodationCard"
 import { AccommodationEnquiryDialog } from "@/components/accommodation/AccommodationEnquiryDialog";
 
 export function AccommodationSection() {
+  const { t } = useTranslation("common");
   const { accommodations } = useAdminStore();
   const { location, hasLocationAccess } = useLocationContext();
   const [selected, setSelected] = useState<Accommodation | null>(null);
@@ -26,13 +28,16 @@ export function AccommodationSection() {
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
       <SectionHeading
-        eyebrow="Student stays"
-        title="PGs & hostels for students"
-        subtitle="Verified accommodation options handpicked for our students — book a viewing or send an enquiry directly."
+        eyebrow={t("accommodationSection.eyebrow", "Student stays")}
+        title={t("accommodationSection.title", "PGs & hostels for students")}
+        subtitle={t(
+          "accommodationSection.subtitle",
+          "Verified accommodation options handpicked for our students — book a viewing or send an enquiry directly.",
+        )}
         action={
           <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
             <Link to="/accommodation">
-              View all <ArrowRight className="ms-1 h-4 w-4" />
+              {t("accommodationSection.viewAll", "View all")} <ArrowRight className="ms-1 h-4 w-4" />
             </Link>
           </Button>
         }

@@ -1,11 +1,13 @@
 "use client";
 
 import { Link } from "@/lib/navigation";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, PlayCircle, Star, BadgeCheck, MessageCircleQuestion, Briefcase } from "lucide-react";
 import { AppImage } from "@/components/AppImage";
 
 export function LevelUpSection() {
+  const { t } = useTranslation("common");
   return (
     <section className="relative overflow-hidden border-y bg-gradient-to-b from-background via-accent/10 to-background py-16 sm:py-24">
       {/* decorative dots */}
@@ -21,26 +23,26 @@ export function LevelUpSection() {
         {/* LEFT */}
         <div>
           <div className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm shadow-sm">
-            <span className="text-muted-foreground">An</span>
-            <span className="font-semibold text-primary">IIT Delhi</span>
-            <span className="text-foreground">Alumni Initiative</span>
+            <span className="text-muted-foreground">{t("levelUp.badgeLead")}</span>
+            <span className="font-semibold text-primary">{t("levelUp.badgeOrg")}</span>
+            <span className="text-foreground">{t("levelUp.badgeTrail")}</span>
           </div>
 
           <h2 className="mt-6 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-            <span className="text-primary">Level Up</span>
+            <span className="text-primary">{t("levelUp.titleLead")}</span>
             <TrendingUp className="mx-2 inline h-8 w-8 text-primary sm:h-10 sm:w-10" />
-            Your Career
+            {t("levelUp.titleMid")}
             <br />
-            With Expert Mentorship &amp;
+            {t("levelUp.titleWith")}
             <br />
-            Internships For{" "}
+            {t("levelUp.titleInternships")}{" "}
             <span className="ml-1 inline-block rounded-md bg-primary/15 px-3 py-1 text-primary">
-              FREE
+              {t("levelUp.free")}
             </span>
           </h2>
 
           <p className="mt-5 text-base text-muted-foreground sm:text-lg">
-            With 100% Refund guarantee on course completion.
+            {t("levelUp.subtitle")}
           </p>
 
           {/* Rating */}
@@ -57,18 +59,18 @@ export function LevelUpSection() {
                   ))}
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Google Ratings</p>
+              <p className="text-xs text-muted-foreground">{t("levelUp.googleRatings")}</p>
             </div>
           </div>
 
           {/* CTAs */}
           <div className="mt-8 flex flex-wrap items-center gap-5">
             <Button asChild size="lg" variant="gradient" className="shadow-lg">
-              <Link to="/courses">Explore Courses</Link>
+              <Link to="/courses">{t("levelUp.exploreCourses")}</Link>
             </Button>
             <button className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
               <PlayCircle className="h-6 w-6" />
-              100% refund offer
+              {t("levelUp.refundOffer")}
             </button>
           </div>
         </div>
@@ -77,16 +79,16 @@ export function LevelUpSection() {
         <div className="relative mx-auto grid w-full max-w-lg grid-cols-2 gap-4">
           {/* feature card stack - placed above images, no overlap */}
           <div className="col-span-2 flex flex-col gap-2.5 sm:w-60">
-            <FeatureChip icon={<BadgeCheck className="h-4 w-4 text-emerald-600" />} label="100% Refund" tint="bg-emerald-50 border-emerald-200" />
-            <FeatureChip icon={<MessageCircleQuestion className="h-4 w-4 text-amber-600" />} label="Instant doubt Support" tint="bg-amber-50 border-amber-200" />
-            <FeatureChip icon={<Briefcase className="h-4 w-4 text-fuchsia-600" />} label="Internship Opportunities" tint="bg-fuchsia-50 border-fuchsia-200" />
+            <FeatureChip icon={<BadgeCheck className="h-4 w-4 text-emerald-600" />} label={t("levelUp.chipRefund")} tint="bg-emerald-50 border-emerald-200" />
+            <FeatureChip icon={<MessageCircleQuestion className="h-4 w-4 text-amber-600" />} label={t("levelUp.chipDoubt")} tint="bg-amber-50 border-amber-200" />
+            <FeatureChip icon={<Briefcase className="h-4 w-4 text-fuchsia-600" />} label={t("levelUp.chipInternship")} tint="bg-fuchsia-50 border-fuchsia-200" />
           </div>
 
           {/* photo 1 */}
           <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] border-2 border-border bg-sky-100 sm:ml-auto sm:mt-0 sm:w-56">
             <AppImage
               src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=500&auto=format&fit=crop"
-              alt="Student"
+              alt={t("levelUp.altStudent")}
               fill
               sizes="(max-width: 640px) 50vw, 224px"
             />
@@ -96,7 +98,7 @@ export function LevelUpSection() {
           <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] border-2 border-border bg-amber-100 sm:mt-12 sm:w-56">
             <AppImage
               src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=500&auto=format&fit=crop"
-              alt="Student"
+              alt={t("levelUp.altStudent")}
               fill
               sizes="(max-width: 640px) 50vw, 224px"
             />
@@ -108,7 +110,7 @@ export function LevelUpSection() {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-red-500 to-yellow-400 text-sm font-bold text-white">
                 G
               </div>
-              <span className="text-sm font-medium">Google Reviews</span>
+              <span className="text-sm font-medium">{t("levelUp.googleReviews")}</span>
             </div>
             <div className="mt-2 text-2xl font-bold">4.9/5</div>
             <div className="flex">

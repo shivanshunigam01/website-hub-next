@@ -31,7 +31,6 @@ import { HeroBackground } from "@/components/home/HeroBackground";
 import careerBanner from "@/assets/career-banner.jpg";
 import { courseImage, tutorImage } from "@/data/images";
 import { AppImage } from "@/components/AppImage";
-import Image from "next/image";
 
 const ICONS: Record<string, any> = {
   Sparkles, Code, Brain, BarChart3, Palette, Briefcase: Bcase, Megaphone, Languages, GraduationCap,
@@ -179,13 +178,14 @@ export function HowItWorks() {
 
 export function TrendingCourses() {
   const { courses: COURSES } = useAdminStore();
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
       <SectionHeading
-        eyebrow="Trending"
-        title="Courses students love right now"
-        subtitle="Hand-picked, top-rated courses from our verified instructors."
-        action={<Button asChild variant="ghost" size="sm" className="hidden md:inline-flex"><Link to="/courses">View all <ArrowRight className="h-4 w-4 ml-1" /></Link></Button>}
+        eyebrow={t("trending.eyebrow")}
+        title={t("trending.title")}
+        subtitle={t("trending.subtitle")}
+        action={<Button asChild variant="ghost" size="sm" className="hidden md:inline-flex"><Link to="/courses">{t("trending.viewAll")} <ArrowRight className="h-4 w-4 ml-1" /></Link></Button>}
       />
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="bg-transparent h-auto flex-wrap justify-start gap-2 mb-6 p-0">
@@ -212,16 +212,17 @@ export function TrendingCourses() {
 
 export function LearnAI() {
   const { courses: COURSES } = useAdminStore();
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
       <div className="relative grid gap-8 overflow-hidden rounded-2xl border bg-primary p-8 text-primary-foreground md:grid-cols-2 md:p-12">
         <div className="relative">
-          <p className="mb-3 text-sm font-medium text-primary-foreground/80">Popular topic</p>
-          <h2 className="font-display font-extrabold text-3xl md:text-4xl leading-tight">Learn AI. Build the future.</h2>
-          <p className="mt-3 opacity-90 max-w-md">Hands-on courses on ChatGPT, LangChain, RAG, and AI Agents — taught by engineers building production AI.</p>
+          <p className="mb-3 text-sm font-medium text-primary-foreground/80">{t("learnAi.eyebrow")}</p>
+          <h2 className="font-display font-extrabold text-3xl md:text-4xl leading-tight">{t("learnAi.title")}</h2>
+          <p className="mt-3 opacity-90 max-w-md">{t("learnAi.subtitle")}</p>
           <div className="mt-6 flex gap-3">
-            <Button asChild size="lg" className="bg-background text-foreground hover:bg-background/90"><Link to="/courses">Explore AI courses</Link></Button>
-            <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"><Link to="/courses">Free intro lesson</Link></Button>
+            <Button asChild size="lg" className="bg-background text-foreground hover:bg-background/90"><Link to="/courses">{t("learnAi.explore")}</Link></Button>
+            <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"><Link to="/courses">{t("learnAi.freeIntro")}</Link></Button>
           </div>
         </div>
         <div className="relative grid grid-cols-2 gap-3">
@@ -259,10 +260,11 @@ export function FeaturedTutors() {
 }
 
 export function CareerBanner() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
       <div className="relative rounded-3xl overflow-hidden p-10 md:p-16 text-white min-h-[320px]">
-        <Image
+        <AppImage
           src={careerBanner}
           alt=""
           fill
@@ -272,15 +274,15 @@ export function CareerBanner() {
         />
         <div className="absolute inset-0 bg-gradient-purple opacity-90" />
         <div className="relative max-w-2xl">
-          <Badge className="bg-white/20 border-0 mb-4">Career growth</Badge>
-          <h2 className="font-display font-extrabold text-3xl md:text-5xl leading-tight">Reimagine your career with industry experts.</h2>
-          <p className="mt-4 opacity-90 text-lg">Programs designed by hiring managers at Google, Microsoft, Adobe, and more — with placement support.</p>
+          <Badge className="bg-white/20 border-0 mb-4">{t("career.badge")}</Badge>
+          <h2 className="font-display font-extrabold text-3xl md:text-5xl leading-tight">{t("career.title")}</h2>
+          <p className="mt-4 opacity-90 text-lg">{t("career.subtitle")}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg" className="bg-white text-purple hover:bg-white/90"><Link to="/courses">Explore programs</Link></Button>
-            <Button asChild size="lg" variant="outline" className="border-white/40 bg-transparent text-white shadow-none hover:bg-white/10 hover:text-white"><Link to="/pricing">View pricing</Link></Button>
+            <Button asChild size="lg" className="bg-white text-purple hover:bg-white/90"><Link to="/courses">{t("career.explore")}</Link></Button>
+            <Button asChild size="lg" variant="outline" className="border-white/40 bg-transparent text-white shadow-none hover:bg-white/10 hover:text-white"><Link to="/pricing">{t("career.pricing")}</Link></Button>
           </div>
           <div className="mt-8 flex flex-wrap items-center gap-6 opacity-80 text-sm">
-            <span>Trusted by hiring teams at:</span>
+            <span>{t("career.trustedBy")}</span>
             {COMPANIES.slice(0, 5).map((c) => <span key={c} className="font-semibold">{c}</span>)}
           </div>
         </div>
@@ -291,10 +293,11 @@ export function CareerBanner() {
 
 export function IndustryExperts() {
   const { courses: COURSES } = useAdminStore();
+  const { t } = useTranslation("common");
   return (
     <section className="bg-purple-soft/40 dark:bg-purple-soft/20 py-16 md:py-20">
       <div className="container mx-auto px-4">
-        <SectionHeading eyebrow="Industry led" title="Courses created by working professionals" subtitle="Every TeacherPoint course is built and taught by people doing the job today — not yesterday." />
+        <SectionHeading eyebrow={t("industry.eyebrow")} title={t("industry.title")} subtitle={t("industry.subtitle")} />
         <div className="grid md:grid-cols-3 gap-5">
           {COURSES.slice(2, 5).map((c) => (
             <article key={c.id} className="bg-card border rounded-2xl overflow-hidden hover:shadow-card transition">
@@ -316,7 +319,7 @@ export function IndustryExperts() {
                   </div>
                   <div>
                     <div className="text-sm font-semibold">{c.instructor}</div>
-                    <div className="text-xs text-muted-foreground">Senior Engineer · 8+ yrs</div>
+                    <div className="text-xs text-muted-foreground">{t("industry.seniorEngineer")}</div>
                   </div>
                 </div>
               </div>
@@ -329,9 +332,10 @@ export function IndustryExperts() {
 }
 
 export function SkillsGrid() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-16 md:py-20">
-      <SectionHeading eyebrow="Hot skills" title="Master the tools that matter" subtitle="Job-ready training on the platforms employers actually use." />
+      <SectionHeading eyebrow={t("skills.eyebrow")} title={t("skills.title")} subtitle={t("skills.subtitle")} />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {SKILLS.map((s) => {
           const Icon = ICONS[s.icon] || Sparkles;
@@ -351,19 +355,22 @@ export function SkillsGrid() {
   );
 }
 
+const CERT_FEATURE_KEYS = ["cert.feature1", "cert.feature2", "cert.feature3", "cert.feature4"] as const;
+
 export function ComboPacks() {
   const { combos: COMBOS } = useAdminStore();
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
-      <SectionHeading eyebrow="Save more" title="Combo packs — bundles built for outcomes" subtitle="Curated multi-course paths at unbeatable prices." />
+      <SectionHeading eyebrow={t("combos.eyebrow")} title={t("combos.title")} subtitle={t("combos.subtitle")} />
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
         {COMBOS.map((k) => (
           <article key={k.id} className="rounded-2xl overflow-hidden border bg-card hover:shadow-card hover:-translate-y-1 transition">
             <div className="h-3" style={{ background: k.gradient }} />
             <div className="p-5">
-              <Badge className="mb-3 bg-amber-400 text-amber-950 hover:bg-amber-400">Combo</Badge>
+              <Badge className="mb-3 bg-amber-400 text-amber-950 hover:bg-amber-400">{t("combos.badge")}</Badge>
               <h3 className="font-display font-bold text-lg leading-tight">{k.title}</h3>
-              <div className="text-xs text-muted-foreground mt-1">{k.courses} courses · {k.hours} hours</div>
+              <div className="text-xs text-muted-foreground mt-1">{t("combos.meta", { courses: k.courses, hours: k.hours })}</div>
               <ul className="mt-3 space-y-1.5">
                 {k.includes.map((i) => (
                   <li key={i} className="text-xs flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-emerald-600" />{i}</li>
@@ -372,7 +379,7 @@ export function ComboPacks() {
               <div className="mt-4 flex items-end gap-2 pt-4 border-t">
                 <span className="font-display font-bold text-2xl">${k.price}</span>
                 <span className="text-sm text-muted-foreground line-through">${k.oldPrice}</span>
-                <Button size="sm" variant="gradient" className="ml-auto">Get</Button>
+                <Button size="sm" variant="gradient" className="ml-auto">{t("combos.get")}</Button>
               </div>
             </div>
           </article>
@@ -383,9 +390,10 @@ export function ComboPacks() {
 }
 
 export function HowYouLearn() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-16 md:py-20">
-      <SectionHeading eyebrow="Methodology" title="How you will learn" subtitle="A proven 5-step framework that takes you from zero to hired." />
+      <SectionHeading eyebrow={t("howYouLearn.eyebrow")} title={t("howYouLearn.title")} subtitle={t("howYouLearn.subtitle")} />
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-5 relative">
         <div className="hidden md:block absolute top-6 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-purple to-emerald-500" />
         {LEARNING_TIMELINE.map((s, i) => {
@@ -395,9 +403,9 @@ export function HowYouLearn() {
               <div className="h-12 w-12 mx-auto rounded-full bg-gradient-primary text-white grid place-items-center mb-3 relative z-10">
                 <Icon className="h-6 w-6" />
               </div>
-              <div className="text-xs font-bold text-primary mb-1">STEP {i + 1}</div>
-              <h3 className="font-display font-bold text-base">{s.title}</h3>
-              <p className="text-xs text-muted-foreground mt-2">{s.desc}</p>
+              <div className="text-xs font-bold text-primary mb-1">{t("howYouLearn.stepLabel", { n: i + 1 })}</div>
+              <h3 className="font-display font-bold text-base">{t(`timeline.${i + 1}.title` as "timeline.1.title")}</h3>
+              <p className="text-xs text-muted-foreground mt-2">{t(`timeline.${i + 1}.desc` as "timeline.1.desc")}</p>
             </div>
           );
         })}
@@ -407,31 +415,32 @@ export function HowYouLearn() {
 }
 
 export function Certification() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
       <div className="grid md:grid-cols-2 gap-10 items-center">
         <div>
-          <Badge className="mb-3 bg-emerald-100 text-emerald-700 border-0 dark:bg-emerald-900/40 dark:text-emerald-300">Industry recognized</Badge>
-          <h2 className="font-display font-extrabold text-3xl md:text-4xl">Certificates that actually open doors.</h2>
-          <p className="mt-4 text-muted-foreground">Add verified TeacherPoint certificates to your LinkedIn and resume. Co-signed by industry partners and endorsed by hiring managers.</p>
+          <Badge className="mb-3 bg-emerald-100 text-emerald-700 border-0 dark:bg-emerald-900/40 dark:text-emerald-300">{t("cert.badge")}</Badge>
+          <h2 className="font-display font-extrabold text-3xl md:text-4xl">{t("cert.title")}</h2>
+          <p className="mt-4 text-muted-foreground">{t("cert.subtitle")}</p>
           <ul className="mt-6 space-y-2">
-            {["Verified blockchain credential", "LinkedIn-ready", "Shareable & permanent", "Co-branded with partners"].map((f) => (
-              <li key={f} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-600" />{f}</li>
+            {CERT_FEATURE_KEYS.map((key) => (
+              <li key={key} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-600" />{t(key)}</li>
             ))}
           </ul>
-          <Button asChild size="lg" variant="gradient" className="mt-6"><Link to="/courses">Browse certified courses</Link></Button>
+          <Button asChild size="lg" variant="gradient" className="mt-6"><Link to="/courses">{t("cert.browse")}</Link></Button>
         </div>
         <div className="relative">
           <div className="bg-card border rounded-3xl p-8 shadow-card">
             <div className="border-2 border-dashed border-border rounded-2xl p-8 text-center">
               <Award className="h-16 w-16 mx-auto text-amber-500" />
-              <div className="text-xs uppercase tracking-widest text-muted-foreground mt-4">Certificate of Completion</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground mt-4">{t("cert.ofCompletion")}</div>
               <h3 className="font-display font-bold text-2xl mt-2">Aarav Patel</h3>
-              <p className="text-sm text-muted-foreground mt-1">has successfully completed</p>
+              <p className="text-sm text-muted-foreground mt-1">{t("cert.completed")}</p>
               <p className="font-display font-bold text-lg mt-2">Python Complete Bootcamp</p>
               <div className="mt-4 flex justify-between text-xs text-muted-foreground">
-                <span>Issued · May 2026</span>
-                <span>ID · TP-94821</span>
+                <span>{t("cert.issued")}</span>
+                <span>{t("cert.id")}</span>
               </div>
             </div>
           </div>
@@ -442,19 +451,20 @@ export function Certification() {
 }
 
 export function Comparison() {
+  const { t } = useTranslation("common");
   return (
     <section className="bg-muted/30 py-16 md:py-20">
       <div className="container mx-auto px-4">
-        <SectionHeading eyebrow="Why TeacherPoint" title="See how we stack up" subtitle="A quick look at what makes TeacherPoint different from typical platforms." />
+        <SectionHeading eyebrow={t("comparison.eyebrow")} title={t("comparison.title")} subtitle={t("comparison.subtitle")} />
         <div className="bg-card border rounded-2xl overflow-hidden max-w-3xl mx-auto">
           <div className="grid grid-cols-3 bg-muted/40 px-3 py-3 text-xs font-semibold sm:px-6 sm:py-4 sm:text-sm">
-            <div className="pe-2">Feature</div>
-            <div className="text-center text-primary">TeacherPoint</div>
-            <div className="text-center text-muted-foreground">Others</div>
+            <div className="pe-2">{t("comparison.featureCol")}</div>
+            <div className="text-center text-primary">{t("comparison.us")}</div>
+            <div className="text-center text-muted-foreground">{t("comparison.others")}</div>
           </div>
           {COMPARISON.map((row, i) => (
             <div key={row.feature} className={`grid grid-cols-3 px-3 py-3 text-xs items-center sm:px-6 sm:text-sm ${i % 2 === 0 ? "bg-card" : "bg-muted/30"}`}>
-              <div className="pe-2 leading-snug">{row.feature}</div>
+              <div className="pe-2 leading-snug">{t(`comparison.f${i + 1}` as "comparison.f1")}</div>
               <div className="text-center">
                 {row.us ? <CheckCircle2 className="h-5 w-5 text-emerald-600 mx-auto" /> : <X className="h-5 w-5 text-muted-foreground mx-auto" />}
               </div>
@@ -470,9 +480,10 @@ export function Comparison() {
 }
 
 export function Testimonials() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-16 md:py-20">
-      <SectionHeading eyebrow="Loved by 850K+" title="What our students say" />
+      <SectionHeading eyebrow={t("testimonials.eyebrow")} title={t("testimonials.title")} />
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
         {TESTIMONIALS.map((t) => (
           <article key={t.id} className="bg-card border rounded-2xl p-6 hover:shadow-card transition">
@@ -503,9 +514,10 @@ export function Testimonials() {
 }
 
 export function VideoTestimonials() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
-      <SectionHeading eyebrow="Watch their stories" title="Real students. Real results." />
+      <SectionHeading eyebrow={t("video.eyebrow")} title={t("video.title")} />
       <div className="grid md:grid-cols-3 gap-5">
         {TESTIMONIALS.slice(0, 3).map((t, i) => (
           <button key={t.id} className="group relative rounded-2xl overflow-hidden aspect-video border bg-gradient-to-br from-slate-700 to-slate-900 text-left hover:shadow-card transition">
@@ -528,14 +540,15 @@ export function VideoTestimonials() {
 }
 
 export function FAQSection() {
+  const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-16 md:py-20 max-w-3xl">
-      <SectionHeading eyebrow="FAQ" title="Frequently asked questions" />
+      <SectionHeading eyebrow={t("faq.eyebrow")} title={t("faq.title")} />
       <Accordion type="single" collapsible className="bg-card border rounded-2xl px-6">
         {FAQS.map((f, i) => (
           <AccordionItem key={i} value={`f${i}`}>
-            <AccordionTrigger className="text-left font-semibold">{f.q}</AccordionTrigger>
-            <AccordionContent className="text-muted-foreground">{f.a}</AccordionContent>
+            <AccordionTrigger className="text-left font-semibold">{t(`faq.${i + 1}.q` as "faq.1.q")}</AccordionTrigger>
+            <AccordionContent className="text-muted-foreground">{t(`faq.${i + 1}.a` as "faq.1.a")}</AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>

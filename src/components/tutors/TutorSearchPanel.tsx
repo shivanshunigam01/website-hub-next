@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/lib/navigation";
+import { useTranslation } from "react-i18next";
 import {
   Search,
   GraduationCap,
@@ -82,6 +83,7 @@ export function TutorSearchPanel({
   showResults = true,
   className = "",
 }: Props) {
+  const { t } = useTranslation("common");
   const { data: facets } = useTutorFacets();
   const { data: popularCatalog = [] } = usePopularSubjects(12);
   const { symbol: visitorSymbol } = useCurrency();
@@ -229,38 +231,41 @@ export function TutorSearchPanel({
     if (applied.mode && applied.mode !== "all") {
       chips.push({
         key: "mode",
-        label: applied.mode === "online" ? "Online" : "Home tutor",
+        label: applied.mode === "online" ? t("search.chipOnline") : t("search.chipHomeTutor"),
         clear: () => runSearch({ ...applied, mode: "all" }),
       });
     }
     if (applied.verified) {
       chips.push({
         key: "verified",
-        label: "Verified",
+        label: t("search.chipVerified"),
         clear: () => runSearch({ ...applied, verified: false }),
       });
     }
     if (applied.minRating && applied.minRating > 0) {
       chips.push({
         key: "minRating",
-        label: `${applied.minRating}★+`,
+        label: t("search.chipMinRating", "{{rating}}★+", { rating: applied.minRating }),
         clear: () => runSearch({ ...applied, minRating: 0 }),
       });
     }
     if (applied.maxPrice != null && applied.maxPrice < 100) {
       chips.push({
         key: "maxPrice",
-        label: `≤ ${visitorSymbol}${applied.maxPrice}/hr`,
+        label: t("search.chipMaxPrice", "≤ {{symbol}}{{price}}/hr", {
+          symbol: visitorSymbol,
+          price: applied.maxPrice,
+        }),
         clear: () => runSearch({ ...applied, maxPrice: 100 }),
       });
     }
     return chips;
-  }, [applied]);
+  }, [applied, t, visitorSymbol]);
 
   const filterResetButton = (
     <Button type="button" variant="ghost" size="sm" className="shrink-0 text-muted-foreground" onClick={clearFilters}>
       <RotateCcw className="me-1.5 h-3.5 w-3.5" />
-      Reset
+      {t("search.reset")}
     </Button>
   );
 
@@ -268,20 +273,20 @@ export function TutorSearchPanel({
     <div className="space-y-5">
       <div>
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Subject or skill
+          {t("search.subjectLabel")}
         </Label>
         <SubjectAutocomplete
           className="mt-2"
           value={draft.subject || draft.q || ""}
           onChange={(value) => scheduleApply({ ...draft, subject: value, q: value })}
-          placeholder="e.g. Mathematics, Python"
+          placeholder={t("search.subjectPlaceholder")}
           extraOptions={facetSubjectOptions}
         />
       </div>
 
       <div>
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Location
+          {t("search.locationLabel")}
         </Label>
         <LocationFilterCombobox
           value={locationSelectValue}
@@ -291,30 +296,30 @@ export function TutorSearchPanel({
           className="mt-2"
         />
         {locationOptions.length === 0 && facets && (
-          <p className="mt-1.5 text-xs text-muted-foreground">No tutor locations yet.</p>
+          <p className="mt-1.5 text-xs text-muted-foreground">{t("search.noLocations")}</p>
         )}
       </div>
 
       <div>
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Session type
+          {t("search.sessionType")}
         </Label>
         <div className="mt-2 flex flex-wrap gap-2">
           <ModeChip
             active={draft.mode === "all"}
             onClick={() => applyNow({ ...draft, mode: "all" })}
-            label="All"
+            label={t("search.modeAll")}
           />
           <ModeChip
             active={draft.mode === "online"}
             onClick={() => applyNow({ ...draft, mode: "online" })}
-            label="Online"
+            label={t("search.modeOnline")}
             icon={<Wifi className="h-3.5 w-3.5" />}
           />
           <ModeChip
             active={draft.mode === "in-person"}
             onClick={() => applyNow({ ...draft, mode: "in-person" })}
-            label="Home"
+            label={t("search.modeHome")}
             icon={<WifiOff className="h-3.5 w-3.5" />}
           />
         </div>
@@ -322,7 +327,7 @@ export function TutorSearchPanel({
 
       <div>
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Sort by
+          {t("search.sortBy")}
         </Label>
         <Select
           value={draft.sortBy ?? "rating"}
@@ -332,18 +337,18 @@ export function TutorSearchPanel({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="rating">Top rated</SelectItem>
-            <SelectItem value="reviews">Most reviews</SelectItem>
-            <SelectItem value="price_asc">Price: low to high</SelectItem>
-            <SelectItem value="price_desc">Price: high to low</SelectItem>
-            <SelectItem value="experience">Most experience</SelectItem>
+            <SelectItem value="rating">{t("search.sortRating")}</SelectItem>
+            <SelectItem value="reviews">{t("search.sortReviews")}</SelectItem>
+            <SelectItem value="price_asc">{t("search.sortPriceAsc")}</SelectItem>
+            <SelectItem value="price_desc">{t("search.sortPriceDesc")}</SelectItem>
+            <SelectItem value="experience">{t("search.sortExperience")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div>
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Max price/hr · {visitorSymbol}{draft.maxPrice ?? 100}
+          {t("search.maxPrice", { symbol: visitorSymbol, price: draft.maxPrice ?? 100 })}
         </Label>
         <Slider
           value={[draft.maxPrice ?? 100]}
@@ -356,7 +361,7 @@ export function TutorSearchPanel({
 
       <div>
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Min rating · {(draft.minRating ?? 0).toFixed(1)}★
+          {t("search.minRating", { rating: (draft.minRating ?? 0).toFixed(1) })}
         </Label>
         <Slider
           value={[draft.minRating ?? 0]}
@@ -374,18 +379,18 @@ export function TutorSearchPanel({
           onCheckedChange={(c) => applyNow({ ...draft, verified: !!c })}
         />
         <ShieldCheck className="h-4 w-4 text-emerald-600" />
-        Verified tutors only
+        {t("search.verifiedOnly")}
       </label>
 
       {!isPage && (
         <div className="flex flex-col gap-2 pt-1">
           <Button type="submit" size="lg" variant="gradient" className="w-full">
             <Search className="me-2 h-4 w-4" />
-            Search tutors
+            {t("search.searchTutors")}
           </Button>
           <Button type="button" variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={clearFilters}>
             <RotateCcw className="me-2 h-3.5 w-3.5" />
-            Reset filters
+            {t("search.resetFilters")}
           </Button>
         </div>
       )}
@@ -407,7 +412,7 @@ export function TutorSearchPanel({
           className="flex-1"
           value={draft.subject || draft.q || ""}
           onChange={(value) => setDraft((d) => ({ ...d, subject: value, q: value }))}
-          placeholder="Subject or skill (e.g. Mathematics, Python)"
+          placeholder={t("search.heroPlaceholder")}
           inputClassName="h-12 border-0 bg-transparent shadow-none focus-visible:ring-0"
           extraOptions={facetSubjectOptions}
         />
@@ -422,7 +427,7 @@ export function TutorSearchPanel({
         </div>
         <Button type="submit" size="lg" variant="gradient" className="shrink-0">
           <Search className="me-2 h-4 w-4" />
-          Search tutors
+          {t("search.searchTutors")}
         </Button>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-2 px-1 pb-1">
@@ -450,7 +455,7 @@ export function TutorSearchPanel({
           className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-700 dark:text-emerald-400"
         >
           <Wifi className="me-1 inline h-3 w-3" />
-          Online only
+          {t("search.onlineOnly")}
         </button>
       </div>
     </form>
@@ -462,7 +467,7 @@ export function TutorSearchPanel({
         <SubjectAutocomplete
           value={draft.subject || draft.q || ""}
           onChange={(value) => setDraft((d) => ({ ...d, subject: value, q: value }))}
-          placeholder="Subject or skill"
+          placeholder={t("search.dashboardPlaceholder")}
           extraOptions={facetSubjectOptions}
         />
         <div>
@@ -478,34 +483,34 @@ export function TutorSearchPanel({
           />
         </div>
         <div className="flex flex-wrap gap-2 sm:col-span-2">
-          <ModeChip active={draft.mode === "all"} onClick={() => setDraft((d) => ({ ...d, mode: "all" }))} label="All" />
-          <ModeChip active={draft.mode === "online"} onClick={() => setDraft((d) => ({ ...d, mode: "online" }))} label="Online" icon={<Wifi className="h-3.5 w-3.5" />} />
-          <ModeChip active={draft.mode === "in-person"} onClick={() => setDraft((d) => ({ ...d, mode: "in-person" }))} label="Home" icon={<WifiOff className="h-3.5 w-3.5" />} />
+          <ModeChip active={draft.mode === "all"} onClick={() => setDraft((d) => ({ ...d, mode: "all" }))} label={t("search.modeAll")} />
+          <ModeChip active={draft.mode === "online"} onClick={() => setDraft((d) => ({ ...d, mode: "online" }))} label={t("search.modeOnline")} icon={<Wifi className="h-3.5 w-3.5" />} />
+          <ModeChip active={draft.mode === "in-person"} onClick={() => setDraft((d) => ({ ...d, mode: "in-person" }))} label={t("search.modeHome")} icon={<WifiOff className="h-3.5 w-3.5" />} />
         </div>
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
           <Button type="submit" variant="gradient">
             <Search className="me-2 h-4 w-4" />
-            Search tutors
+            {t("search.searchTutors")}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setShowAdvanced((v) => !v)}>
             <SlidersHorizontal className="me-2 h-4 w-4" />
-            {showAdvanced ? "Hide filters" : "More filters"}
+            {showAdvanced ? t("search.hideFilters") : t("search.moreFilters")}
           </Button>
         </div>
       </div>
       {showAdvanced && (
         <div className="grid gap-5 border-t pt-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Country</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{t("search.country")}</Label>
             <Select
               value={draft.country || "__any__"}
               onValueChange={(v) => setDraft((d) => ({ ...d, country: v === "__any__" ? "" : v }))}
             >
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Any country" />
+                <SelectValue placeholder={t("search.anyCountry")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__any__">Any country</SelectItem>
+                <SelectItem value="__any__">{t("search.anyCountry")}</SelectItem>
                 {(facets?.countriesWithTutors ?? []).map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
@@ -515,16 +520,16 @@ export function TutorSearchPanel({
             </Select>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">City</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{t("search.city")}</Label>
             <Select
               value={draft.city || "__any__"}
               onValueChange={(v) => setDraft((d) => ({ ...d, city: v === "__any__" ? "" : v }))}
             >
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Any city" />
+                <SelectValue placeholder={t("search.anyCity")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__any__">Any city</SelectItem>
+                <SelectItem value="__any__">{t("search.anyCity")}</SelectItem>
                 {(facets?.citiesWithTutors ?? []).map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
@@ -534,7 +539,7 @@ export function TutorSearchPanel({
             </Select>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Min experience · {draft.minExperience ?? 0} yrs</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{t("search.minExperience", { years: draft.minExperience ?? 0 })}</Label>
             <Slider
               value={[draft.minExperience ?? 0]}
               onValueChange={([v]) => setDraft((d) => ({ ...d, minExperience: v }))}
@@ -550,38 +555,38 @@ export function TutorSearchPanel({
                 checked={!!draft.homeTuition}
                 onCheckedChange={(c) => setDraft((d) => ({ ...d, homeTuition: !!c }))}
               />
-              Home tuition
+              {t("search.homeTuition")}
             </label>
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <Checkbox checked={!!draft.verified} onCheckedChange={(c) => setDraft((d) => ({ ...d, verified: !!c }))} />
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
-              Verified only
+              {t("search.verifiedShort")}
             </label>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Sort by</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{t("search.sortBy")}</Label>
             <Select value={draft.sortBy ?? "rating"} onValueChange={(v) => setDraft((d) => ({ ...d, sortBy: v as TutorSearchFilters["sortBy"] }))}>
               <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="rating">Top rated</SelectItem>
-                <SelectItem value="reviews">Most reviews</SelectItem>
-                <SelectItem value="price_asc">Price: low to high</SelectItem>
-                <SelectItem value="price_desc">Price: high to low</SelectItem>
-                <SelectItem value="experience">Most experience</SelectItem>
+                <SelectItem value="rating">{t("search.sortRating")}</SelectItem>
+                <SelectItem value="reviews">{t("search.sortReviews")}</SelectItem>
+                <SelectItem value="price_asc">{t("search.sortPriceAsc")}</SelectItem>
+                <SelectItem value="price_desc">{t("search.sortPriceDesc")}</SelectItem>
+                <SelectItem value="experience">{t("search.sortExperience")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Max price/hr · {visitorSymbol}{draft.maxPrice ?? 100}</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{t("search.maxPrice", { symbol: visitorSymbol, price: draft.maxPrice ?? 100 })}</Label>
             <Slider value={[draft.maxPrice ?? 100]} onValueChange={([v]) => setDraft((d) => ({ ...d, maxPrice: v }))} max={100} step={5} className="mt-3" />
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Min rating · {(draft.minRating ?? 0).toFixed(1)}★</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">{t("search.minRating", { rating: (draft.minRating ?? 0).toFixed(1) })}</Label>
             <Slider value={[draft.minRating ?? 0]} onValueChange={([v]) => setDraft((d) => ({ ...d, minRating: v }))} min={0} max={5} step={0.5} className="mt-3" />
           </div>
           <div className="flex flex-col justify-end">
             <Button type="button" variant="secondary" size="sm" onClick={() => runSearch()}>
-              Apply filters
+              {t("search.applyFilters")}
             </Button>
           </div>
         </div>
@@ -595,10 +600,10 @@ export function TutorSearchPanel({
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-xl font-bold sm:text-2xl">
-              {isLoading || isFetching ? "Searching tutors…" : `${total} tutor${total === 1 ? "" : "s"} found`}
+              {isLoading || isFetching ? t("search.searching") : t("search.resultsTitle", { count: total })}
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Compare profiles, ratings and hourly rates
+              {t("search.compareHint")}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -606,12 +611,12 @@ export function TutorSearchPanel({
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="lg:hidden">
                   <Filter className="me-2 h-4 w-4" />
-                  Filters
+                  {t("search.filters")}
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[min(100vw,320px)] overflow-y-auto">
                 <SheetHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-                  <SheetTitle>Filter tutors</SheetTitle>
+                  <SheetTitle>{t("search.filterTutors")}</SheetTitle>
                   {filterResetButton}
                 </SheetHeader>
                 <div className="mt-6">{filterFields}</div>
@@ -621,12 +626,12 @@ export function TutorSearchPanel({
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="xl:hidden">
                   <MapPin className="me-2 h-4 w-4" />
-                  Locations
+                  {t("search.locations")}
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[min(100vw,300px)] p-0">
                 <SheetHeader className="border-b px-4 py-3">
-                  <SheetTitle>Browse by location</SheetTitle>
+                  <SheetTitle>{t("search.browseByLocation")}</SheetTitle>
                 </SheetHeader>
                 <TutorLocationsSidebar
                   className="px-2 py-2"
@@ -645,24 +650,29 @@ export function TutorSearchPanel({
       {!isPage && (
         <div className="mb-4 flex items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            {isLoading || isFetching ? "Searching…" : `${total} tutor${total === 1 ? "" : "s"} found`}
+            {isLoading || isFetching ? t("search.searchingShort") : t("search.resultsTitle", { count: total })}
           </p>
         </div>
       )}
 
       {activeChips.length > 0 && (
         <div className="mb-5 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Active:</span>
+          <span className="text-xs font-medium text-muted-foreground">{t("search.active")}</span>
           {activeChips.map((chip) => (
             <Badge key={chip.key} variant="secondary" className="gap-1 pr-1.5">
               {chip.label}
-              <button type="button" onClick={chip.clear} className="rounded-full p-0.5 hover:bg-muted" aria-label={`Remove ${chip.label}`}>
+              <button
+                type="button"
+                onClick={chip.clear}
+                className="rounded-full p-0.5 hover:bg-muted"
+                aria-label={t("search.removeChip", "Remove {{label}}", { label: chip.label })}
+              >
                 <X className="h-3 w-3" />
               </button>
             </Badge>
           ))}
           <button type="button" onClick={clearFilters} className="text-xs text-primary hover:underline">
-            Clear all
+            {t("search.clearAll")}
           </button>
         </div>
       )}
@@ -670,18 +680,18 @@ export function TutorSearchPanel({
       {(isLoading || isFetching) && (
         <div className="flex flex-col items-center justify-center gap-3 py-20">
           <Loader2 className="h-9 w-9 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Finding the best tutors for you…</p>
+          <p className="text-sm text-muted-foreground">{t("search.finding")}</p>
         </div>
       )}
 
       {isError && !isLoading && !isFetching && (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-6 py-12 text-center">
-          <p className="font-medium text-destructive">Could not load tutors</p>
+          <p className="font-medium text-destructive">{t("search.loadError")}</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : "Check that the backend is running and try again."}
+            {error instanceof Error ? error.message : t("search.loadErrorHint")}
           </p>
           <Button variant="outline" className="mt-4" onClick={() => refetch()}>
-            Retry
+            {t("search.retry")}
           </Button>
         </div>
       )}
@@ -689,9 +699,9 @@ export function TutorSearchPanel({
       {!isLoading && !isFetching && !isError && tutors.length === 0 && (
         <div className="rounded-2xl border border-dashed bg-muted/20 px-6 py-16 text-center">
           <GraduationCap className="mx-auto h-12 w-12 text-muted-foreground/40" />
-          <h3 className="mt-4 font-display text-lg font-bold">No tutors match your search</h3>
+          <h3 className="mt-4 font-display text-lg font-bold">{t("search.emptyTitle")}</h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Try a different subject, widen your location, or reset filters to browse all tutors.
+            {t("search.emptyDesc")}
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             {popularSubjects.slice(0, 4).map((tag) => (
@@ -707,7 +717,7 @@ export function TutorSearchPanel({
           </div>
           <Button variant="outline" className="mt-5" onClick={clearFilters}>
             <RotateCcw className="me-2 h-4 w-4" />
-            Reset all filters
+            {t("search.resetAll")}
           </Button>
         </div>
       )}
@@ -723,12 +733,12 @@ export function TutorSearchPanel({
       {!isLoading && !isFetching && !isError && tutors.length > 0 && isPage && (
         <div className="mt-10 rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-fuchsia-500/5 p-6 text-center sm:p-8">
           <Star className="mx-auto h-8 w-8 text-primary" />
-          <h3 className="mt-3 font-display text-lg font-bold">Can&apos;t find the right tutor?</h3>
+          <h3 className="mt-3 font-display text-lg font-bold">{t("search.cantFindTitle")}</h3>
           <p className="mx-auto mt-1 max-w-lg text-sm text-muted-foreground">
-            Post your requirement and let verified tutors reach out with tailored offers within hours.
+            {t("search.cantFindDesc")}
           </p>
           <Button asChild size="lg" variant="gradient" className="mt-4">
-            <Link to="/post-requirement">Post a requirement</Link>
+            <Link to="/post-requirement">{t("search.postRequirement")}</Link>
           </Button>
         </div>
       )}
@@ -748,7 +758,7 @@ export function TutorSearchPanel({
               <div className="mb-4 flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 font-display text-base font-semibold">
                   <SlidersHorizontal className="h-4 w-4 text-primary" />
-                  Filters
+                  {t("search.filters")}
                 </h3>
                 {filterResetButton}
               </div>

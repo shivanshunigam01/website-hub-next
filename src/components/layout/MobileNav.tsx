@@ -35,7 +35,7 @@ export function MobileNav() {
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-background safe-bottom lg:hidden"
-      aria-label="Mobile navigation"
+      aria-label={t("nav.ariaMobile")}
     >
       <div className="grid grid-cols-5">
         {items.map((i) => {

@@ -24,7 +24,7 @@ import { syncDocumentLanguage } from "@/lib/document-language";
 import { completeLanguagePrompt, ONBOARDING_POPUPS_ENABLED } from "@/lib/popup-sequence";
 
 export function LanguageSuggestionDialog() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation("common");
   const { location, isLoading, hasLocationAccess } = useLocationContext();
   const [open, setOpen] = useState(false);
   const [suggested, setSuggested] = useState<string>("en");
@@ -101,21 +101,19 @@ export function LanguageSuggestionDialog() {
             {meta.flag}
           </div>
           <DialogTitle className="text-center text-xl">
-            Continue in {meta.native}?
+            {t("lang.suggestTitle", { native: meta.native })}
           </DialogTitle>
           <DialogDescription className="text-center pt-2">
-            Would you like to switch the entire site to{" "}
-            <strong className="text-foreground">{meta.native}</strong> ({meta.english})?
-            You can change this anytime from the language menu.
+            {t("lang.suggestDesc", { native: meta.native, english: meta.english })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2 sm:justify-center">
           <Button variant="outline" size="lg" onClick={decline}>
-            Keep English
+            {t("lang.keepEnglish")}
           </Button>
           <Button size="lg" variant="gradient" onClick={accept}>
             <span className="mr-1.5">{meta.flag}</span>
-            Switch to {meta.native}
+            {t("lang.switchTo", { native: meta.native })}
           </Button>
         </DialogFooter>
       </DialogContent>
