@@ -37,7 +37,7 @@ const QUICK_REPLIES = [
 ];
 
 function isEnquiryRole(role: string | null | undefined) {
-  return role === "student" || role === "teacher";
+  return role === "student" || role === "parent" || role === "teacher";
 }
 
 type UiMessage = {
@@ -253,8 +253,8 @@ export function AccommodationEnquiryDialog({ accommodation, open, onOpenChange }
           <div className="border-t bg-muted/40 px-4 py-3">
             <p className="text-sm font-medium">Sign in to continue this chat</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Log in as a <strong>student</strong> or <strong>teacher</strong> so we can save your messages and
-              reply to you here.
+              Log in as a <strong>student</strong>, <strong>parent</strong>, or <strong>teacher</strong> so we
+              can save your messages and reply to you here.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button asChild size="sm">

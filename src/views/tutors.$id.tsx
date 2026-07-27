@@ -23,6 +23,7 @@ import {
   User,
   Clock,
   ChevronLeft,
+  Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,9 @@ import { formatApiErrorMessage } from "@/lib/api";
 import { useCurrency } from "@/hooks/use-currency";
 import { formatTeachingSubjectLabel } from "@/lib/teaching-subjects";
 import { requestTutorPhone } from "@/services/tutor-actions-api";
+import { requestTutorConnection } from "@/services/connections-api";
+import { useConnectionByTeacher } from "@/hooks/use-connections-api";
+import { useSavedTutors, useToggleSaveTutor } from "@/hooks/use-saved-tutors";
 import { completeRazorpayCheckout } from "@/lib/razorpay";
 import { toRazorpayPaise } from "@/services/razorpay-api";
 import { TimelineList } from "@/components/teacher/TimelineList";
@@ -123,6 +127,16 @@ function TutorDetail() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
+  const [connectLoading, setConnectLoading] = useState(false);
+
+  const { data: connection, refetch: refetchConnection } = useConnectionByTeacher(
+    id,
+    !!user && (user.role === "student" || user.role === "parent"),
+  );
+  const canSave = !!user && (user.role === "student" || user.role === "parent");
+  const { data: savedTutors = [] } = useSavedTutors(canSave);
+  const toggleSave = useToggleSaveTutor();
+  const isSaved = savedTutors.some((t) => t.id === id);
 
   const requireStudent = (action: () => void) => {
     if (!user) {
@@ -145,8 +159,22 @@ function TutorDetail() {
   };
 
   const handleMessage = () => {
-    requireStudent(() => {
-      void navigate({ to: "/messages", search: { tutorId: id } });
+    requireStudent(async () => {
+      setConnectLoading(true);
+      try {
+        await requestTutorConnection({ teacherId: id, source: "message" });
+        toast.success(
+          t(
+            "tutorDetail.toastConnectionRequested",
+            "Connection request sent. You can send up to 2 messages while admin reviews.",
+          ),
+        );
+        void navigate({ to: "/messages", search: { tutorId: id } });
+      } catch (e) {
+        toast.error(formatApiErrorMessage(e, "Could not start connection"));
+      } finally {
+        setConnectLoading(false);
+      }
     });
   };
 
@@ -155,14 +183,27 @@ function TutorDetail() {
       setPhoneLoading(true);
       try {
         const result = await requestTutorPhone(id);
-        if (result.sent) {
-          toast.success(t("tutorDetail.toastPhoneSent", "Phone number sent to {{email}}", { email: result.deliveredTo }));
+        void refetchConnection();
+        if (result.unlocked && result.sent) {
+          toast.success(
+            t("tutorDetail.toastPhoneSent", "Phone number sent to {{email}}", {
+              email: result.deliveredTo,
+            }),
+          );
+        } else if (result.unlocked && result.phone) {
+          toast.success(`Tutor phone: ${result.phone}`);
         } else {
-          toast.warning(
-            t(
-              "tutorDetail.toastPhoneEmailFailed",
-              "Email could not be sent — ask an admin to configure SMTP. The tutor may not have a phone on file.",
-            ),
+          toast.info(
+            result.phoneMasked
+              ? t(
+                  "tutorDetail.toastPhoneMasked",
+                  "Phone masked ({{phone}}). Admin must approve, then pay to unlock.",
+                  { phone: result.phoneMasked },
+                )
+              : t(
+                  "tutorDetail.toastPhoneLocked",
+                  "Phone stays masked until admin approves and you pay the tutor fee.",
+                ),
           );
         }
       } catch (e) {
@@ -174,11 +215,48 @@ function TutorDetail() {
   };
 
   const handlePay = () => {
-    requireStudent(() => setPayOpen(true));
+    requireStudent(async () => {
+      if (connection?.status === "connected") {
+        setPayOpen(true);
+        return;
+      }
+      if (connection?.status === "approved") {
+        setPayOpen(true);
+        return;
+      }
+      setConnectLoading(true);
+      try {
+        const conn = await requestTutorConnection({ teacherId: id, source: "hire" });
+        void refetchConnection();
+        if (conn.status === "approved" || conn.status === "connected") {
+          setPayOpen(true);
+        } else {
+          toast.info(
+            t(
+              "tutorDetail.toastHirePending",
+              "Hire request sent to admin. After approval you can pay to unlock full contact.",
+            ),
+          );
+        }
+      } catch (e) {
+        toast.error(formatApiErrorMessage(e, "Could not request hire"));
+      } finally {
+        setConnectLoading(false);
+      }
+    });
   };
 
   const confirmPay = async () => {
     if (!tutor || !user) return;
+    if (connection && connection.status !== "approved" && connection.status !== "connected") {
+      toast.info(
+        t(
+          "tutorDetail.toastPayNeedsApproval",
+          "Wait for admin approval before paying to unlock this tutor.",
+        ),
+      );
+      return;
+    }
     setPayLoading(true);
     try {
       const currency = tutor.currency || "INR";
@@ -192,10 +270,21 @@ function TutorDetail() {
         customerName: user.name,
         customerEmail: user.email,
         customerPhone: user.phone ? `${user.phoneCountryCode || ""}${user.phone}` : undefined,
-        metadata: { tutorName: tutor.name, displayCurrency: currency, displayPrice: tutor.price },
+        metadata: {
+          tutorName: tutor.name,
+          teacherId: tutor.id,
+          ...(connection?.id ? { connectionId: connection.id } : {}),
+          displayCurrency: currency,
+          displayPrice: tutor.price,
+        },
       });
       setPayOpen(false);
-      toast.success(t("tutorDetail.toastPaymentSuccess", "Payment successful — invoice {{id}}", { id: result.invoiceId }));
+      void refetchConnection();
+      toast.success(
+        t("tutorDetail.toastPaymentUnlock", "Payment successful — full contact unlocked. Invoice {{id}}", {
+          id: result.invoiceId,
+        }),
+      );
     } catch (e) {
       const message = e instanceof Error ? e.message : t("tutorDetail.paymentFailed", "Payment failed");
       if (message !== "Payment cancelled") {
@@ -208,6 +297,17 @@ function TutorDetail() {
 
   const handleReview = () => {
     requireStudent(() => setReviewOpen(true));
+  };
+
+  const handleSave = () => {
+    requireStudent(async () => {
+      try {
+        await toggleSave.mutateAsync({ tutorId: id, currentlySaved: isSaved });
+        toast.success(isSaved ? "Removed from saved tutors" : "Tutor saved");
+      } catch (e) {
+        toast.error(formatApiErrorMessage(e, "Could not update saved tutors"));
+      }
+    });
   };
 
   if (isLoading) {
@@ -448,12 +548,37 @@ function TutorDetail() {
           {/* Sidebar */}
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+              {connection && (
+                <div className="border-b bg-muted/40 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+                  {connection.status === "connected" ? (
+                    <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                      Full contact unlocked. Phone: {connection.phone || "on file"}
+                    </span>
+                  ) : connection.status === "approved" ? (
+                    <span>
+                      Admin approved. Pay {formatLocalizedPrice(connection.amount || tutor.price, connection.currency || tutor.currency)} to unlock unlimited chat &amp; full phone
+                      {connection.phoneMasked ? ` (now ${connection.phoneMasked})` : ""}.
+                    </span>
+                  ) : connection.status === "rejected" ? (
+                    <span className="text-destructive">Connection rejected by admin.</span>
+                  ) : (
+                    <span>
+                      Connection pending admin review. Up to 2 messages allowed.
+                      Phone masked{connection.phoneMasked ? `: ${connection.phoneMasked}` : ""}.
+                      {typeof connection.messagesRemaining === "number"
+                        ? ` (${connection.messagesRemaining} left)`
+                        : ""}
+                    </span>
+                  )}
+                </div>
+              )}
               <div className="flex border-b">
                 <ActionButton
                   label={t("tutorDetail.actionMessage", "Message")}
                   icon={Mail}
                   className="bg-emerald-500 hover:bg-emerald-600"
                   onClick={handleMessage}
+                  loading={connectLoading}
                 />
                 <ActionButton
                   label={t("tutorDetail.actionPhone", "Phone")}
@@ -467,18 +592,27 @@ function TutorDetail() {
                   icon={Clock}
                   className="bg-teal-500 hover:bg-teal-600"
                   onClick={handlePay}
+                  loading={connectLoading}
                 />
                 <ActionButton
                   label={t("tutorDetail.actionHire", "Hire")}
                   icon={CreditCard}
                   className="bg-violet-500 hover:bg-violet-600"
                   onClick={handlePay}
+                  loading={connectLoading}
                 />
                 <ActionButton
                   label={t("tutorDetail.actionReview", "Review")}
                   icon={Star}
                   className="bg-amber-500 hover:bg-amber-600"
                   onClick={handleReview}
+                />
+                <ActionButton
+                  label={isSaved ? "Saved" : "Save"}
+                  icon={Heart}
+                  className={isSaved ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-500 hover:bg-rose-600"}
+                  onClick={handleSave}
+                  loading={toggleSave.isPending}
                 />
               </div>
 

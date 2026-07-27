@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image, { type StaticImageData } from "next/image";
 import { cn } from "@/lib/utils";
 import { useDeferredBackgroundVideo } from "@/hooks/use-deferred-background-video";
@@ -7,7 +8,7 @@ import { useDeferredBackgroundVideo } from "@/hooks/use-deferred-background-vide
 type Props = {
   src: string;
   className?: string;
-  /** Optional static poster shown immediately (preferred for LCP). */
+  /** Optional static poster shown until the video is actually playing. */
   poster?: StaticImageData | string;
   posterClassName?: string;
   desktopDelayMs?: number;
@@ -20,6 +21,7 @@ type Props = {
 /**
  * Poster-first background video. Defers the MP4 until after paint / when near viewport,
  * and skips on reduced-motion / save-data / slow connections.
+ * Once the video is playing, the poster is hidden so image + video never stack.
  */
 export function DeferredBackgroundVideo({
   src,
@@ -36,12 +38,14 @@ export function DeferredBackgroundVideo({
     mobileDelayMs,
     requireMediaQuery,
   });
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
   const shellClass = fill ? "pointer-events-none absolute inset-0" : "pointer-events-none relative";
+  const showPoster = Boolean(poster) && !videoPlaying;
 
   return (
     <div ref={containerRef} aria-hidden className={cn(shellClass, "[&_*]:pointer-events-none")}>
-      {poster ? (
+      {showPoster ? (
         typeof poster === "string" ? (
           // Remote / public path posters — avoid next/image host restrictions for local public files
           // eslint-disable-next-line @next/next/no-img-element
@@ -54,7 +58,7 @@ export function DeferredBackgroundVideo({
           />
         ) : (
           <Image
-            src={poster}
+            src={poster!}
             alt=""
             fill
             priority
@@ -74,6 +78,8 @@ export function DeferredBackgroundVideo({
           muted
           playsInline
           preload="none"
+          onPlaying={() => setVideoPlaying(true)}
+          onError={() => setVideoPlaying(false)}
           className={cn("absolute inset-0 h-full w-full object-cover", className)}
         />
       ) : null}

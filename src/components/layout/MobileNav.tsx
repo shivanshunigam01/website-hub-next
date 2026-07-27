@@ -24,11 +24,13 @@ export function MobileNav() {
   ] as const;
 
   const isDashboard =
+    path === "/profile" ||
     path.startsWith("/admin") ||
     path.startsWith("/student") ||
     path.startsWith("/teacher") ||
     path.startsWith("/parent") ||
-    path.startsWith("/lms");
+    path.startsWith("/lms") ||
+    path.startsWith("/messages");
 
   if (isDashboard) return null;
 

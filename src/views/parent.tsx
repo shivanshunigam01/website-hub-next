@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/lib/navigation";
+import { Link, useNavigate } from "@/lib/navigation";
 import {
   LayoutDashboard,
   Heart,
@@ -10,17 +10,25 @@ import {
   User,
   Search,
   ClipboardList,
+  Bell,
+  Loader2,
+  Building2,
 } from "lucide-react";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { AccountSecurityPanel } from "@/components/auth/AccountSecurityPanel";
 import { AccountProfilePanel } from "@/components/auth/AccountProfilePanel";
 import { DashboardShell, DashboardSection, StatCard } from "@/components/dashboard/Shell";
 import { DashboardProfileCard } from "@/components/dashboard/DashboardProfileCard";
+import { TutorSearchPanel, tutorSearchToUrl } from "@/components/tutors/TutorSearchPanel";
+import type { TutorSearchFilters } from "@/types/tutor-search";
 import { useApp } from "@/hooks/use-app";
-import { useTutors } from "@/hooks/use-catalog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useMyRequirements } from "@/hooks/use-requirements-api";
+import { NotificationsPanel } from "@/components/dashboard/NotificationsPanel";
+import { PaymentsHistoryPanel } from "@/components/dashboard/PaymentsHistoryPanel";
+import { UserAccommodationInquiriesPanel } from "@/components/accommodation/UserAccommodationInquiriesPanel";
+import { useSavedTutors } from "@/hooks/use-saved-tutors";
 import {
   jobTypeLabel,
   requirementStatusClass,
@@ -31,19 +39,27 @@ const ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "my-posts", label: "My Posts", icon: ClipboardList },
   { id: "children", label: "Children", icon: BookOpen },
-  { id: "tutors", label: "Find Tutors", icon: Heart },
+  { id: "tutors", label: "Find Tutors", icon: Search },
+  { id: "saved", label: "Saved Tutors", icon: Heart },
   { id: "payments", label: "Payments", icon: CreditCard },
+  { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "accommodation", label: "Accommodation", icon: Building2 },
   { id: "messages", label: "Messages", icon: MessageCircle },
   { id: "account", label: "Account & Profile", icon: User },
 ];
 
 function Parent() {
   const { user } = useApp();
-  const { data: tutors = [] } = useTutors();
+  const navigate = useNavigate();
   const { data: myPosts = [], isLoading: postsLoading } = useMyRequirements(true);
+  const { data: savedTutors = [], isLoading: savedLoading } = useSavedTutors(true);
   const approvedPosts = myPosts.filter((p) => p.status === "approved");
   const firstName = user?.name?.split(" ")[0] || "there";
   const children = user?.parentProfile?.children ?? [];
+
+  const openFullSearch = (filters: TutorSearchFilters) => {
+    navigate({ to: "/tutors", search: tutorSearchToUrl(filters) });
+  };
 
   return (
     <RequireAuth roles={["parent"]}>
@@ -59,7 +75,7 @@ function Parent() {
             avatarUrl={user?.avatarUrl}
             roleLabel="Parent account"
           />
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard label="Children on profile" value={String(children.length)} icon={BookOpen} />
             <StatCard
               label="Approved posts"
@@ -68,9 +84,9 @@ function Parent() {
               color="from-emerald-400 to-teal-600"
             />
             <StatCard
-              label="Find help"
-              value="Post a need"
-              icon={Search}
+              label="Saved tutors"
+              value={String(savedTutors.length)}
+              icon={Heart}
               color="from-sky-400 to-blue-600"
             />
           </div>
@@ -144,18 +160,18 @@ function Parent() {
 
         <DashboardSection id="children" title="Your children" description="Details saved on your parent profile.">
           {children.length === 0 ? (
-            <div className="bg-card border rounded-2xl p-5 text-sm text-muted-foreground">
+            <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">
               No children added yet.{" "}
-              <Link to="/profile" className="text-primary font-medium hover:underline">
+              <Link to="/profile" className="font-medium text-primary hover:underline">
                 Add child details →
               </Link>
             </div>
           ) : (
-            <div className="bg-card border rounded-2xl p-5 grid sm:grid-cols-2 gap-3">
+            <div className="grid gap-3 rounded-2xl border bg-card p-5 sm:grid-cols-2">
               {children.map((child, i) => (
                 <div key={`${child.name}-${i}`} className="rounded-xl border p-4">
                   <div className="font-semibold">{child.name}</div>
-                  <div className="text-sm text-muted-foreground mt-1">
+                  <div className="mt-1 text-sm text-muted-foreground">
                     {[child.age != null ? `Age ${child.age}` : null, child.grade ? `Grade ${child.grade}` : null]
                       .filter(Boolean)
                       .join(" · ") || "Details pending"}
@@ -166,44 +182,82 @@ function Parent() {
           )}
         </DashboardSection>
 
-        <DashboardSection id="tutors" title="Recommended tutors">
-          <div className="bg-card border rounded-2xl p-5 grid sm:grid-cols-2 gap-3">
-            {tutors.slice(0, 4).map((t) => (
-              <Link
-                to="/tutors/$id"
-                params={{ id: t.id }}
-                key={t.id}
-                className="flex items-center gap-3 hover:bg-muted/40 rounded-lg p-2"
-              >
-                <div
-                  className="h-10 w-10 rounded-full grid place-items-center text-white font-bold text-sm"
-                  style={{ background: t.gradient }}
-                >
-                  {t.initials}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold truncate">{t.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {t.subject} · ${t.price}/hr
-                  </div>
-                </div>
-                <span className="text-xs text-amber-600">★ {t.rating}</span>
-              </Link>
-            ))}
+        <DashboardSection
+          id="tutors"
+          title="Find a tutor"
+          description="Search by subject, location, online or in-person."
+          action={
+            <Link to="/tutors" className="text-sm font-medium text-primary hover:underline">
+              Open full search →
+            </Link>
+          }
+        >
+          <TutorSearchPanel variant="dashboard" onSearch={openFullSearch} showResults />
+        </DashboardSection>
+
+        <DashboardSection id="saved" title="Saved tutors" description="Tutors you favourited.">
+          <div className="rounded-2xl border bg-card p-5">
+            {savedLoading ? (
+              <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
+            ) : savedTutors.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No saved tutors yet.{" "}
+                <Link to="/tutors" className="font-medium text-primary hover:underline">
+                  Browse tutors
+                </Link>
+                .
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {savedTutors.map((t) => (
+                  <Link
+                    to="/tutors/$id"
+                    params={{ id: t.id }}
+                    key={t.id}
+                    className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/40"
+                  >
+                    <div
+                      className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white"
+                      style={{ background: t.gradient }}
+                    >
+                      {t.initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold">{t.name}</div>
+                      <div className="text-xs text-muted-foreground">{t.subject}</div>
+                    </div>
+                    <span className="text-xs text-amber-600">★ {t.rating}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </DashboardSection>
 
         <DashboardSection id="payments" title="Payments">
-          <div className="bg-card border rounded-2xl p-5 text-sm text-muted-foreground">
-            <Link to="/payments" className="text-primary font-medium hover:underline">
-              View payment history →
+          <PaymentsHistoryPanel />
+        </DashboardSection>
+
+        <DashboardSection id="notifications" title="Notifications">
+          <NotificationsPanel />
+        </DashboardSection>
+
+        <DashboardSection
+          id="accommodation"
+          title="Accommodation enquiries"
+          description="Your chats with TeacherPoint about PGs and hostels — admin replies appear here."
+          action={
+            <Link to="/accommodation" className="text-sm font-medium text-primary hover:underline">
+              Browse accommodation →
             </Link>
-          </div>
+          }
+        >
+          <UserAccommodationInquiriesPanel />
         </DashboardSection>
 
         <DashboardSection id="messages" title="Messages">
-          <div className="bg-card border rounded-2xl p-5 text-sm text-muted-foreground">
-            <Link to="/messages" className="text-primary font-medium hover:underline">
+          <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">
+            <Link to="/messages" className="font-medium text-primary hover:underline">
               Open inbox →
             </Link>
           </div>

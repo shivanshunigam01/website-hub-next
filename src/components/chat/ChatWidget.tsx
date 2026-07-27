@@ -29,9 +29,20 @@ const QUICK: { label: string; reply: string; href?: string }[] = [
   },
 ];
 
-export function ChatWidget() {
+export function ChatWidget({
+  open: openControlled,
+  onOpenChange,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+} = {}) {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [openUncontrolled, setOpenUncontrolled] = useState(false);
+  const open = openControlled ?? openUncontrolled;
+  const setOpen = (next: boolean) => {
+    onOpenChange?.(next);
+    if (openControlled === undefined) setOpenUncontrolled(next);
+  };
   const [msgs, setMsgs] = useState<{ from: "bot" | "user"; text: string }[]>([
     { from: "bot", text: "Hi - how can we help you today? Ask about tutors, courses, or getting started." },
   ]);

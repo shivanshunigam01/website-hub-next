@@ -6,7 +6,7 @@ import logoDark from "@/assets/teacherspoints-logo-dark.webp";
 import { cn } from "@/lib/utils";
 
 const sizeClass = {
-  header: "h-14 sm:h-16 w-auto max-w-[14rem] sm:max-w-[17rem]",
+  header: "h-12 sm:h-14 w-auto max-w-[11rem] sm:max-w-[14rem] xl:h-16 xl:max-w-[16rem]",
   footer: "h-12 w-auto max-w-[14rem]",
   login: "h-16 sm:h-[4.5rem] w-auto max-w-[18rem]",
   sidebar: "h-10 w-auto max-w-[10rem]",
@@ -32,11 +32,13 @@ export function BrandLogo({
   className?: string;
   priority?: boolean;
 }) {
-  const imgClass = cn("object-contain object-left shrink-0", sizeClass[size], className);
+  // Keep responsive/layout classes on the wrapper so they never fight theme
+  // visibility (`dark:hidden` / `hidden dark:block`) on the images.
+  const imgClass = cn("object-contain object-left shrink-0", sizeClass[size]);
   const { w, h } = sizePx[size];
 
   return (
-    <>
+    <span className={cn("relative inline-flex shrink-0 items-center", className)}>
       <Image
         src={logoLight}
         alt="TeacherPoint"
@@ -47,16 +49,17 @@ export function BrandLogo({
         sizes="(max-width: 640px) 14rem, 17rem"
         className={cn(imgClass, "dark:hidden")}
       />
-      {/* Never priority both themes — dark logo is large and CSS-hidden in light mode */}
+      {/* Absolutely stacked so light+dark never sit side-by-side if theme CSS lags */}
       <Image
         src={logoDark}
-        alt="TeacherPoint"
+        alt=""
+        aria-hidden
         width={w}
         height={h}
         loading="lazy"
         sizes="(max-width: 640px) 14rem, 17rem"
-        className={cn(imgClass, "hidden dark:block")}
+        className={cn(imgClass, "pointer-events-none absolute inset-0 hidden dark:block")}
       />
-    </>
+    </span>
   );
 }

@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 export type InquiryMessage = {
   id?: string;
   authorId?: string;
-  authorRole: "student" | "teacher" | "admin";
+  authorRole: "student" | "parent" | "teacher" | "admin";
   body: string;
   createdAt: string;
 };

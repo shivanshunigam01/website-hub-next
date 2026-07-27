@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { ShieldCheck, UserPlus, Trash2, Pencil, Send, Mail, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Flag, Server, Crown, Wrench } from "lucide-react";
+import { ShieldCheck, UserPlus, Trash2, Pencil, Send, Mail, CheckCircle2, XCircle, AlertTriangle, MessageSquare, Flag, Server, Crown, Wrench, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -19,9 +19,6 @@ import {
   ROLE_PERMISSIONS,
   type AdminRole,
   type AdminMember,
-  type SupportTicket,
-  type TicketStatus,
-  type TicketPriority,
   type CourseSubmission,
   type UserReport,
   type NotificationAudience,
@@ -29,7 +26,18 @@ import {
 } from "@/hooks/use-platform-store";
 import { useApp } from "@/hooks/use-app";
 import { getAdminTeam, type AdminTeamMember } from "@/services/admin-team-api";
+import {
+  fetchMyNotifications,
+  sendBroadcastNotification,
+  type AppNotification,
+} from "@/services/notifications-api";
 import { formatApiErrorMessage } from "@/lib/api";
+import {
+  fetchTickets,
+  replyTicket,
+  updateTicket,
+  type SupportTicket as ApiTicket,
+} from "@/services/tickets-api";
 
 /* ============ Permission Gate ============ */
 export function PermissionGate({ permission, children, fallback }: { permission: string; children: React.ReactNode; fallback?: React.ReactNode }) {
@@ -271,37 +279,52 @@ function MemberDialog({ open, onOpenChange, member, onSave }: { open: boolean; o
 }
 
 /* ============ Tickets ============ */
-const TICKET_STATUS_TONE: Record<TicketStatus, string> = {
-  open: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-  in_progress: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
-  waiting: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
-  resolved: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
-  closed: "bg-muted text-muted-foreground",
-};
-const PRIORITY_TONE: Record<TicketPriority, string> = {
-  low: "bg-muted text-muted-foreground",
-  medium: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",
-  high: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
-  urgent: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
-};
-
 export function TicketsPanel() {
-  const { tickets, team, updateTicket, replyTicket, currentAdmin } = usePlatformStore();
-  const [active, setActive] = useState<SupportTicket | null>(null);
+  const [tickets, setTickets] = useState<ApiTicket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [active, setActive] = useState<ApiTicket | null>(null);
   const [reply, setReply] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const live = active ? tickets.find((t) => t.id === active.id) ?? null : null;
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setTickets(await fetchTickets({}));
+    } catch (e) {
+      toast.error(formatApiErrorMessage(e, "Could not load tickets"));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const live = active ? tickets.find((t) => t.id === active.id) ?? active : null;
+
+  const setStatus = async (id: string, status: string) => {
+    try {
+      const updated = await updateTicket(id, { status });
+      setTickets((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      if (active?.id === id) setActive(updated);
+    } catch (e) {
+      toast.error(formatApiErrorMessage(e, "Could not update ticket"));
+    }
+  };
 
   return (
     <PermissionGate permission="tickets.manage">
-      <div className="bg-card border rounded-2xl p-5">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+      <div className="rounded-2xl border bg-card p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-display font-bold text-lg">Support tickets</h2>
-            <p className="text-xs text-muted-foreground mt-1">Student & teacher issues with full ticketing workflow.</p>
+            <h2 className="font-display text-lg font-bold">Support tickets</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Live tickets from students and teachers.
+            </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {(["open", "in_progress", "resolved"] as TicketStatus[]).map((s) => (
+          <div className="flex flex-wrap gap-2">
+            {(["open", "in_progress", "resolved"] as const).map((s) => (
               <Badge key={s} variant="outline" className="text-[11px]">
                 {s.replace("_", " ")}: {tickets.filter((t) => t.status === s).length}
               </Badge>
@@ -309,38 +332,66 @@ export function TicketsPanel() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Subject</TableHead><TableHead>From</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead>Assignee</TableHead><TableHead></TableHead></TableRow></TableHeader>
-            <TableBody>
-              {tickets.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell className="font-mono text-xs">{t.id}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">{t.subject}</div>
-                    <div className="text-xs text-muted-foreground line-clamp-1">{t.description}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">{t.requesterName}</div>
-                    <div className="text-xs text-muted-foreground capitalize">{t.requesterRole}</div>
-                  </TableCell>
-                  <TableCell><Badge className={PRIORITY_TONE[t.priority]}>{t.priority}</Badge></TableCell>
-                  <TableCell><Badge className={TICKET_STATUS_TONE[t.status]}>{t.status.replace("_", " ")}</Badge></TableCell>
-                  <TableCell>
-                    <Select value={t.assigneeId ?? "unassigned"} onValueChange={(v) => updateTicket(t.id, { assigneeId: v === "unassigned" ? undefined : v })}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Unassigned" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
-                        {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell><Button size="sm" variant="outline" onClick={() => { setActive(t); setReply(""); }}><MessageSquare className="h-4 w-4" /> Open</Button></TableCell>
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Subject</TableHead>
+                  <TableHead>From</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {tickets.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                      No tickets yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {tickets.map((t) => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-mono text-xs">{t.ticketNumber || t.id.slice(-8)}</TableCell>
+                    <TableCell>
+                      <div className="font-medium">{t.subject}</div>
+                      <div className="line-clamp-1 text-xs text-muted-foreground">{t.description}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{t.requesterName || "User"}</div>
+                      <div className="text-xs text-muted-foreground">{t.requesterEmail}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="capitalize">{t.priority}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="capitalize">{t.status.replace(/_/g, " ")}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setActive(t);
+                          setReply("");
+                        }}
+                      >
+                        <MessageSquare className="h-4 w-4" /> Open
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
 
       <Dialog open={!!live} onOpenChange={(v) => !v && setActive(null)}>
@@ -349,40 +400,77 @@ export function TicketsPanel() {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <span className="font-mono text-xs text-muted-foreground">{live.id}</span>
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {live.ticketNumber || live.id}
+                  </span>
                   {live.subject}
                 </DialogTitle>
               </DialogHeader>
               <div className="flex flex-wrap gap-2 text-xs">
-                <Badge className={PRIORITY_TONE[live.priority]}>{live.priority}</Badge>
-                <Badge className={TICKET_STATUS_TONE[live.status]}>{live.status.replace("_", " ")}</Badge>
+                <Badge className="capitalize">{live.priority}</Badge>
+                <Badge className="capitalize">{live.status.replace(/_/g, " ")}</Badge>
                 <Badge variant="outline">{live.category}</Badge>
-                <Badge variant="outline">{live.requesterName} · {live.requesterEmail}</Badge>
+                <Badge variant="outline">
+                  {live.requesterName} · {live.requesterEmail}
+                </Badge>
               </div>
-              <div className="space-y-3 max-h-72 overflow-auto border rounded-xl p-3 bg-muted/30">
-                <div className="text-sm whitespace-pre-wrap">{live.description}</div>
-                {live.messages.map((m) => (
-                  <div key={m.id} className={`text-sm p-3 rounded-lg border ${m.authorRole === "admin" ? "bg-primary/5 border-primary/30" : "bg-background"}`}>
-                    <div className="text-[11px] text-muted-foreground mb-1 capitalize">{m.author} · {m.authorRole}</div>
-                    <div className="whitespace-pre-wrap">{m.message}</div>
+              <div className="max-h-72 space-y-3 overflow-auto rounded-xl border bg-muted/30 p-3">
+                {(live.messages || []).map((m, i) => (
+                  <div
+                    key={m.id || i}
+                    className={`rounded-lg border p-3 text-sm ${
+                      m.authorRole === "admin" ? "border-primary/30 bg-primary/5" : "bg-background"
+                    }`}
+                  >
+                    <div className="mb-1 text-[11px] capitalize text-muted-foreground">
+                      {m.authorRole || "user"}
+                      {m.createdAt ? ` · ${new Date(m.createdAt).toLocaleString()}` : ""}
+                    </div>
+                    <div className="whitespace-pre-wrap">{m.message || m.body}</div>
                   </div>
                 ))}
               </div>
-              <Textarea placeholder="Type your reply..." value={reply} onChange={(e) => setReply(e.target.value)} className="min-h-[90px]" />
+              <Textarea
+                placeholder="Type your reply..."
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                className="min-h-[90px]"
+              />
               <DialogFooter className="flex-wrap gap-2">
-                <Select value={live.status} onValueChange={(v) => updateTicket(live.id, { status: v as TicketStatus })}>
-                  <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                <Select value={live.status} onValueChange={(v) => void setStatus(live.id, v)}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    {(["open", "in_progress", "waiting", "resolved", "closed"] as TicketStatus[]).map((s) =>
-                      <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}
+                    {(["open", "in_progress", "resolved", "closed"] as const).map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s.replace("_", " ")}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={() => {
-                  if (!reply.trim()) return toast.error("Type a reply");
-                  replyTicket(live.id, { author: currentAdmin?.name ?? "Admin", authorRole: "admin", message: reply.trim() });
-                  setReply("");
-                  toast.success("Reply sent");
-                }}><Send className="h-4 w-4" /> Send reply</Button>
+                <Button
+                  disabled={busy}
+                  onClick={() => {
+                    void (async () => {
+                      if (!reply.trim()) return toast.error("Type a reply");
+                      setBusy(true);
+                      try {
+                        const updated = await replyTicket(live.id, reply.trim());
+                        setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+                        setActive(updated);
+                        setReply("");
+                        toast.success("Reply sent");
+                      } catch (e) {
+                        toast.error(formatApiErrorMessage(e, "Could not reply"));
+                      } finally {
+                        setBusy(false);
+                      }
+                    })();
+                  }}
+                >
+                  <Send className="h-4 w-4" /> Send reply
+                </Button>
               </DialogFooter>
             </>
           )}
@@ -531,22 +619,56 @@ export function ReportsPanel() {
 
 /* ============ Notifications (SMTP) ============ */
 export function NotificationsPanel() {
-  const { notifications, smtp, updateSmtp, sendNotification, currentAdmin } = usePlatformStore();
-  const [form, setForm] = useState<{ subject: string; body: string; audience: NotificationAudience; channel: NotificationChannel }>({
-    subject: "", body: "", audience: "all", channel: "email",
+  const { smtp, updateSmtp } = usePlatformStore();
+  const [form, setForm] = useState<{
+    subject: string;
+    body: string;
+    audience: NotificationAudience;
+    channel: NotificationChannel;
+  }>({
+    subject: "",
+    body: "",
+    audience: "all",
+    channel: "in_app",
   });
+  const [recent, setRecent] = useState<AppNotification[]>([]);
+  const [sending, setSending] = useState(false);
+  const [loadingRecent, setLoadingRecent] = useState(true);
+
+  const loadRecent = useCallback(async () => {
+    setLoadingRecent(true);
+    try {
+      // Admin sees their own inbox sample; broadcast creates per-user rows.
+      setRecent(await fetchMyNotifications({ limit: 20 }));
+    } catch {
+      setRecent([]);
+    } finally {
+      setLoadingRecent(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadRecent();
+  }, [loadRecent]);
 
   return (
     <PermissionGate permission="notifications.send">
-      <div className="grid lg:grid-cols-[1fr_360px] gap-5">
+      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         <div className="space-y-5">
-          <div className="bg-card border rounded-2xl p-5">
-            <h2 className="font-display font-bold text-lg flex items-center gap-2 mb-4"><Mail className="h-4 w-4" /> Compose system notification</h2>
-            <div className="grid sm:grid-cols-2 gap-3">
+          <div className="rounded-2xl border bg-card p-5">
+            <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold">
+              <Mail className="h-4 w-4" /> Compose system notification
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Audience</Label>
-                <Select value={form.audience} onValueChange={(v) => setForm({ ...form, audience: v as NotificationAudience })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={form.audience}
+                  onValueChange={(v) => setForm({ ...form, audience: v as NotificationAudience })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All users</SelectItem>
                     <SelectItem value="students">Students</SelectItem>
@@ -558,82 +680,148 @@ export function NotificationsPanel() {
               </div>
               <div>
                 <Label>Channel</Label>
-                <Select value={form.channel} onValueChange={(v) => setForm({ ...form, channel: v as NotificationChannel })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={form.channel}
+                  onValueChange={(v) => setForm({ ...form, channel: v as NotificationChannel })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="email">Email (SMTP)</SelectItem>
-                    <SelectItem value="in_app">In-app push</SelectItem>
+                    <SelectItem value="in_app">In-app</SelectItem>
+                    <SelectItem value="email">Email (SMTP — config only)</SelectItem>
                     <SelectItem value="both">Both</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="mt-3"><Label>Subject</Label><Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="System maintenance, new feature, course alert..." /></div>
-            <div className="mt-3"><Label>Body</Label><Textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} className="min-h-[140px]" placeholder="Message body — supports plain text." /></div>
+            <div className="mt-3">
+              <Label>Subject</Label>
+              <Input
+                value={form.subject}
+                onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                placeholder="System maintenance, new feature, course alert..."
+              />
+            </div>
+            <div className="mt-3">
+              <Label>Body</Label>
+              <Textarea
+                value={form.body}
+                onChange={(e) => setForm({ ...form, body: e.target.value })}
+                className="min-h-[140px]"
+                placeholder="Message body — supports plain text."
+              />
+            </div>
             {form.channel !== "in_app" && !smtp.enabled && (
-              <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 text-amber-900 dark:text-amber-200 rounded-lg p-3 text-xs flex gap-2 items-start">
-                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>SMTP delivery is disabled. Enable it in the SMTP panel before sending email alerts.</span>
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  SMTP delivery is disabled. In-app notifications still send. Enable SMTP in the panel
+                  for email later.
+                </span>
               </div>
             )}
             <div className="mt-4 flex justify-end">
-              <Button onClick={() => {
-                if (!form.subject || !form.body) return toast.error("Subject and body required");
-                const n = sendNotification({ ...form, sentBy: currentAdmin?.id ?? "system" });
-                toast.success(n.status === "sent" ? `Notification sent to ${n.recipientsCount.toLocaleString()} users` : "Notification queued — SMTP unavailable");
-                setForm({ subject: "", body: "", audience: form.audience, channel: form.channel });
-              }}><Send className="h-4 w-4" /> Send notification</Button>
+              <Button
+                disabled={sending}
+                onClick={() => {
+                  void (async () => {
+                    if (!form.subject || !form.body) return toast.error("Subject and body required");
+                    setSending(true);
+                    try {
+                      const result = await sendBroadcastNotification({
+                        title: form.subject.trim(),
+                        body: form.body.trim(),
+                        audience: form.audience,
+                      });
+                      toast.success(
+                        `In-app notification created for ${result.created?.toLocaleString?.() ?? result.created} users`,
+                      );
+                      setForm({ subject: "", body: "", audience: form.audience, channel: form.channel });
+                      void loadRecent();
+                    } catch (e) {
+                      toast.error(formatApiErrorMessage(e, "Could not send notification"));
+                    } finally {
+                      setSending(false);
+                    }
+                  })();
+                }}
+              >
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send
+                notification
+              </Button>
             </div>
           </div>
 
-          <div className="bg-card border rounded-2xl p-5">
-            <h3 className="font-display font-bold mb-3">Recent notifications</h3>
-            <Table>
-              <TableHeader><TableRow><TableHead>Subject</TableHead><TableHead>Audience</TableHead><TableHead>Channel</TableHead><TableHead>Sent</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {notifications.map((n) => (
-                  <TableRow key={n.id}>
-                    <TableCell className="font-medium">{n.subject}</TableCell>
-                    <TableCell><Badge variant="outline" className="capitalize">{n.audience}</Badge></TableCell>
-                    <TableCell className="text-xs capitalize">{n.channel.replace("_", " ")}</TableCell>
-                    <TableCell className="text-xs">{n.recipientsCount.toLocaleString()}</TableCell>
-                    <TableCell>
-                      {n.status === "sent" ? (
-                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Sent</Badge>
-                      ) : n.status === "failed" ? (
-                        <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Failed</Badge>
-                      ) : <Badge variant="outline">Queued</Badge>}
-                    </TableCell>
+          <div className="rounded-2xl border bg-card p-5">
+            <h3 className="mb-3 font-display font-bold">Your recent notifications</h3>
+            {loadingRecent ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : recent.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No notifications in your inbox yet.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Read</TableHead>
+                    <TableHead>When</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {recent.map((n) => (
+                    <TableRow key={n.id}>
+                      <TableCell className="font-medium">{n.title}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {n.type || "system"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{n.read ? "Yes" : "No"}</TableCell>
+                      <TableCell className="text-xs">
+                        {n.createdAt ? new Date(n.createdAt).toLocaleString() : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </div>
 
-        <div className="bg-card border rounded-2xl p-5 h-fit">
-          <h3 className="font-display font-bold flex items-center gap-2 mb-3"><Server className="h-4 w-4" /> SMTP configuration</h3>
-          <p className="text-xs text-muted-foreground mb-4">Mail SMTP setup for system alerts & updates.</p>
+        <div className="h-fit rounded-2xl border bg-card p-5">
+          <h3 className="mb-3 flex items-center gap-2 font-display font-bold">
+            <Server className="h-4 w-4" /> SMTP configuration
+          </h3>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Mail SMTP setup for system alerts & updates (stored locally until a mail service is wired).
+          </p>
           <div className="space-y-3">
-            <div className="flex items-center justify-between border rounded-lg p-3">
+            <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
-                <div className="text-sm font-medium">SMTP delivery</div>
-                <div className="text-xs text-muted-foreground">{smtp.enabled ? "Active" : "Disabled"}</div>
+                <div className="text-sm font-medium">Enable SMTP</div>
+                <div className="text-xs text-muted-foreground">Toggle outbound email</div>
               </div>
-              <Switch checked={smtp.enabled} onCheckedChange={(v) => { updateSmtp({ enabled: v }); toast.success(v ? "SMTP enabled" : "SMTP disabled"); }} />
+              <Switch checked={smtp.enabled} onCheckedChange={(v) => updateSmtp({ enabled: v })} />
             </div>
-            <div><Label className="text-xs">Host</Label><Input value={smtp.host} onChange={(e) => updateSmtp({ host: e.target.value })} /></div>
-            <div className="grid grid-cols-2 gap-2">
-              <div><Label className="text-xs">Port</Label><Input type="number" value={smtp.port} onChange={(e) => updateSmtp({ port: Number(e.target.value) })} /></div>
-              <div className="flex items-end gap-2 pb-2"><Switch checked={smtp.secure} onCheckedChange={(v) => updateSmtp({ secure: v })} /><span className="text-xs">TLS/SSL</span></div>
+            <div>
+              <Label>Host</Label>
+              <Input value={smtp.host} onChange={(e) => updateSmtp({ host: e.target.value })} />
             </div>
-            <div><Label className="text-xs">Username</Label><Input value={smtp.username} onChange={(e) => updateSmtp({ username: e.target.value })} /></div>
-            <div><Label className="text-xs">Password</Label><Input type="password" value={smtp.passwordMasked} onChange={(e) => updateSmtp({ passwordMasked: e.target.value })} /></div>
-            <div><Label className="text-xs">From name</Label><Input value={smtp.fromName} onChange={(e) => updateSmtp({ fromName: e.target.value })} /></div>
-            <div><Label className="text-xs">From email</Label><Input value={smtp.fromEmail} onChange={(e) => updateSmtp({ fromEmail: e.target.value })} /></div>
-            <Button variant="outline" className="w-full" onClick={() => toast.success("Test email queued via SMTP")}>
-              Send test email
-            </Button>
+            <div>
+              <Label>Port</Label>
+              <Input
+                value={String(smtp.port)}
+                onChange={(e) => updateSmtp({ port: Number(e.target.value) || 587 })}
+              />
+            </div>
+            <div>
+              <Label>From email</Label>
+              <Input value={smtp.fromEmail} onChange={(e) => updateSmtp({ fromEmail: e.target.value })} />
+            </div>
           </div>
         </div>
       </div>

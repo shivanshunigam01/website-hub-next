@@ -30,7 +30,8 @@ const NAV_PATHS = [
 
 const INLINE_NAV_PATHS = NAV_PATHS.filter((n) => n.to !== "/courses" && n.to !== "/tutors");
 
-const DESKTOP_NAV_MQ = "(min-width: 1024px)";
+/** Full inline nav needs ~1280px; below that use the hamburger to avoid overlap. */
+const DESKTOP_NAV_MQ = "(min-width: 1280px)";
 
 function navItemClass(active: boolean) {
   return cn(
@@ -84,16 +85,12 @@ function DesktopNavLinks({
   navLabel,
   tc,
   t,
-  role,
 }: {
   path: string;
   navLabel: (key: string, fallback: string) => string;
   tc: (name: string) => string;
   t: (key: string) => string;
-  role: string | null;
 }) {
-  const isLearner = role === "student" || role === "parent";
-
   return (
     <>
       <DropdownMenu modal={false}>
@@ -149,12 +146,6 @@ function DesktopNavLinks({
           {navLabel(n.key, n.to.slice(1).replace(/^./, (c) => c.toUpperCase()))}
         </Link>
       ))}
-
-      {isLearner ? (
-        <Link to="/my-posts" className={navItemClass(path.startsWith("/my-posts"))}>
-          {navLabel("nav.myPosts", "My Posts")}
-        </Link>
-      ) : null}
 
       <Link to="/post-requirement" className={navItemClass(path.startsWith("/post-requirement"))}>
         {navLabel("nav.postJob", "Post a job")}
@@ -224,21 +215,21 @@ export function Header() {
         className="notranslate sticky top-0 z-50 w-full max-w-[100vw] overflow-x-clip border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
         translate="no"
       >
-        <div className="container relative mx-auto flex h-16 min-h-16 items-center px-4 sm:px-6">
+        <div className="container mx-auto flex h-16 min-h-16 items-center gap-2 px-4 sm:px-6">
           <Link to="/" className="relative z-10 flex shrink-0 items-center" aria-label={t("nav.ariaHome")}>
             <BrandLogo size="header" priority />
           </Link>
 
           <nav
-            className="pointer-events-none absolute inset-x-0 hidden justify-center lg:flex"
+            className="hidden min-w-0 flex-1 items-center justify-center overflow-hidden xl:flex"
             aria-label={t("nav.ariaMain")}
           >
-            <div className="pointer-events-auto flex max-w-[calc(100%-18rem)] flex-nowrap items-center justify-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <DesktopNavLinks path={path} navLabel={navLabel} tc={tc} t={t} role={role} />
+            <div className="flex max-w-full flex-nowrap items-center justify-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <DesktopNavLinks path={path} navLabel={navLabel} tc={tc} t={t} />
             </div>
           </nav>
 
-          <div className="relative z-10 ms-auto flex shrink-0 flex-nowrap items-center justify-end gap-0.5 sm:gap-1">
+          <div className="relative z-10 ms-auto flex shrink-0 flex-nowrap items-center justify-end gap-0.5 bg-background/95 ps-1 sm:gap-1">
             <Button
               variant="ghost"
               size="icon"
@@ -303,10 +294,10 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <>
-                <Button asChild variant="ghost" size="sm" className="hidden h-9 shrink-0 px-2 text-xs lg:inline-flex">
+                <Button asChild variant="ghost" size="sm" className="hidden h-9 shrink-0 px-2 text-xs xl:inline-flex">
                   <Link to="/login">{t("nav.login")}</Link>
                 </Button>
-                <Button asChild size="sm" variant="gradient" className="hidden h-9 shrink-0 px-2.5 text-xs lg:inline-flex">
+                <Button asChild size="sm" variant="gradient" className="hidden h-9 shrink-0 px-2.5 text-xs xl:inline-flex">
                   <Link to="/role-select">{t("nav.signup")}</Link>
                 </Button>
               </>
@@ -315,7 +306,7 @@ export function Header() {
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 shrink-0 lg:hidden"
+              className="h-9 w-9 shrink-0 xl:hidden"
               aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen((o) => !o)}
@@ -326,7 +317,7 @@ export function Header() {
         </div>
 
         {mobileOpen && (
-          <div className="max-h-[min(70vh,calc(100dvh-3.5rem))] overflow-y-auto border-t bg-background lg:hidden">
+          <div className="max-h-[min(70vh,calc(100dvh-3.5rem))] overflow-y-auto border-t bg-background xl:hidden">
             <div className="container mx-auto space-y-1 px-4 py-4">
               <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("nav.categories")}
@@ -439,7 +430,34 @@ export function Header() {
                 </Link>
               )}
 
-              {!role && (
+              {role && user ? (
+                <div className="space-y-1 border-t pt-2">
+                  <Link
+                    to={`/${role}` as any}
+                    onClick={() => setMobileOpen(false)}
+                    className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    {t("nav.dashboard")}
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileOpen(false)}
+                    className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    {t("nav.editProfile")}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      logout();
+                    }}
+                    className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent"
+                  >
+                    {t("nav.logout")}
+                  </button>
+                </div>
+              ) : (
                 <>
                   <Link
                     to="/login"

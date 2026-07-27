@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { LayoutDashboard, Users, BookOpen, Package, DollarSign, Plus, Pencil, Trash2, Settings, BarChart3, Megaphone, Building2, Mail, ShieldCheck, LifeBuoy, CheckSquare, Flag, Bell, Network, FileText, ShoppingBag, Mail as MailIcon, TrendingUp, Search as SearchIcon, Smartphone, Presentation, GraduationCap, Briefcase } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Package, DollarSign, Plus, Pencil, Trash2, Settings, BarChart3, Megaphone, Building2, Mail, ShieldCheck, LifeBuoy, CheckSquare, Flag, Bell, Network, FileText, ShoppingBag, Mail as MailIcon, TrendingUp, Search as SearchIcon, Smartphone, Presentation, GraduationCap, Briefcase, Handshake } from "lucide-react";
 import { IpMonitorPanel } from "@/components/admin/IpMonitorPanel";
 import { DashboardShell, StatCard } from "@/components/dashboard/Shell";
 import { RequireAuth } from "@/components/auth/RequireAuth";
@@ -38,6 +38,7 @@ import {
   PwaSecurityPanel,
 } from "@/components/admin/ExtendedPanels";
 import { JobApplicationsApprovalPanel } from "@/components/admin/JobApplicationsApprovalPanel";
+import { ConnectionRequestsPanel } from "@/components/admin/ConnectionRequestsPanel";
 import { WorkshopsAdminPanel } from "@/components/admin/WorkshopsAdminPanel";
 import { SubjectsAdminPanel } from "@/components/admin/SubjectsAdminPanel";
 import { AccommodationInquiriesPanel } from "@/components/admin/AccommodationInquiriesPanel";
@@ -52,6 +53,7 @@ const ITEMS = [
   { id: "workshops", label: "Workshop Requests", icon: Presentation },
   { id: "requirements", label: "Requirement Approvals", icon: FileText },
   { id: "job-applications", label: "Job Applications", icon: Briefcase },
+  { id: "connections", label: "Tutor Connections", icon: Handshake },
   { id: "marketplace", label: "Exchange Approvals", icon: ShoppingBag },
   { id: "tickets", label: "Support Tickets", icon: LifeBuoy },
   { id: "notifications", label: "Notifications", icon: Bell },
@@ -157,6 +159,7 @@ function Admin() {
       )}
       {tab === "requirements" && <RequirementsApprovalPanel />}
       {tab === "job-applications" && <JobApplicationsApprovalPanel />}
+      {tab === "connections" && <ConnectionRequestsPanel />}
       {tab === "marketplace" && <MarketplaceApprovalPanel />}
       {tab === "tickets" && <TicketsPanel />}
       {tab === "notifications" && <NotificationsPanel />}

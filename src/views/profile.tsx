@@ -366,12 +366,11 @@ function ProfileSetup() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative hidden overflow-hidden rounded-3xl border bg-gradient-to-br from-primary/90 via-primary to-primary/70 p-8 text-primary-foreground shadow-2xl lg:flex lg:flex-col lg:justify-between"
         >
-          {/* Looping background video — deferred, desktop only (panel is lg+) */}
+          {/* Looping background video only (no poster) — desktop only (panel is lg+) */}
           <DeferredBackgroundVideo
             src="/videos/profile-hero.mp4?v=2"
-            poster="/videos/profile-hero-poster.jpg?v=2"
             className="opacity-60 mix-blend-overlay"
-            desktopDelayMs={1500}
+            desktopDelayMs={0}
             requireMediaQuery="(min-width: 1024px)"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-primary/70 via-primary/25 to-transparent" />

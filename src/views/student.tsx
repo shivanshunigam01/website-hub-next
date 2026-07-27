@@ -9,8 +9,6 @@ import type { TutorSearchFilters } from "@/types/tutor-search";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { useApp } from "@/hooks/use-app";
 import { DashboardShell, DashboardSection, StatCard } from "@/components/dashboard/Shell";
-import { NOTIFICATIONS } from "@/data/mock";
-import { useTutors } from "@/hooks/use-catalog";
 import { useLearning } from "@/hooks/use-learning";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -19,12 +17,17 @@ import { CertificateCard } from "@/components/lms/CertificateCard";
 import { StudentExchangePanel } from "@/components/marketplace/StudentExchangePanel";
 import { DashboardProfileCard } from "@/components/dashboard/DashboardProfileCard";
 import { UserAccommodationInquiriesPanel } from "@/components/accommodation/UserAccommodationInquiriesPanel";
+import { NotificationsPanel } from "@/components/dashboard/NotificationsPanel";
+import { useSavedTutors } from "@/hooks/use-saved-tutors";
 import { useMyRequirements } from "@/hooks/use-requirements-api";
+import { useQuery } from "@tanstack/react-query";
+import { fetchConversations } from "@/services/conversations-api";
 import {
   jobTypeLabel,
   requirementStatusClass,
   requirementStatusLabel,
 } from "@/lib/tutor-jobs-utils";
+import { Loader2 } from "lucide-react";
 
 const ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -45,8 +48,12 @@ function Student() {
   const { user } = useApp();
   const navigate = useNavigate();
   const { enrollments, certificates, loading } = useLearning();
-  const { data: tutors = [] } = useTutors();
+  const { data: savedTutors = [], isLoading: savedLoading } = useSavedTutors(true);
   const { data: myPosts = [], isLoading: postsLoading } = useMyRequirements(true);
+  const { data: conversations = [], isLoading: convLoading } = useQuery({
+    queryKey: ["dashboard-conversations"],
+    queryFn: () => fetchConversations(),
+  });
   const approvedPosts = myPosts.filter((p) => p.status === "approved");
 
   const openFullSearch = (filters: TutorSearchFilters) => {
@@ -196,18 +203,44 @@ function Student() {
         </div>
       </DashboardSection>
 
-      <DashboardSection id="saved" title="Saved tutors" description="Quick access to your favourites.">
-        <div className="bg-card border rounded-2xl p-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {tutors.slice(0, 6).map((t) => (
-            <Link to="/tutors/$id" params={{ id: t.id }} key={t.id} className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2">
-              <div className="h-10 w-10 rounded-full grid place-items-center text-white font-bold text-sm" style={{ background: t.gradient }}>{t.initials}</div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{t.name}</div>
-                <div className="text-xs text-muted-foreground">{t.subject}</div>
-              </div>
-              <span className="text-xs text-amber-600">★ {t.rating}</span>
-            </Link>
-          ))}
+      <DashboardSection id="saved" title="Saved tutors" description="Tutors you favourited from their profile.">
+        <div className="rounded-2xl border bg-card p-5">
+          {savedLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : savedTutors.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No saved tutors yet.{" "}
+              <Link to="/tutors" className="font-medium text-primary hover:underline">
+                Browse tutors
+              </Link>{" "}
+              and tap save on a profile.
+            </p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {savedTutors.map((t) => (
+                <Link
+                  to="/tutors/$id"
+                  params={{ id: t.id }}
+                  key={t.id}
+                  className="-mx-2 flex items-center gap-3 rounded-lg p-2 hover:bg-muted/50"
+                >
+                  <div
+                    className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white"
+                    style={{ background: t.gradient }}
+                  >
+                    {t.initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold">{t.name}</div>
+                    <div className="text-xs text-muted-foreground">{t.subject}</div>
+                  </div>
+                  <span className="text-xs text-amber-600">★ {t.rating}</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </DashboardSection>
 
@@ -224,16 +257,7 @@ function Student() {
       </DashboardSection>
 
       <DashboardSection id="notifications" title="Notifications">
-        <div className="bg-card border rounded-2xl p-5">
-          <ul className="space-y-3">
-            {NOTIFICATIONS.map((n) => (
-              <li key={n.id} className="text-sm border-b last:border-0 pb-3 last:pb-0">
-                <div className="font-semibold flex items-center gap-2">{n.title}{n.unread && <Badge className="bg-primary h-1.5 w-1.5 p-0 rounded-full" />}</div>
-                <div className="text-xs text-muted-foreground">{n.body} · {n.time}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <NotificationsPanel />
       </DashboardSection>
 
       <DashboardSection
@@ -249,9 +273,47 @@ function Student() {
         <UserAccommodationInquiriesPanel />
       </DashboardSection>
 
-      <DashboardSection id="messages" title="Messages" description="Recent conversations with your tutors.">
-        <div className="bg-card border rounded-2xl p-5 text-sm text-muted-foreground">
-          Open the full messaging page for chats. <Link to="/messages" className="text-primary font-medium hover:underline">Go to messages →</Link>
+      <DashboardSection
+        id="messages"
+        title="Messages"
+        description="Recent conversations with your tutors."
+        action={
+          <Link to="/messages" className="text-sm font-medium text-primary hover:underline">
+            Open inbox →
+          </Link>
+        }
+      >
+        <div className="rounded-2xl border bg-card p-5">
+          {convLoading ? (
+            <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
+          ) : conversations.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No conversations yet.{" "}
+              <Link to="/tutors" className="font-medium text-primary hover:underline">
+                Message a tutor
+              </Link>{" "}
+              to start (admin approval + payment unlock full chat).
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {conversations.slice(0, 5).map((c) => (
+                <li key={c.id}>
+                  <Link
+                    to="/messages"
+                    search={{ tutorId: c.other?.id }}
+                    className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 hover:bg-muted/40"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold">{c.other?.name || "Chat"}</div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {c.lastMessage || c.connectionStatus || "New conversation"}
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </DashboardSection>
 

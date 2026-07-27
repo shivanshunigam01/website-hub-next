@@ -11,7 +11,6 @@ import { LmsStoreProvider } from "@/hooks/use-lms-store";
 import { LearningProvider } from "@/hooks/use-learning";
 import { PlatformStoreProvider } from "@/hooks/use-platform-store";
 import { MarketplaceProvider } from "@/hooks/use-marketplace";
-import { RequirementsStoreProvider } from "@/hooks/use-requirements-store";
 import { LocationProvider } from "@/hooks/use-user-location";
 import { CurrencyProvider } from "@/hooks/use-currency";
 import { I18nProvider } from "@/components/I18nProvider";
@@ -21,6 +20,11 @@ import { MobileNav } from "@/components/layout/MobileNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { Toaster } from "@/components/ui/sonner";
 import { buildEarlyLanguageCookieScript } from "@/lib/google-translate";
+import {
+  isDashboardPath,
+  shouldHideSupportWidgets,
+  shouldShowMarketingChrome,
+} from "@/lib/site-chrome";
 
 const ChatWidget = dynamic(() => import("@/components/chat/ChatWidget").then((m) => m.ChatWidget), {
   ssr: false,
@@ -42,23 +46,33 @@ const VisitorTracker = dynamic(
   { ssr: false },
 );
 
-function DeferredWidgets({ isDashboard }: { isDashboard: boolean }) {
+function DeferredWidgets({ hideSupportWidgets }: { hideSupportWidgets: boolean }) {
   const [ready, setReady] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const t = window.setTimeout(() => setReady(true), 2500);
     return () => window.clearTimeout(t);
   }, []);
 
-  if (!ready) return null;
+  if (!ready || hideSupportWidgets) {
+    return (
+      <>
+        <RegionalAdPopup />
+        <GoogleTranslate />
+        <VisitorTracker />
+      </>
+    );
+  }
 
   return (
     <>
-      {!isDashboard && <ChatWidget />}
-      {!isDashboard && <WhatsAppButton />}
+      <ChatWidget open={chatOpen} onOpenChange={setChatOpen} />
+      {!chatOpen && <WhatsAppButton />}
       <RegionalAdPopup />
       <GoogleTranslate />
       <VisitorTracker />
+      {!chatOpen && <ScrollToTop />}
     </>
   );
 }
@@ -68,7 +82,6 @@ function SiteChrome({ children }: { children: ReactNode }) {
   const prevPath = useRef(pathname);
   const { role } = useApp();
 
-  // Always land at the top when opening a new page (skip hash-only jumps).
   useEffect(() => {
     if (prevPath.current === pathname) return;
     prevPath.current = pathname;
@@ -79,26 +92,25 @@ function SiteChrome({ children }: { children: ReactNode }) {
     document.body.scrollTop = 0;
   }, [pathname]);
 
-  const isDashboard =
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/teacher") ||
-    pathname.startsWith("/student") ||
-    pathname.startsWith("/parent") ||
-    pathname.startsWith("/lms") ||
-    pathname === "/profile";
+  const isDashboard = isDashboardPath(pathname);
+  const hideSupportWidgets = shouldHideSupportWidgets(pathname);
+  const showMarketingChrome = shouldShowMarketingChrome(pathname);
   const showSiteHeader = !role || !isDashboard;
 
   return (
     <div className="flex min-h-dvh w-full max-w-full flex-col bg-background text-foreground">
       {showSiteHeader && <Header />}
-      <main className={`flex-1 ${isDashboard ? "" : "pb-[calc(3.5rem+max(1rem,env(safe-area-inset-bottom)))] lg:pb-0"}`}>
+      <main className="flex-1">
         <Suspense fallback={null}>{children}</Suspense>
       </main>
-      {!isDashboard && <Footer />}
-      {!isDashboard && <MobileNav />}
-      <DeferredWidgets isDashboard={isDashboard} />
+      {showMarketingChrome && (
+        <div className="pb-[calc(3.5rem+max(1rem,env(safe-area-inset-bottom)))] lg:pb-0">
+          <Footer />
+        </div>
+      )}
+      {showMarketingChrome && <MobileNav />}
+      <DeferredWidgets hideSupportWidgets={hideSupportWidgets} />
       <Toaster />
-      <ScrollToTop />
     </div>
   );
 }
@@ -118,9 +130,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
                     <LmsStoreProvider>
                       <PlatformStoreProvider>
                         <MarketplaceProvider>
-                          <RequirementsStoreProvider>
-                            <SiteChrome>{children}</SiteChrome>
-                          </RequirementsStoreProvider>
+                          <SiteChrome>{children}</SiteChrome>
                         </MarketplaceProvider>
                       </PlatformStoreProvider>
                     </LmsStoreProvider>

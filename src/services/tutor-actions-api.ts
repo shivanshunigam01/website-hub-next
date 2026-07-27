@@ -1,9 +1,17 @@
 import { api } from "@/lib/api";
+import type { TutorConnection } from "@/services/connections-api";
 
 export type RequestPhoneResult = {
   sent: boolean;
-  deliveredTo: string;
+  deliveredTo?: string;
   stub?: boolean;
+  unlocked?: boolean;
+  phoneMasked?: string | null;
+  phone?: string | null;
+  status?: string;
+  created?: boolean;
+  requestEmailSent?: boolean;
+  connection?: TutorConnection;
 };
 
 export type TutorPaymentResult = {
@@ -22,6 +30,7 @@ export async function payTutorSession(input: {
   amount: number;
   currency: string;
   tutorName: string;
+  connectionId?: string;
 }): Promise<TutorPaymentResult> {
   return api<TutorPaymentResult>("/payments", {
     method: "POST",
@@ -31,7 +40,11 @@ export async function payTutorSession(input: {
       amount: input.amount,
       currency: input.currency,
       method: "manual",
-      metadata: { tutorName: input.tutorName },
+      metadata: {
+        tutorName: input.tutorName,
+        teacherId: input.tutorId,
+        connectionId: input.connectionId,
+      },
     }),
   });
 }

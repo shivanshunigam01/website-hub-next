@@ -151,8 +151,7 @@ export function DashboardShell({
           className="flex min-w-0 shrink items-center overflow-hidden"
           aria-label="Dashboard home"
         >
-          <BrandLogo size="sidebar" className="sm:hidden" />
-          <BrandLogo size="header" className="hidden sm:block" />
+          <BrandLogo size="header" />
         </Link>
         <div className="hidden items-center gap-2 sm:flex">
           <span className="text-sm font-semibold">{title}</span>

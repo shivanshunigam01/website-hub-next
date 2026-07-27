@@ -11,6 +11,7 @@ export const ADMIN_TAB_PERMISSIONS: Record<string, string | null> = {
   workshops: "courses.approve",
   requirements: "courses.approve",
   "job-applications": "courses.approve",
+  connections: "courses.approve",
   marketplace: "courses.approve",
   tickets: "tickets.manage",
   notifications: "notifications.send",

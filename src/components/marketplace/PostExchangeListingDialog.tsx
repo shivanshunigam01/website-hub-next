@@ -28,23 +28,22 @@ import { toast } from "sonner";
 import { useApp } from "@/hooks/use-app";
 import { useLocationContext } from "@/hooks/use-user-location";
 import { useCurrency } from "@/hooks/use-currency";
-import {
-  CATEGORY_LABELS,
-  useMarketplace,
-  type Listing,
-  type ListingCategory,
-  type ListingCondition,
-} from "@/hooks/use-marketplace";
+import { useCreateListing } from "@/hooks/use-listings-api";
+import { CATEGORY_LABELS, toApiCategory } from "@/services/listings-api";
+import { formatApiErrorMessage } from "@/lib/api";
+
+type ListingCategory = "books" | "notes" | "electronics" | "services" | "rideshare" | "accommodation" | "tutoring" | "other";
+type ListingCondition = "new" | "like-new" | "good" | "used" | "other";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmitted?: (listing: Listing) => void;
+  onSubmitted?: () => void;
 };
 
 export function PostExchangeListingDialog({ open, onOpenChange, onSubmitted }: Props) {
   const { user, role } = useApp();
-  const { createListing } = useMarketplace();
+  const createMut = useCreateListing();
   const { location, hasLocationAccess } = useLocationContext();
   const { currency: detectedCurrency } = useCurrency();
   const isStudent = role === "student" && !!user;
@@ -101,7 +100,7 @@ export function PostExchangeListingDialog({ open, onOpenChange, onSubmitted }: P
     });
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!isStudent || !user) return;
     if (!form.title.trim() || !form.description.trim() || !form.price || !form.city.trim()) {
       toast.error("Fill in title, description, price and city");
@@ -111,37 +110,38 @@ export function PostExchangeListingDialog({ open, onOpenChange, onSubmitted }: P
       toast.error("Please specify the category");
       return;
     }
-    if (form.condition === "other" && !form.conditionOther.trim()) {
-      toast.error("Please specify the condition");
-      return;
+    try {
+      const descParts = [form.description.trim()];
+      if (form.condition) descParts.push(`Condition: ${form.condition}`);
+      if (form.category === "other" && form.categoryOther.trim()) {
+        descParts.push(`Category: ${form.categoryOther.trim()}`);
+      }
+      if (form.negotiable) descParts.push("Price negotiable.");
+      if (form.sellerPhone.trim()) descParts.push(`Contact: ${form.sellerPhone.trim()}`);
+      if (form.category === "rideshare") {
+        descParts.push(
+          `Ride: ${form.rideFrom} → ${form.rideTo} (${form.rideDate}, ${form.rideSeats} seats)`,
+        );
+      }
+
+      await createMut.mutateAsync({
+        title: form.title.trim(),
+        description: descParts.join("\n"),
+        category: toApiCategory(form.category),
+        price: form.price,
+        currency: form.currency,
+        city: form.city.trim(),
+        country: form.country.trim() || "India",
+        imageUrl: form.imageUrl.trim() || undefined,
+        status: "pending",
+      });
+      toast.success("Listing submitted! It will appear after admin approval.");
+      resetForm();
+      onOpenChange(false);
+      onSubmitted?.();
+    } catch (e) {
+      toast.error(formatApiErrorMessage(e, "Could not submit listing"));
     }
-    const listing = createListing({
-      title: form.title.trim(),
-      description: form.description.trim(),
-      category: form.category,
-      categoryOther: form.category === "other" ? form.categoryOther.trim() : undefined,
-      condition: form.condition,
-      conditionOther: form.condition === "other" ? form.conditionOther.trim() : undefined,
-      price: form.price,
-      currency: form.currency,
-      negotiable: form.negotiable,
-      city: form.city.trim(),
-      country: form.country.trim() || "India",
-      imageUrl: form.imageUrl.trim() || undefined,
-      sellerId: user.id,
-      sellerName: user.name,
-      sellerRole: "student",
-      sellerEmail: user.email?.trim() || user.phone || "",
-      sellerPhone: form.sellerPhone.trim() || user.phone || undefined,
-      rideFrom: form.category === "rideshare" ? form.rideFrom : undefined,
-      rideTo: form.category === "rideshare" ? form.rideTo : undefined,
-      rideDate: form.category === "rideshare" ? form.rideDate : undefined,
-      rideSeats: form.category === "rideshare" ? form.rideSeats : undefined,
-    });
-    toast.success("Listing submitted! It will appear after admin approval.");
-    resetForm();
-    onOpenChange(false);
-    onSubmitted?.(listing);
   };
 
   return (
@@ -205,9 +205,8 @@ export function PostExchangeListingDialog({ open, onOpenChange, onSubmitted }: P
                 <SelectWithOther
                   mode="enum-other"
                   className="mt-1.5"
-                  options={(Object.keys(CATEGORY_LABELS) as ListingCategory[])
-                    .filter((c) => c !== "other")
-                    .map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
+                  options={(["books", "notes", "electronics", "services", "rideshare", "accommodation", "tutoring"] as ListingCategory[])
+                    .map((c) => ({ value: c, label: CATEGORY_LABELS[c] || c }))}
                   value={form.category}
                   customValue={form.categoryOther}
                   onValueChange={(v) => setForm({ ...form, category: v as ListingCategory })}
@@ -304,9 +303,9 @@ export function PostExchangeListingDialog({ open, onOpenChange, onSubmitted }: P
         <DialogFooter>
           <Button variant="outline" size="default" onClick={() => onOpenChange(false)}>Cancel</Button>
           {isStudent && (
-            <Button size="default" variant="gradient" onClick={submit}>
+            <Button size="default" variant="gradient" onClick={() => void submit()} disabled={createMut.isPending}>
               <Plus className="me-2 h-4 w-4" />
-              Submit for approval
+              {createMut.isPending ? "Submitting…" : "Submit for approval"}
             </Button>
           )}
         </DialogFooter>

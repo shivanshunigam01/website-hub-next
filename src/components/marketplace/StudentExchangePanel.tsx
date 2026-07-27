@@ -1,34 +1,31 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "@/lib/navigation";
-import { Clock, ExternalLink, Package, Plus } from "lucide-react";
+import { Clock, ExternalLink, Loader2, Package, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/hooks/use-app";
-import { useMarketplace, CATEGORY_LABELS, type ListingStatus } from "@/hooks/use-marketplace";
+import { useMyListings } from "@/hooks/use-listings-api";
+import { CATEGORY_LABELS, displayListingStatus } from "@/services/listings-api";
 import { useCurrency } from "@/hooks/use-currency";
 import { PostExchangeListingDialog } from "@/components/marketplace/PostExchangeListingDialog";
 import { cn } from "@/lib/utils";
 
-const STATUS_STYLE: Record<ListingStatus, string> = {
+const STATUS_STYLE: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
   active: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+  approved: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
   rejected: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
   sold: "bg-muted text-muted-foreground",
-  expired: "bg-muted text-muted-foreground",
+  draft: "bg-muted text-muted-foreground",
 };
 
 export function StudentExchangePanel() {
   const { user } = useApp();
-  const { getMyListings } = useMarketplace();
+  const { data: myListings = [], isLoading } = useMyListings(!!user);
   const { formatLocalizedPrice } = useCurrency();
   const [postOpen, setPostOpen] = useState(false);
-
-  const myListings = useMemo(
-    () => (user ? getMyListings(user.id, user.email) : []),
-    [getMyListings, user],
-  );
 
   return (
     <>
@@ -54,7 +51,11 @@ export function StudentExchangePanel() {
           </div>
         </div>
 
-        {myListings.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : myListings.length === 0 ? (
           <div className="rounded-2xl border border-dashed bg-muted/20 p-8 text-center">
             <Package className="mx-auto h-10 w-10 text-muted-foreground/50" />
             <p className="mt-3 text-sm font-medium">No listings yet</p>
@@ -70,20 +71,25 @@ export function StudentExchangePanel() {
           <div className="overflow-hidden rounded-2xl border bg-card">
             <div className="border-b px-4 py-3 text-sm font-semibold">Your listings ({myListings.length})</div>
             <ul className="divide-y">
-              {myListings.map((l) => (
-                <li key={l.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{l.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {CATEGORY_LABELS[l.category]} · {formatLocalizedPrice(l.price, l.currency)} · {l.city}
-                    </p>
-                  </div>
-                  <Badge className={cn("capitalize shrink-0", STATUS_STYLE[l.status])}>
-                    {l.status === "pending" && <Clock className="me-1 h-3 w-3" />}
-                    {l.status}
-                  </Badge>
-                </li>
-              ))}
+              {myListings.map((l) => {
+                const status = displayListingStatus(l.status);
+                return (
+                  <li key={l.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{l.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {CATEGORY_LABELS[l.category || "materials"] || l.category} ·{" "}
+                        {formatLocalizedPrice(Number(l.price || 0), l.currency || "INR")}
+                        {l.city ? ` · ${l.city}` : ""}
+                      </p>
+                    </div>
+                    <Badge className={cn("shrink-0 capitalize", STATUS_STYLE[status] || STATUS_STYLE.pending)}>
+                      {status === "pending" && <Clock className="me-1 h-3 w-3" />}
+                      {status}
+                    </Badge>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
