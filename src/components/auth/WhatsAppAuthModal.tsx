@@ -42,6 +42,8 @@ export type WhatsAppAuthModalProps = {
   mode: "login" | "signup";
   /** Signup role from /register?role= */
   defaultRole?: "student" | "teacher" | "parent";
+  /** Login portal gate — rejects accounts with a different role */
+  expectedRole?: "student" | "teacher" | "parent";
   redirect?: string;
 };
 
@@ -50,6 +52,7 @@ export function WhatsAppAuthModal({
   onOpenChange,
   mode,
   defaultRole = "student",
+  expectedRole,
   redirect,
 }: WhatsAppAuthModalProps) {
   const nav = useNavigate();
@@ -187,7 +190,7 @@ export function WhatsAppAuthModal({
     });
 
     if (mode === "login") {
-      const result = await loginWithWhatsapp(phoneE164);
+      const result = await loginWithWhatsapp(phoneE164, expectedRole);
       if ("newUser" in result && result.newUser) {
         onOpenChange(false);
         toast.info("No account found. Create one with WhatsApp.");

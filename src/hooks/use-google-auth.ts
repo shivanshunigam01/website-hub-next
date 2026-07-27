@@ -11,12 +11,13 @@ import { GOOGLE_SIGNIN_CONFIG_ERROR, isGoogleAuthConfigured } from "@/config/goo
 
 type UseGoogleAuthOptions = {
   role?: "student" | "teacher" | "parent";
+  expectedRole?: "student" | "teacher" | "parent";
   /** After sign-in, go here instead of the default dashboard path */
   redirect?: string;
 };
 
 export function useGoogleAuth(options: UseGoogleAuthOptions = {}) {
-  const { role, redirect } = options;
+  const { role, expectedRole, redirect } = options;
   const { loginWithGoogle } = useApp();
   const nav = useNavigate();
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -26,7 +27,7 @@ export function useGoogleAuth(options: UseGoogleAuthOptions = {}) {
     setGoogleError(null);
     setGoogleLoading(true);
     try {
-      const session = await loginWithGoogle(credential, role);
+      const session = await loginWithGoogle(credential, role || expectedRole, expectedRole);
       toast.success(`Welcome${session.user.name ? `, ${session.user.name}` : ""}!`);
       if (session.welcomeEmailSent) {
         toast.success("Welcome email with course highlights sent to your inbox.", {

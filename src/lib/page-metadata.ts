@@ -82,6 +82,22 @@ export const ROUTE_METADATA: Record<string, RouteMetaEntry> = {
     title: "Log in · TeacherPoint",
     description: "Log in to your TeacherPoint account.",
   },
+  "/login/student": {
+    title: "Student log in · TeacherPoint",
+    description: "Student login for courses, tutors, and your learning dashboard.",
+  },
+  "/login/teacher": {
+    title: "Tutor log in · TeacherPoint",
+    description: "Tutor login for jobs, connections, and your teaching profile.",
+  },
+  "/login/parent": {
+    title: "Parent log in · TeacherPoint",
+    description: "Parent login to manage requirements and follow your child's tutors.",
+  },
+  "/staff-console": {
+    title: "Staff console · TeacherPoint",
+    noIndex: true,
+  },
   "/lms": { title: "Course builder · TeacherPoint", noIndex: true },
   "/marketing": {
     title: "Marketing & Partners · TeacherPoint",

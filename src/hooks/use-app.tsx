@@ -13,8 +13,16 @@ interface AppState {
   theme: Theme;
   loading: boolean;
   profileComplete: boolean;
-  loginWithPassword: (email: string, password: string) => Promise<AuthSession>;
-  loginWithGoogle: (credential: string, role?: "student" | "teacher" | "parent") => Promise<AuthSession>;
+  loginWithPassword: (
+    email: string,
+    password: string,
+    expectedRole?: "student" | "teacher" | "parent" | "admin",
+  ) => Promise<AuthSession>;
+  loginWithGoogle: (
+    credential: string,
+    role?: "student" | "teacher" | "parent",
+    expectedRole?: "student" | "teacher" | "parent",
+  ) => Promise<AuthSession>;
   setWhatsappSession: (data: AuthSession) => Promise<AuthSession>;
   registerWithPassword: (data: {
     name: string;
@@ -181,10 +189,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const loginWithPassword = async (email: string, password: string) => {
+  const loginWithPassword = async (
+    email: string,
+    password: string,
+    expectedRole?: "student" | "teacher" | "parent" | "admin",
+  ) => {
     const data = await apiPublic<AuthSession>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+        ...(expectedRole ? { expectedRole } : {}),
+      }),
     });
     const session: AuthSession = {
       user: data.user,
@@ -197,12 +213,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return session;
   };
 
-  const loginWithGoogle = async (credential: string, role?: "student" | "teacher" | "parent") => {
+  const loginWithGoogle = async (
+    credential: string,
+    role?: "student" | "teacher" | "parent",
+    expectedRole?: "student" | "teacher" | "parent",
+  ) => {
     const data = await apiPublic<AuthSession>("/auth/google-login", {
       method: "POST",
       body: JSON.stringify({
         credential,
         ...(role ? { role } : {}),
+        ...(expectedRole ? { expectedRole } : {}),
       }),
     });
     const session: AuthSession = {

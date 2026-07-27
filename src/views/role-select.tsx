@@ -66,6 +66,21 @@ function RoleSelect() {
           </Link>
         ))}
       </div>
+
+      <p className="mt-8 text-center text-sm text-muted-foreground">
+        Already registered?{" "}
+        <Link to="/login/student" className="font-semibold text-primary hover:underline">
+          Student
+        </Link>
+        {" · "}
+        <Link to="/login/teacher" className="font-semibold text-primary hover:underline">
+          Tutor
+        </Link>
+        {" · "}
+        <Link to="/login/parent" className="font-semibold text-primary hover:underline">
+          Parent
+        </Link>
+      </p>
     </section>
   );
 }

@@ -7,6 +7,10 @@ const HIDE_SUPPORT_PREFIXES = [
   "/lms",
   "/messages",
   "/login",
+  "/login/student",
+  "/login/teacher",
+  "/login/parent",
+  "/staff-console",
   "/register",
   "/forgot-password",
   "/reset-password",
@@ -53,6 +57,7 @@ export function shouldShowMarketingChrome(pathname: string): boolean {
   // still show footer on marketing-ish routes. Hide MobileNav on auth for cleaner forms.
   if (
     path.startsWith("/login") ||
+    path.startsWith("/staff-console") ||
     path.startsWith("/register") ||
     path.startsWith("/forgot-password") ||
     path.startsWith("/reset-password") ||

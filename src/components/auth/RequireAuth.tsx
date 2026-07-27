@@ -21,7 +21,8 @@ export function RequireAuth({ children, roles, requireProfileComplete = true }: 
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      nav({ to: "/login" });
+      const staffOnly = roles?.length === 1 && roles[0] === "admin";
+      nav({ to: staffOnly ? "/staff-console" : "/login" });
       return;
     }
     if (roles?.length && role && !roles.includes(role)) {
@@ -48,11 +49,12 @@ export function RequireAuth({ children, roles, requireProfileComplete = true }: 
   }
 
   if (!user) {
+    const staffOnly = roles?.length === 1 && roles[0] === "admin";
     return (
       <div className="container py-20 text-center">
         <p className="text-muted-foreground">Please sign in to continue.</p>
         <Button className="mt-4" asChild>
-          <Link to="/login">Log in</Link>
+          <Link to={staffOnly ? "/staff-console" : "/login"}>Log in</Link>
         </Button>
       </div>
     );

@@ -28,13 +28,19 @@ export async function verifyWhatsappOtp(phone: string, otp: string, purpose: Wha
   });
 }
 
-export async function loginWithWhatsapp(phone: string) {
+export async function loginWithWhatsapp(
+  phone: string,
+  expectedRole?: "student" | "teacher" | "parent",
+) {
   return apiPublic<
     | (AuthSession & { newUser?: false })
     | { newUser: true; phone: string }
   >("/auth/whatsapp/login", {
     method: "POST",
-    body: JSON.stringify({ phone }),
+    body: JSON.stringify({
+      phone,
+      ...(expectedRole ? { expectedRole } : {}),
+    }),
   });
 }
 

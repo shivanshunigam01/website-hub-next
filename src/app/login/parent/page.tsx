@@ -1,13 +1,13 @@
 import { Suspense } from "react";
-import LoginChooser from "@/views/login-chooser";
+import { RoleLoginForm } from "@/views/login";
 import { createStaticPageMetadata } from "@/lib/page-metadata";
 
-export const generateMetadata = createStaticPageMetadata("/login");
+export const generateMetadata = createStaticPageMetadata("/login/parent");
 
 export default function Page() {
   return (
     <Suspense fallback={null}>
-      <LoginChooser />
+      <RoleLoginForm portal="parent" />
     </Suspense>
   );
 }
