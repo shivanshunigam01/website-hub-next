@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useMyPayments } from "@/hooks/use-payments-api";
 import { formatPrice } from "@/lib/currencies";
+import { paymentStatusLabel } from "@/lib/payment-status";
 
 export function PaymentsHistoryPanel({ enabled = true }: { enabled?: boolean }) {
   const { data: items = [], isLoading } = useMyPayments(enabled);
@@ -69,10 +70,12 @@ export function PaymentsHistoryPanel({ enabled = true }: { enabled?: boolean }) 
                       className={
                         t.status === "paid"
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                          : ""
+                          : t.status === "pending"
+                            ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                            : ""
                       }
                     >
-                      {t.status || "—"}
+                      {paymentStatusLabel(t.status)}
                     </Badge>
                   </TableCell>
                 </TableRow>

@@ -6,6 +6,7 @@ import { Loader2, Handshake } from "lucide-react";
 import { Link } from "@/lib/navigation";
 import { useMyConnections } from "@/hooks/use-connections-api";
 import { formatPrice } from "@/lib/currencies";
+import { connectionStatusLabel } from "@/lib/payment-status";
 
 const STATUS_CLASS: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
@@ -52,7 +53,7 @@ export function TeacherConnectionsPanel() {
           </div>
           <div className="flex items-center gap-2">
             <Badge className={STATUS_CLASS[c.status] || ""} variant="outline">
-              {c.status}
+              {connectionStatusLabel(c.status)}
             </Badge>
             {c.conversationId && (
               <Button asChild size="sm" variant="outline">

@@ -30,6 +30,7 @@ import {
 } from "@/hooks/use-connections-api";
 import { formatPrice } from "@/lib/currencies";
 import { formatApiErrorMessage } from "@/lib/api";
+import { connectionStatusLabel } from "@/lib/payment-status";
 import { toast } from "sonner";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -156,7 +157,7 @@ export function ConnectionRequestsPanel() {
                     </TableCell>
                     <TableCell>
                       <Badge className={STATUS_CLASS[row.status] || ""} variant="outline">
-                        {row.status}
+                        {connectionStatusLabel(row.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-mono text-xs">

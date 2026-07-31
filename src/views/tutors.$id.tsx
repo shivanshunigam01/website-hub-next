@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "@/lib/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Star,
   MapPin,
@@ -128,6 +129,7 @@ function TutorDetail() {
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: connection, refetch: refetchConnection } = useConnectionByTeacher(
     id,
@@ -280,8 +282,13 @@ function TutorDetail() {
       });
       setPayOpen(false);
       void refetchConnection();
+      void queryClient.invalidateQueries({ queryKey: ["my-payments"] });
+      void queryClient.invalidateQueries({ queryKey: ["received-payments"] });
+      void queryClient.invalidateQueries({ queryKey: ["my-connections"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-connections"] });
+      void queryClient.invalidateQueries({ queryKey: ["connection-by-teacher", id] });
       toast.success(
-        t("tutorDetail.toastPaymentUnlock", "Payment successful — full contact unlocked. Invoice {{id}}", {
+        t("tutorDetail.toastPaymentUnlock", "Payment successful — marked as Paid. Full contact unlocked. Invoice {{id}}", {
           id: result.invoiceId,
         }),
       );
@@ -552,7 +559,7 @@ function TutorDetail() {
                 <div className="border-b bg-muted/40 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
                   {connection.status === "connected" ? (
                     <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                      Full contact unlocked. Phone: {connection.phone || "on file"}
+                      Paid — full contact unlocked. Phone: {connection.phone || "on file"}
                     </span>
                   ) : connection.status === "approved" ? (
                     <span>

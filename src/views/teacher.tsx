@@ -28,6 +28,7 @@ import { computeTeacherProfileProgress } from "@/lib/teacher-profile-utils";
 import { DashboardShell, DashboardSection, StatCard } from "@/components/dashboard/Shell";
 import { useCourses } from "@/hooks/use-catalog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 import { DashboardProfileCard } from "@/components/dashboard/DashboardProfileCard";
 import { TeacherJobApplicationsPanel } from "@/components/teacher/TeacherJobApplicationsPanel";
@@ -293,6 +294,27 @@ function Teacher() {
                 </ResponsiveContainer>
               )}
             </div>
+            {paidReceived.length > 0 ? (
+              <div className="mt-4 space-y-2 rounded-2xl border bg-card p-4">
+                <h3 className="text-sm font-semibold">Recent paid sessions</h3>
+                <ul className="divide-y text-sm">
+                  {paidReceived.slice(0, 8).map((p) => (
+                    <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                      <span className="text-muted-foreground">
+                        {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—"} ·{" "}
+                        {p.invoiceId || p.id.slice(-8)}
+                      </span>
+                      <span className="flex items-center gap-2 font-medium">
+                        {formatPrice(Number(p.amount || 0), p.currency || currency)}
+                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                          Paid
+                        </Badge>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           )}
         </DashboardSection>
 

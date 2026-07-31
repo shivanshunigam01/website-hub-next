@@ -1,7 +1,7 @@
 "use client";
 
 import { Link, useNavigate } from "@/lib/navigation";
-import { LayoutDashboard, BookOpen, Heart, Award, MessageCircle, LifeBuoy, Clock, TrendingUp, Bell, Search, ShoppingBag, User, Building2, ClipboardList } from "lucide-react";
+import { LayoutDashboard, BookOpen, Heart, Award, MessageCircle, LifeBuoy, Clock, TrendingUp, Bell, Search, ShoppingBag, User, Building2, ClipboardList, CreditCard } from "lucide-react";
 import { AccountSecurityPanel } from "@/components/auth/AccountSecurityPanel";
 import { AccountProfilePanel } from "@/components/auth/AccountProfilePanel";
 import { TutorSearchPanel, tutorSearchToUrl } from "@/components/tutors/TutorSearchPanel";
@@ -18,6 +18,7 @@ import { StudentExchangePanel } from "@/components/marketplace/StudentExchangePa
 import { DashboardProfileCard } from "@/components/dashboard/DashboardProfileCard";
 import { UserAccommodationInquiriesPanel } from "@/components/accommodation/UserAccommodationInquiriesPanel";
 import { NotificationsPanel } from "@/components/dashboard/NotificationsPanel";
+import { PaymentsHistoryPanel } from "@/components/dashboard/PaymentsHistoryPanel";
 import { useSavedTutors } from "@/hooks/use-saved-tutors";
 import { useMyRequirements } from "@/hooks/use-requirements-api";
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +37,7 @@ const ITEMS = [
   { id: "find-tutors", label: "Find Tutors", icon: Search },
   { id: "continue", label: "Continue Learning", icon: BookOpen },
   { id: "saved", label: "Saved Tutors", icon: Heart },
+  { id: "payments", label: "Payments", icon: CreditCard },
   { id: "certificates", label: "Certificates", icon: Award },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "accommodation", label: "Accommodation", icon: Building2 },
@@ -315,6 +317,19 @@ function Student() {
             </ul>
           )}
         </div>
+      </DashboardSection>
+
+      <DashboardSection
+        id="payments"
+        title="Payments"
+        description="Your tutor unlock invoices — successful checkouts show as Paid."
+        action={
+          <Link to="/payments" className="text-sm font-medium text-primary hover:underline">
+            Full payments page →
+          </Link>
+        }
+      >
+        <PaymentsHistoryPanel />
       </DashboardSection>
 
       <DashboardSection id="support" title="Support" description="We're here to help.">
