@@ -36,7 +36,7 @@ export async function ensureSubject(
   name: string,
   opts?: { pendingApproval?: boolean },
 ): Promise<SubjectItem> {
-  return apiPublic<SubjectItem>("/subjects/ensure", {
+  return api<SubjectItem>("/subjects/ensure", {
     method: "POST",
     body: JSON.stringify({
       name: name.trim(),

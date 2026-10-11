@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { LayoutDashboard, Users, BookOpen, Package, DollarSign, Plus, Pencil, Trash2, Settings, BarChart3, Megaphone, Building2, Mail, ShieldCheck, LifeBuoy, CheckSquare, Flag, Bell, Network, FileText, ShoppingBag, Mail as MailIcon, TrendingUp, Search as SearchIcon, Smartphone, Presentation, GraduationCap, Briefcase, Handshake } from "lucide-react";
 import { IpMonitorPanel } from "@/components/admin/IpMonitorPanel";
+import { DemoDataBanner } from "@/components/admin/DemoDataBanner";
 import { DashboardShell, StatCard } from "@/components/dashboard/Shell";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { UsersPanel } from "@/components/admin/UsersPanel";
@@ -211,6 +212,7 @@ function CoursesPanel() {
 
   return (
     <div className="bg-card border rounded-2xl p-5">
+      <DemoDataBanner feature="Courses" />
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <h2 className="font-display font-bold">All courses ({courses.length})</h2>
         <Button size="sm" onClick={() => { addCourse({}); toast.success("Course added — edit it below"); }}>
@@ -316,6 +318,7 @@ function TeachersPanel() {
 
   return (
     <div className="bg-card border rounded-2xl p-5">
+      <DemoDataBanner feature="Teachers" />
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <h2 className="font-display font-bold">All teachers ({tutors.length})</h2>
         <Button size="sm" onClick={() => { addTutor({}); toast.success("Teacher added — edit details"); }}>
@@ -432,6 +435,7 @@ function PackagesPanel() {
 
   return (
     <div className="bg-card border rounded-2xl p-5">
+      <DemoDataBanner feature="Packages" />
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <h2 className="font-display font-bold">Course packages ({combos.length})</h2>
         <Button size="sm" onClick={() => { addCombo({}); toast.success("Package added"); }}>
@@ -506,6 +510,7 @@ function ComboEditDialog({ open, combo, onClose, onSave }: { open: boolean; comb
 function RevenuePanel() {
   return (
     <div className="bg-card border rounded-2xl p-5">
+      <DemoDataBanner feature="Revenue chart" />
       <h2 className="font-display font-bold mb-4">Revenue & payouts</h2>
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
@@ -541,6 +546,7 @@ function AccommodationsPanel() {
 
   return (
     <div className="bg-card border rounded-2xl p-5">
+      <DemoDataBanner feature="Accommodations browse" />
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <h2 className="font-display font-bold">Accommodations ({accommodations.length})</h2>
         <Button size="sm" onClick={() => { addAccommodation({}); toast.success("Accommodation added — edit details"); }}>
@@ -673,6 +679,10 @@ function InquiriesPanel() {
 
   return (
     <div className="bg-card border rounded-2xl p-5">
+      <DemoDataBanner feature="Inquiries (local)" />
+      <p className="mb-4 text-sm text-muted-foreground">
+        Live accommodation inquiries: use the <strong>Accommodation inquiries</strong> API panel in the admin sidebar.
+      </p>
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <h2 className="font-display font-bold">Accommodation inquiries ({inquiries.length})</h2>
       </div>

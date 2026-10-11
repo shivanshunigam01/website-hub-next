@@ -18,6 +18,7 @@ import {
   type Conversation,
 } from "@/services/conversations-api";
 import { toast } from "sonner";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 
 const POLL_MS = 5000;
 
@@ -423,4 +424,10 @@ function Messages() {
   );
 }
 
-export default Messages;
+export default function MessagesPage() {
+  return (
+    <RequireAuth roles={["student", "teacher", "parent", "admin"]}>
+      <Messages />
+    </RequireAuth>
+  );
+}
