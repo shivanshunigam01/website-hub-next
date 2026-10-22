@@ -101,7 +101,18 @@ export function GeoContentStrip({
     [regionalAds, location, isLoading, hasLocationAccess, placement, i18n.language],
   );
 
-  if (!hasLocationAccess || isLoading) return null;
+  if (!hasLocationAccess) return null;
+  if (isLoading) {
+    return (
+      <div className={`container mx-auto px-4 py-6 sm:py-8 ${className ?? ""}`} aria-hidden>
+        <div className={`grid gap-4 ${limit > 1 ? "md:grid-cols-2" : ""}`}>
+          {Array.from({ length: limit }).map((_, i) => (
+            <div key={i} className="aspect-[16/7] w-full animate-pulse rounded-2xl border bg-muted/40" />
+          ))}
+        </div>
+      </div>
+    );
+  }
   if (!ads.length) return null;
   const shown = ads.slice(0, limit);
 

@@ -23,8 +23,9 @@ import { TutorCard } from "@/components/cards/TutorCard";
 import { SectionHeading } from "@/components/SectionHeading";
 import {
   CATEGORIES, SKILLS, TESTIMONIALS, FAQS,
-  COMPANIES, STATS, HOW_IT_WORKS, LEARNING_TIMELINE, COMPARISON,
+  COMPANIES, HOW_IT_WORKS, LEARNING_TIMELINE, COMPARISON,
 } from "@/data/mock";
+import { useCourses } from "@/hooks/use-catalog";
 import { useAdminStore } from "@/hooks/use-admin-store";
 import { useTranslation } from "react-i18next";
 import { HeroBackground } from "@/components/home/HeroBackground";
@@ -53,7 +54,7 @@ export function Hero() {
   };
 
   return (
-    <section className="relative overflow-hidden border-b bg-gradient-hero">
+    <section className="relative min-h-[min(88vh,760px)] overflow-hidden border-b bg-gradient-hero">
       <HeroBackground />
 
       <div className="container relative mx-auto px-4 py-20 sm:px-6 md:py-28 lg:py-32">
@@ -132,17 +133,17 @@ export function Hero() {
 
 
 
-const STAT_KEYS = ["stats.tutors", "stats.students", "stats.rating", "stats.countries"] as const;
+const TRUST_PILLARS = ["stats.tutors", "stats.students", "stats.rating", "stats.countries"] as const;
 
+/** Qualitative trust strip — no unverified aggregate counts (SEO/AEO accuracy). */
 export function TrustStats() {
   const { t } = useTranslation("common");
   return (
     <section className="border-y bg-muted/30">
-      <div className="container mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-        {STATS.map((s, i) => (
-          <div key={s.label} className="text-center">
-            <div className="font-display font-extrabold text-2xl md:text-3xl text-primary font-bold">{s.value}</div>
-            <div className="text-xs md:text-sm text-muted-foreground mt-1">{t(STAT_KEYS[i])}</div>
+      <div className="container mx-auto grid grid-cols-2 gap-6 px-4 py-8 md:grid-cols-4">
+        {TRUST_PILLARS.map((key) => (
+          <div key={key} className="text-center text-sm font-medium text-foreground md:text-base">
+            {t(key)}
           </div>
         ))}
       </div>
@@ -177,7 +178,8 @@ export function HowItWorks() {
 }
 
 export function TrendingCourses() {
-  const { courses: COURSES } = useAdminStore();
+  const { data: apiCourses = [], isLoading } = useCourses({ status: "published", limit: 24 });
+  const COURSES = apiCourses;
   const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
@@ -187,25 +189,42 @@ export function TrendingCourses() {
         subtitle={t("trending.subtitle")}
         action={<Button asChild variant="ghost" size="sm" className="hidden md:inline-flex"><Link to="/courses">{t("trending.viewAll")} <ArrowRight className="h-4 w-4 ml-1" /></Link></Button>}
       />
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="bg-transparent h-auto flex-wrap justify-start gap-2 mb-6 p-0">
-          {CATEGORIES.map((c) => (
-            <TabsTrigger key={c.id} value={c.id} className="rounded-full border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-1.5">
-              {c.name}
-            </TabsTrigger>
+      {isLoading ? (
+        <div className="grid min-h-[560px] gap-5 sm:grid-cols-2 lg:grid-cols-4" aria-hidden>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-[260px] animate-pulse rounded-2xl border bg-muted/40" />
           ))}
-        </TabsList>
-        {CATEGORIES.map((c) => {
-          const items = c.id === "all" ? COURSES.slice(0, 8) : COURSES.filter((x) => x.category.toLowerCase().includes(c.name.toLowerCase())).slice(0, 8);
-          return (
-            <TabsContent key={c.id} value={c.id}>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {(items.length ? items : COURSES.slice(0, 4)).map((course) => <CourseCard key={course.id} course={course} />)}
-              </div>
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+        </div>
+      ) : (
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="mb-6 flex h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
+            {CATEGORIES.map((c) => (
+              <TabsTrigger
+                key={c.id}
+                value={c.id}
+                className="rounded-full border px-4 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                {c.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {CATEGORIES.map((c) => {
+            const items =
+              c.id === "all"
+                ? COURSES.slice(0, 8)
+                : COURSES.filter((x) => x.category.toLowerCase().includes(c.name.toLowerCase())).slice(0, 8);
+            return (
+              <TabsContent key={c.id} value={c.id}>
+                <div className="grid min-h-[260px] gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                  {(items.length ? items : COURSES.slice(0, 4)).map((course) => (
+                    <CourseCard key={course.id} course={course} />
+                  ))}
+                </div>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
+      )}
     </section>
   );
 }

@@ -248,7 +248,7 @@
   "faq.3.q": "Can parents track their child's learning?",
   "faq.3.a": "Absolutely. The Parent Dashboard shows enrolled courses, attendance, test scores, and weekly learning hours in real time.",
   "faq.4.q": "What payment methods are supported?",
-  "faq.4.a": "We accept Razorpay, Stripe, PayPal, UPI, debit/credit cards, and net banking across multiple currencies.",
+  "faq.4.a": "Paid flows use Razorpay checkout (cards, UPI, and other methods Razorpay supports in your region). Payment is confirmed on the server after verification.",
   "faq.5.q": "Is there a refund policy?",
   "faq.5.a": "Yes — 7-day no-questions-asked refund on every course and tutor session purchase.",
   "faq.6.q": "How do teachers get verified?",

@@ -5,39 +5,39 @@ import { Hero } from "@/components/home/Sections";
 
 const GeoContentStrip = dynamic(
   () => import("@/components/home/GeoContentStrip").then((m) => m.GeoContentStrip),
-  { loading: () => null },
+  { loading: () => <div className="min-h-[200px]" aria-hidden /> },
 );
 const QuickLinks = dynamic(
   () => import("@/components/home/QuickLinks").then((m) => m.QuickLinks),
-  { loading: () => null },
+  { loading: () => <div className="min-h-[200px]" aria-hidden /> },
 );
 const LevelUpSection = dynamic(
   () => import("@/components/home/LevelUpSection").then((m) => m.LevelUpSection),
-  { loading: () => null },
+  { loading: () => <div className="min-h-[200px]" aria-hidden /> },
 );
 const TrustStats = dynamic(
   () => import("@/components/home/Sections").then((m) => m.TrustStats),
-  { loading: () => null },
+  { loading: () => <div className="min-h-[200px]" aria-hidden /> },
 );
 const TrendingCourses = dynamic(
   () => import("@/components/home/Sections").then((m) => m.TrendingCourses),
-  { loading: () => null },
+  { loading: () => <div className="min-h-[200px]" aria-hidden /> },
 );
 const TopTutors = dynamic(
   () => import("@/components/home/TopTutors").then((m) => m.TopTutors),
-  { loading: () => null },
+  { loading: () => <div className="min-h-[200px]" aria-hidden /> },
 );
 const PopularSubjectsSeo = dynamic(
   () => import("@/components/seo/PopularSubjectsSeo").then((m) => m.PopularSubjectsSeo),
-  { loading: () => null },
+  { loading: () => <div className="min-h-[200px]" aria-hidden /> },
 );
 const FAQSection = dynamic(
   () => import("@/components/home/Sections").then((m) => m.FAQSection),
-  { loading: () => null },
+  { loading: () => <div className="min-h-[200px]" aria-hidden /> },
 );
 const CTABand = dynamic(
   () => import("@/components/home/Sections").then((m) => m.CTABand),
-  { loading: () => null },
+  { loading: () => <div className="min-h-[200px]" aria-hidden /> },
 );
 
 function HomePage() {

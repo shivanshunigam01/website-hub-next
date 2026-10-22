@@ -109,10 +109,11 @@ function Market() {
   const [active, setActive] = useState<Listing | null>(null);
 
   const activeListings = useMemo(() => {
+    const allowLocalFallback = process.env.NEXT_PUBLIC_USE_LOCAL_MARKETPLACE_FALLBACK === "true";
+    if (!allowLocalFallback) return apiAsLocal;
     const local = listings.filter((l) => l.status === "active");
     const seen = new Set(apiAsLocal.map((l) => l.id));
-    const merged = [...apiAsLocal, ...local.filter((l) => !seen.has(l.id))];
-    return merged;
+    return [...apiAsLocal, ...local.filter((l) => !seen.has(l.id))];
   }, [listings, apiAsLocal]);
 
   const cities = useMemo(

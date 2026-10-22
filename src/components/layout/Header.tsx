@@ -212,7 +212,7 @@ export function Header() {
       </div>
 
       <header
-        className="notranslate sticky top-0 z-50 w-full max-w-[100vw] overflow-x-clip border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        className="notranslate sticky top-0 z-50 min-h-16 w-full max-w-[100vw] overflow-x-clip border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
         translate="no"
       >
         <div className="container mx-auto flex h-16 min-h-16 items-center gap-2 px-4 sm:px-6">

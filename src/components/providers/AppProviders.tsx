@@ -56,13 +56,7 @@ function DeferredWidgets({ hideSupportWidgets }: { hideSupportWidgets: boolean }
   }, []);
 
   if (!ready || hideSupportWidgets) {
-    return (
-      <>
-        <RegionalAdPopup />
-        <GoogleTranslate />
-        <VisitorTracker />
-      </>
-    );
+    return null;
   }
 
   return (
@@ -116,7 +110,19 @@ function SiteChrome({ children }: { children: ReactNode }) {
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60_000,
+            gcTime: 5 * 60_000,
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      }),
+  );
 
   return (
     <QueryClientProvider client={queryClient}>

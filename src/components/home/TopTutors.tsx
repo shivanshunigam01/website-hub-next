@@ -2,7 +2,7 @@
 
 import { Link } from "@/lib/navigation";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/SectionHeading";
 import { TutorCard } from "@/components/cards/TutorCard";
@@ -30,8 +30,10 @@ export function TopTutors() {
         }
       />
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="grid min-h-[600px] gap-5 sm:grid-cols-2 lg:grid-cols-4" aria-hidden>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-[280px] animate-pulse rounded-2xl border bg-muted/40" />
+          ))}
         </div>
       ) : top.length === 0 ? (
         <p className="rounded-2xl border border-dashed bg-muted/20 px-6 py-12 text-center text-sm text-muted-foreground">

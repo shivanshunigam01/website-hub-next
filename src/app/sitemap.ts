@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site-config";
 import { POPULAR_SUBJECT_LINKS } from "@/lib/seo-keywords";
+import { fetchSitemapCourseIds, fetchSitemapTutorIds } from "@/lib/seo-server";
 
 const staticEntries: {
   path: string;
@@ -31,11 +32,9 @@ const staticEntries: {
   { path: "/privacy", changefreq: "yearly", priority: 0.4 },
   { path: "/terms", changefreq: "yearly", priority: 0.4 },
   { path: "/refund", changefreq: "yearly", priority: 0.4 },
-  { path: "/register", changefreq: "yearly", priority: 0.35 },
-  { path: "/login", changefreq: "yearly", priority: 0.3 },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticUrls = staticEntries.map((e) => ({
     url: `${SITE_URL}${e.path}`,
     changeFrequency: e.changefreq,
@@ -48,5 +47,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticUrls, ...subjectUrls];
+  const [tutorIds, courseIds] = await Promise.all([
+    fetchSitemapTutorIds().catch(() => [] as string[]),
+    fetchSitemapCourseIds().catch(() => [] as string[]),
+  ]);
+
+  const tutorUrls = tutorIds.map((id) => ({
+    url: `${SITE_URL}/tutors/${id}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
+  }));
+
+  const courseUrls = courseIds.map((id) => ({
+    url: `${SITE_URL}/courses/${id}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.72,
+  }));
+
+  return [...staticUrls, ...subjectUrls, ...tutorUrls, ...courseUrls];
 }
