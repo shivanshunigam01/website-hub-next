@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useSearch } from "@/lib/navigation";
 import { Building2, Globe2, Search } from "lucide-react";
@@ -22,12 +23,51 @@ import {
   userCountryLabel,
 } from "@/lib/accommodation-location";
 import { canonicalUrl } from "@/lib/site-config";
+import { fetchPublicAccommodations, type ApiAccommodation } from "@/services/accommodations-api";
 
 type Search = { city?: string; enquiry?: string };
 
+function mapApiAccommodation(a: ApiAccommodation): Accommodation {
+  const type = (["PG", "Hostel", "Apartment", "Shared Room", "Other"].includes(a.type || "")
+    ? a.type
+    : "Other") as Accommodation["type"];
+  const gender = (["boys", "girls", "co-ed", "other"].includes(a.gender || "")
+    ? a.gender
+    : "co-ed") as Accommodation["gender"];
+  return {
+    id: a.id,
+    name: a.name || "Accommodation",
+    type,
+    city: a.city || "",
+    country: a.country || "",
+    address: a.address || "",
+    pricePerMonth: Number(a.pricePerMonth || 0),
+    currency: a.currency || "INR",
+    amenities: a.amenities || [],
+    gender,
+    rating: Number(a.rating || 0),
+    imageUrl: a.imageUrl || a.images?.[0],
+    available: a.available !== false,
+    description: a.description || "",
+    contactPhone: a.contactPhone,
+    contactEmail: a.contactEmail,
+    distanceToCampus: a.distanceToCampus,
+    createdAt: new Date().toISOString(),
+  };
+}
+
 function AccommodationPage() {
   const { t } = useTranslation("common");
-  const { accommodations } = useAdminStore();
+  const { accommodations: localAccommodations } = useAdminStore();
+  const { data: apiAccommodations = [] } = useQuery({
+    queryKey: ["public-accommodations"],
+    queryFn: () => fetchPublicAccommodations({ limit: 100 }),
+  });
+  const accommodations = useMemo(() => {
+    const fromApi = apiAccommodations.map(mapApiAccommodation);
+    const ids = new Set(fromApi.map((a) => a.id));
+    return [...fromApi, ...localAccommodations.filter((a) => !ids.has(a.id))];
+  }, [apiAccommodations, localAccommodations]);
   const { location, hasLocationAccess, isLoading: locationLoading } = useLocationContext();
   const search = useSearch<Search>();
   const [q, setQ] = useState(search.city ?? "");

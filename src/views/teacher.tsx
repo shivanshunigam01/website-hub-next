@@ -272,49 +272,51 @@ function Teacher() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="h-72 rounded-2xl border bg-card p-5">
-              {paidReceived.length === 0 ? (
-                <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                  No tutor-session payments received yet.
-                </p>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="month" fontSize={12} />
-                    <YAxis fontSize={12} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="revenue" stroke="#6366f1" fill="url(#g1)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            {paidReceived.length > 0 ? (
-              <div className="mt-4 space-y-2 rounded-2xl border bg-card p-4">
-                <h3 className="text-sm font-semibold">Recent paid sessions</h3>
-                <ul className="divide-y text-sm">
-                  {paidReceived.slice(0, 8).map((p) => (
-                    <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                      <span className="text-muted-foreground">
-                        {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—"} ·{" "}
-                        {p.invoiceId || p.id.slice(-8)}
-                      </span>
-                      <span className="flex items-center gap-2 font-medium">
-                        {formatPrice(Number(p.amount || 0), p.currency || currency)}
-                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                          Paid
-                        </Badge>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+            <>
+              <div className="h-72 rounded-2xl border bg-card p-5">
+                {paidReceived.length === 0 ? (
+                  <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    No tutor-session payments received yet.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="month" fontSize={12} />
+                      <YAxis fontSize={12} />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="revenue" stroke="#6366f1" fill="url(#g1)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
               </div>
-            ) : null}
+              {paidReceived.length > 0 ? (
+                <div className="mt-4 space-y-2 rounded-2xl border bg-card p-4">
+                  <h3 className="text-sm font-semibold">Recent paid sessions</h3>
+                  <ul className="divide-y text-sm">
+                    {paidReceived.slice(0, 8).map((p) => (
+                      <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                        <span className="text-muted-foreground">
+                          {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—"} ·{" "}
+                          {p.invoiceId || p.id.slice(-8)}
+                        </span>
+                        <span className="flex items-center gap-2 font-medium">
+                          {formatPrice(Number(p.amount || 0), p.currency || currency)}
+                          <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            Paid
+                          </Badge>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </>
           )}
         </DashboardSection>
 
