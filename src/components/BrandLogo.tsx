@@ -38,7 +38,7 @@ export function BrandLogo({
   const { w, h } = sizePx[size];
 
   return (
-    <span className={cn("relative inline-flex shrink-0 items-center", className)}>
+    <span className={cn("inline-flex shrink-0 items-center", className)}>
       <Image
         src={logoLight}
         alt="TeacherPoint"
@@ -49,16 +49,14 @@ export function BrandLogo({
         sizes="(max-width: 640px) 14rem, 17rem"
         className={cn(imgClass, "dark:hidden")}
       />
-      {/* Absolutely stacked so light+dark never sit side-by-side if theme CSS lags */}
       <Image
         src={logoDark}
-        alt=""
-        aria-hidden
+        alt="TeacherPoint"
         width={w}
         height={h}
         loading="lazy"
         sizes="(max-width: 640px) 14rem, 17rem"
-        className={cn(imgClass, "pointer-events-none absolute inset-0 hidden dark:block")}
+        className={cn(imgClass, "hidden dark:block")}
       />
     </span>
   );

@@ -1,0 +1,20 @@
+# TeacherPoint
+
+> Global edtech platform connecting students with verified tutors, online courses, workshops, and student exchange listings.
+
+- Public site: https://www.teacherpoint.org
+- API (server-side): https://api.teacherpoint.org/api/v1
+
+## Primary offerings
+
+- Tutor search and hire (online and home tutoring)
+- Student/parent job posts (tutoring requirements)
+- Teacher job applications
+- Razorpay checkout for tutor connection unlock (live payments)
+- Courses and workshops
+- Student marketplace (exchange listings)
+- Accommodation discovery and enquiries
+
+## Documentation
+
+Production readiness notes: see repository `docs/production-readiness/` (maintainers).

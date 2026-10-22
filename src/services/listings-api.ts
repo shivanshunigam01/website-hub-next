@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api, apiPublic } from "@/lib/api";
 
 /** Backend Listing.category enum */
 export type ApiListingCategory = "materials" | "services" | "accommodation";
@@ -61,6 +61,16 @@ export async function fetchListings(params?: { status?: string; q?: string }) {
   if (params?.q) p.set("q", params.q);
   p.set("limit", "50");
   const data = await api<{ items: ApiListing[] }>(`/listings?${p.toString()}`);
+  return data.items ?? [];
+}
+
+/** Public catalog (approved listings) — no auth required. */
+export async function fetchPublicListings(params?: { status?: string; q?: string }) {
+  const p = new URLSearchParams();
+  p.set("status", params?.status || "approved");
+  if (params?.q) p.set("q", params.q);
+  p.set("limit", "50");
+  const data = await apiPublic<{ items: ApiListing[] }>(`/listings?${p.toString()}`);
   return data.items ?? [];
 }
 

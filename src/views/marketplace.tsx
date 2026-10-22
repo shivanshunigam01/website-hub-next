@@ -2,6 +2,7 @@
 
 import { Link, useNavigate } from "@/lib/navigation";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { canonicalUrl } from "@/lib/site-config";
 import {
@@ -42,6 +43,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useApp } from "@/hooks/use-app";
 import { afterAuthPath } from "@/lib/auth-redirect";
 import { PostExchangeListingDialog } from "@/components/marketplace/PostExchangeListingDialog";
+import { fetchPublicListings, type ApiListing } from "@/services/listings-api";
 import { AppImage } from "@/components/AppImage";
 import { cn } from "@/lib/utils";
 
@@ -72,7 +74,33 @@ function Market() {
   const navigate = useNavigate();
   const { role, user } = useApp();
   const { listings, incrementViews } = useMarketplace();
+  const { data: apiListings = [] } = useQuery({
+    queryKey: ["marketplace-public-listings"],
+    queryFn: () => fetchPublicListings({ status: "approved" }),
+  });
   const { symbol, convertAmount } = useCurrency();
+
+  const apiAsLocal = useMemo((): Listing[] => {
+    return apiListings.map((item: ApiListing) => ({
+      id: item.id,
+      title: item.title || "Listing",
+      description: item.description || "",
+      category: (item.category === "services" ? "services" : item.category === "accommodation" ? "accommodation" : "books") as ListingCategory,
+      price: Number(item.price || 0),
+      currency: item.currency || "INR",
+      negotiable: false,
+      city: item.city || "",
+      country: item.country || "",
+      imageUrl: item.approvedImage || item.imageUrl,
+      sellerId: item.sellerId,
+      sellerName: item.sellerName || "Seller",
+      sellerRole: "student",
+      sellerEmail: "",
+      status: "active",
+      views: item.viewCount || 0,
+      createdAt: item.createdAt || new Date().toISOString(),
+    }));
+  }, [apiListings]);
   const [cat, setCat] = useState<ListingCategory | "all">("all");
   const [q, setQ] = useState("");
   const [city, setCity] = useState<string>("all");
@@ -80,7 +108,12 @@ function Market() {
   const [postOpen, setPostOpen] = useState(false);
   const [active, setActive] = useState<Listing | null>(null);
 
-  const activeListings = useMemo(() => listings.filter((l) => l.status === "active"), [listings]);
+  const activeListings = useMemo(() => {
+    const local = listings.filter((l) => l.status === "active");
+    const seen = new Set(apiAsLocal.map((l) => l.id));
+    const merged = [...apiAsLocal, ...local.filter((l) => !seen.has(l.id))];
+    return merged;
+  }, [listings, apiAsLocal]);
 
   const cities = useMemo(
     () => Array.from(new Set(activeListings.map((l) => l.city))).sort(),
