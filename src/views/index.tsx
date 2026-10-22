@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Hero } from "@/components/home/Sections";
+import { Hero } from "@/components/home/Hero";
 
 const GeoContentStrip = dynamic(
   () => import("@/components/home/GeoContentStrip").then((m) => m.GeoContentStrip),

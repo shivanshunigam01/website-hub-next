@@ -6,11 +6,6 @@ import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AppProvider, useApp } from "@/hooks/use-app";
 import { GoogleAuthProvider } from "@/components/auth/GoogleAuthProvider";
-import { AdminStoreProvider } from "@/hooks/use-admin-store";
-import { LmsStoreProvider } from "@/hooks/use-lms-store";
-import { LearningProvider } from "@/hooks/use-learning";
-import { PlatformStoreProvider } from "@/hooks/use-platform-store";
-import { MarketplaceProvider } from "@/hooks/use-marketplace";
 import { LocationProvider } from "@/hooks/use-user-location";
 import { CurrencyProvider } from "@/hooks/use-currency";
 import { I18nProvider } from "@/components/I18nProvider";
@@ -51,7 +46,12 @@ function DeferredWidgets({ hideSupportWidgets }: { hideSupportWidgets: boolean }
   const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
-    const t = window.setTimeout(() => setReady(true), 2500);
+    const markReady = () => setReady(true);
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(markReady, { timeout: 3500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = window.setTimeout(markReady, 2000);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -131,17 +131,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <I18nProvider>
             <GoogleAuthProvider>
               <AppProvider>
-                <LearningProvider>
-                  <AdminStoreProvider>
-                    <LmsStoreProvider>
-                      <PlatformStoreProvider>
-                        <MarketplaceProvider>
-                          <SiteChrome>{children}</SiteChrome>
-                        </MarketplaceProvider>
-                      </PlatformStoreProvider>
-                    </LmsStoreProvider>
-                  </AdminStoreProvider>
-                </LearningProvider>
+                <SiteChrome>{children}</SiteChrome>
               </AppProvider>
             </GoogleAuthProvider>
           </I18nProvider>
