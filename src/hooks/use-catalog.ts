@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { api, ApiRequestError } from "@/lib/api";
 import { fetchTutorById } from "@/services/tutor-search-api";
 import {
@@ -18,6 +18,33 @@ import type { Curriculum } from "@/hooks/use-lms-store";
 
 type Paginated<T> = { items: T[]; pagination?: { total: number } };
 
+const HOME_COURSES_KEY = ["courses", "published", 24] as const;
+const HOME_TUTORS_KEY = ["tutors", 50] as const;
+
+async function fetchPublishedCourses(limit: number) {
+  const data = await api<Paginated<ApiCourse>>(`/courses?status=published&limit=${limit}`);
+  return (data.items ?? []).map((c, i) => mapApiCourse(c, i));
+}
+
+async function fetchTutorsList(limit: number) {
+  const data = await api<Paginated<ApiTutor>>(`/users/tutors?limit=${limit}`);
+  return (data.items ?? []).map((t, i) => mapApiTutor(t, i));
+}
+
+/** Warm home catalog cache as soon as the homepage mounts (faster sections/images). */
+export function prefetchHomeCatalog(queryClient: QueryClient) {
+  void queryClient.prefetchQuery({
+    queryKey: HOME_COURSES_KEY,
+    queryFn: () => fetchPublishedCourses(24),
+    staleTime: 60_000,
+  });
+  void queryClient.prefetchQuery({
+    queryKey: HOME_TUTORS_KEY,
+    queryFn: () => fetchTutorsList(50),
+    staleTime: 60_000,
+  });
+}
+
 export function useCourses(options: { status?: string; limit?: number; enabled?: boolean } = {}) {
   const status = options.status ?? "published";
   const limit = options.limit ?? 100;
@@ -25,10 +52,7 @@ export function useCourses(options: { status?: string; limit?: number; enabled?:
   return useQuery({
     queryKey: ["courses", status, limit],
     enabled,
-    queryFn: async () => {
-      const data = await api<Paginated<ApiCourse>>(`/courses?status=${status}&limit=${limit}`);
-      return (data.items ?? []).map((c, i) => mapApiCourse(c, i));
-    },
+    queryFn: () => fetchPublishedCourses(limit),
     staleTime: 60_000,
   });
 }
@@ -108,10 +132,7 @@ export function useTutor(tutorId: string | undefined) {
 export function useTutors(limit = 50) {
   return useQuery({
     queryKey: ["tutors", limit],
-    queryFn: async () => {
-      const data = await api<Paginated<ApiTutor>>(`/users/tutors?limit=${limit}`);
-      return (data.items ?? []).map((t, i) => mapApiTutor(t, i));
-    },
+    queryFn: () => fetchTutorsList(limit),
     staleTime: 60_000,
   });
 }

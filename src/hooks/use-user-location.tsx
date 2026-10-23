@@ -34,10 +34,7 @@ type LocationContextValue = {
 const LocationCtx = createContext<LocationContextValue | null>(null);
 
 function geoDetectDelayMs(pathname: string): number {
-  if (pathname === "/") {
-    return 5500;
-  }
-  if (pathname.startsWith("/tutors") || pathname.startsWith("/accommodation")) {
+  if (pathname === "/" || pathname.startsWith("/tutors") || pathname.startsWith("/accommodation")) {
     return 0;
   }
   return 4500;
@@ -109,10 +106,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     const routeDelay = geoDetectDelayMs(pathname);
     const schedule = () => {
       if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        const idleId = window.requestIdleCallback(() => start(), { timeout: routeDelay > 0 ? 8000 : 3000 });
+        const idleId = window.requestIdleCallback(() => start(), { timeout: routeDelay > 0 ? 8000 : 800 });
         return () => window.cancelIdleCallback(idleId);
       }
-      const timer = setTimeout(start, routeDelay > 0 ? routeDelay : 2000);
+      const timer = setTimeout(start, routeDelay > 0 ? routeDelay : 400);
       return () => clearTimeout(timer);
     };
 
