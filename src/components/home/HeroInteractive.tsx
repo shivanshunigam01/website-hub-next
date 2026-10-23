@@ -31,7 +31,7 @@ const TutorSearchPanel = dynamic(
 
 const searchPlaceholder = (
   <div
-    className="mx-auto min-h-[168px] max-w-3xl animate-pulse rounded-2xl border bg-background/60 backdrop-blur md:min-h-[200px]"
+    className="mx-auto min-h-[168px] max-w-3xl rounded-2xl border border-transparent bg-transparent md:min-h-[200px]"
     aria-hidden
   />
 );
