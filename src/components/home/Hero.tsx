@@ -23,7 +23,7 @@ const TutorSearchPanel = dynamic(
     ssr: false,
     loading: () => (
       <div
-        className="mx-auto min-h-[132px] max-w-3xl animate-pulse rounded-2xl border bg-background/60 backdrop-blur"
+        className="mx-auto min-h-[168px] max-w-3xl animate-pulse rounded-2xl border bg-background/60 backdrop-blur md:min-h-[200px]"
         aria-hidden
       />
     ),

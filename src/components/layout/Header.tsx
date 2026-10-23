@@ -158,7 +158,6 @@ export function Header() {
   const { theme, toggleTheme, role, user, logout } = useApp();
   const { t } = useTranslation("common");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   const tc = (categoryName: string) => {
@@ -166,10 +165,6 @@ export function Header() {
     const translated = t(key);
     return translated === key ? categoryName : translated;
   };
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("overflow-hidden", mobileOpen);
@@ -195,20 +190,14 @@ export function Header() {
   return (
     <>
       <div
-        className="notranslate border-b bg-muted/50 px-4 py-2 text-center text-xs text-muted-foreground sm:text-sm"
+        className="notranslate min-h-[2.25rem] border-b bg-muted/50 px-4 py-2 text-center text-xs text-muted-foreground sm:min-h-[2.5rem] sm:text-sm"
         suppressHydrationWarning
         translate="no"
       >
-        {mounted ? (
-          <>
-            {t("promo.sale")}{" "}
-            <Link to="/courses" className="font-medium text-primary underline-offset-2 hover:underline">
-              {t("promo.browse")}
-            </Link>
-          </>
-        ) : (
-          <span className="opacity-0">·</span>
-        )}
+        {t("promo.sale")}{" "}
+        <Link to="/courses" className="font-medium text-primary underline-offset-2 hover:underline">
+          {t("promo.browse")}
+        </Link>
       </div>
 
       <header
@@ -229,7 +218,7 @@ export function Header() {
             </div>
           </nav>
 
-          <div className="relative z-10 ms-auto flex shrink-0 flex-nowrap items-center justify-end gap-0.5 bg-background/95 ps-1 sm:gap-1">
+          <div className="relative z-10 ms-auto flex min-h-9 min-w-[9.5rem] shrink-0 flex-nowrap items-center justify-end gap-0.5 bg-background/95 ps-1 sm:min-w-[11rem] sm:gap-1 xl:min-w-[14rem]">
             <Button
               variant="ghost"
               size="icon"

@@ -23,7 +23,7 @@ const inter = Inter({
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-display-app",
-  display: "swap",
+  display: "optional",
   preload: true,
 });
 

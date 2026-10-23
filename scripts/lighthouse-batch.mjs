@@ -44,13 +44,22 @@ function runOnce(i) {
         unlinkSync(out);
         const perf = json.categories?.performance?.score ?? 0;
         const a = json.audits || {};
+        const shiftItems =
+          a["layout-shifts"]?.details?.items?.slice(0, 8)?.map((item) => ({
+            score: item.score,
+            node: item.node?.snippet?.slice(0, 120),
+            selector: item.node?.selector,
+          })) ?? [];
+        const lcpEl = a["largest-contentful-paint-element"]?.displayValue;
         resolve({
           score: Math.round(perf * 100),
           lcp: a["largest-contentful-paint"]?.numericValue,
+          lcpElement: lcpEl,
           cls: a["cumulative-layout-shift"]?.numericValue,
           tbt: a["total-blocking-time"]?.numericValue,
           fcp: a["first-contentful-paint"]?.numericValue,
           si: a["speed-index"]?.numericValue,
+          layoutShifts: shiftItems,
         });
       } catch (e) {
         reject(e);

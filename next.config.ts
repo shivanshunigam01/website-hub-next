@@ -23,6 +23,10 @@ const nextConfig = {
   },
   headers: async () => [
     {
+      source: "/llms.txt",
+      headers: [{ key: "Content-Type", value: "text/plain; charset=utf-8" }],
+    },
+    {
       source: "/:path*\\.(mp4|webm|jpg|jpeg|png|webp|avif|gif|svg|ico|woff2)",
       headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
     },

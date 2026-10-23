@@ -8,7 +8,10 @@ import { DeferredBackgroundVideo } from "@/components/DeferredBackgroundVideo";
  */
 export function HeroBackground() {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 [&_*]:pointer-events-none">
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 overflow-hidden [contain:paint] [&_*]:pointer-events-none"
+    >
       <DeferredBackgroundVideo
         src="/hero-video.mp4?v=2"
         poster={heroPoster}

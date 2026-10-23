@@ -18,6 +18,14 @@ test.describe("Public smoke", () => {
     await expect(page.locator("#email")).toBeVisible({ timeout: 20_000 });
   });
 
+  test("llms.txt is plain text with site title", async ({ page }) => {
+    const res = await page.goto("/llms.txt");
+    expect(res?.status()).toBe(200);
+    const body = await page.locator("body").innerText();
+    expect(body).toMatch(/^# TeacherPoint/m);
+    expect(body).toMatch(/teacherpoint\.org\/tutors/);
+  });
+
   test("robots route includes staff-console disallow", async ({ page }) => {
     const res = await page.goto("/robots.txt");
     test.skip(res?.status() !== 200, "robots.txt not OK in dev — run against production build");

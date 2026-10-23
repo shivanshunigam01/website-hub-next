@@ -113,7 +113,20 @@ export function GeoContentStrip({
       </div>
     );
   }
-  if (!ads.length) return null;
+  if (!ads.length) {
+    return (
+      <div
+        className={`container mx-auto px-4 py-6 sm:py-8 ${className ?? ""}`}
+        aria-hidden
+      >
+        <div className={`grid gap-4 ${limit > 1 ? "md:grid-cols-2" : ""}`}>
+          {Array.from({ length: limit }).map((_, i) => (
+            <div key={i} className="aspect-[16/7] w-full rounded-2xl border border-transparent" />
+          ))}
+        </div>
+      </div>
+    );
+  }
   const shown = ads.slice(0, limit);
 
   return (

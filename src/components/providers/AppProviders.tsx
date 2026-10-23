@@ -20,6 +20,7 @@ import {
   shouldHideSupportWidgets,
   shouldShowMarketingChrome,
 } from "@/lib/site-chrome";
+import { cn } from "@/lib/utils";
 
 const ChatWidget = dynamic(() => import("@/components/chat/ChatWidget").then((m) => m.ChatWidget), {
   ssr: false,
@@ -47,12 +48,24 @@ function DeferredWidgets({ hideSupportWidgets }: { hideSupportWidgets: boolean }
 
   useEffect(() => {
     const markReady = () => setReady(true);
+    const onEngage = () => markReady();
+    window.addEventListener("scroll", onEngage, { once: true, passive: true });
+    window.addEventListener("pointerdown", onEngage, { once: true, passive: true });
+    let idleId: number | undefined;
     if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(markReady, { timeout: 3500 });
-      return () => window.cancelIdleCallback(id);
+      idleId = window.requestIdleCallback(markReady, { timeout: 6000 });
+    } else {
+      idleId = window.setTimeout(markReady, 4000) as unknown as number;
     }
-    const t = window.setTimeout(markReady, 2000);
-    return () => window.clearTimeout(t);
+    return () => {
+      window.removeEventListener("scroll", onEngage);
+      window.removeEventListener("pointerdown", onEngage);
+      if (typeof window.cancelIdleCallback === "function" && idleId != null) {
+        window.cancelIdleCallback(idleId);
+      } else if (idleId != null) {
+        window.clearTimeout(idleId);
+      }
+    };
   }, []);
 
   if (!ready || hideSupportWidgets) {
@@ -94,14 +107,16 @@ function SiteChrome({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh w-full max-w-full flex-col bg-background text-foreground">
       {showSiteHeader && <Header />}
-      <main className="flex-1">
+      <main
+        className={cn(
+          "flex-1",
+          showMarketingChrome &&
+            "pb-[calc(3.5rem+max(1rem,env(safe-area-inset-bottom)))] lg:pb-0",
+        )}
+      >
         <Suspense fallback={null}>{children}</Suspense>
       </main>
-      {showMarketingChrome && (
-        <div className="pb-[calc(3.5rem+max(1rem,env(safe-area-inset-bottom)))] lg:pb-0">
-          <Footer />
-        </div>
-      )}
+      {showMarketingChrome && <Footer />}
       {showMarketingChrome && <MobileNav />}
       <DeferredWidgets hideSupportWidgets={hideSupportWidgets} />
       <Toaster />
