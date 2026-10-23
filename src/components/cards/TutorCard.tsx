@@ -8,7 +8,7 @@ import type { Tutor } from "@/types/catalog";
 import { tutorImage } from "@/data/images";
 import { AppImage } from "@/components/AppImage";
 
-export function TutorCard({ tutor }: { tutor: Tutor }) {
+export function TutorCard({ tutor, priorityImage }: { tutor: Tutor; priorityImage?: boolean }) {
   const { formatLocalizedPrice } = useCurrency();
   const img = tutor.avatarUrl || tutor.image || tutorImage(tutor.id);
 
@@ -45,6 +45,9 @@ export function TutorCard({ tutor }: { tutor: Tutor }) {
               alt={tutor.name}
               fill
               sizes="96px"
+              priority={priorityImage}
+              fetchPriority={priorityImage ? "high" : undefined}
+              loading={priorityImage ? "eager" : "lazy"}
               className="object-top"
             />
           </div>
