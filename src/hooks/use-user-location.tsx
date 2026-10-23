@@ -34,10 +34,7 @@ type LocationContextValue = {
 const LocationCtx = createContext<LocationContextValue | null>(null);
 
 function geoDetectDelayMs(pathname: string): number {
-  if (pathname === "/") {
-    return 5500;
-  }
-  if (pathname.startsWith("/tutors") || pathname.startsWith("/accommodation")) {
+  if (pathname === "/" || pathname.startsWith("/tutors") || pathname.startsWith("/accommodation")) {
     return 0;
   }
   return 4500;

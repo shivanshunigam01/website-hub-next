@@ -3,11 +3,11 @@
 import dynamic from "next/dynamic";
 import { HomeHeroServer } from "@/components/home/HomeHeroServer";
 
-const HeroSearchLazy = dynamic(
-  () => import("@/components/home/HeroSearchLazy").then((m) => m.HeroSearchLazy),
+const HeroInteractive = dynamic(
+  () => import("@/components/home/HeroInteractive").then((m) => m.HeroInteractive),
   {
     loading: () => (
-      <div className="mt-9 min-h-[168px] max-w-3xl md:min-h-[200px]" aria-hidden />
+      <div className="mt-9 min-h-[380px] md:min-h-[400px]" aria-hidden />
     ),
   },
 );
@@ -16,7 +16,7 @@ const HeroSearchLazy = dynamic(
 export function HomeHeroClient() {
   return (
     <HomeHeroServer>
-      <HeroSearchLazy />
+      <HeroInteractive />
     </HomeHeroServer>
   );
 }
