@@ -215,6 +215,10 @@ export function LmsStoreProvider({ children }: { children: ReactNode }) {
     const { course, curriculum } = await fetchCourseCurriculum(courseId);
     curriculumLoadRef.current.add(courseId);
     setState((s) => {
+      const prev = s.curricula[courseId];
+      if (prev && JSON.stringify(prev.modules) === JSON.stringify(curriculum.modules)) {
+        return s;
+      }
       const next = {
         ...s,
         curricula: { ...s.curricula, [courseId]: curriculum },

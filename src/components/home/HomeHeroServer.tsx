@@ -1,8 +1,10 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import heroPoster from "@/assets/hero-illustration.jpg";
+import { Award, CheckCircle2, GraduationCap, ShieldCheck, Star, Users } from "lucide-react";
 
-/** SSR hero shell — poster + headline paint before client hydration (mobile LCP). */
+/** SSR hero shell — poster + headline + primary CTAs paint before client hydration (LCP / CLS). */
 export function HomeHeroServer({
   children,
   videoSlot,
@@ -51,7 +53,63 @@ export function HomeHeroServer({
           Book live sessions with verified teachers, learn at your own pace, and earn certificates you can share
           with employers.
         </p>
-        <div className="min-h-[380px] md:min-h-[400px]">{children}</div>
+
+        <div className="min-h-[168px] md:min-h-[200px]">{children}</div>
+
+        <div className="mt-7 flex min-h-[3rem] flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link
+            href="/tutors"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-primary to-primary/90 px-8 text-sm font-medium text-primary-foreground shadow transition hover:opacity-95 sm:w-auto"
+          >
+            <Users className="h-4 w-4" aria-hidden />
+            Find a tutor
+          </Link>
+          <Link
+            href="/courses"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border bg-background/70 px-8 text-sm font-medium backdrop-blur transition hover:bg-background sm:w-auto"
+          >
+            <GraduationCap className="h-4 w-4" aria-hidden />
+            Browse courses
+          </Link>
+        </div>
+
+        <ul className="mt-8 flex min-h-[1.5rem] flex-col items-center justify-center gap-3 text-sm text-foreground/80 sm:flex-row sm:gap-x-8">
+          <li className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-emerald-500" aria-hidden />
+            Verified tutors
+          </li>
+          <li className="hidden h-1 w-1 rounded-full bg-border sm:block" aria-hidden />
+          <li className="flex items-center gap-2">
+            <Award className="h-4 w-4 text-amber-500" aria-hidden />
+            Recognized certificates
+          </li>
+          <li className="hidden h-1 w-1 rounded-full bg-border sm:block" aria-hidden />
+          <li className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
+            Satisfaction guarantee
+          </li>
+        </ul>
+
+        <div className="mx-auto mt-12 grid min-h-[5.5rem] max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+          <div className="flex items-center gap-3 rounded-2xl border bg-card/90 p-4 shadow-xl backdrop-blur">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Users className="h-5 w-5" aria-hidden />
+            </div>
+            <div>
+              <p className="text-sm font-semibold leading-none">Students worldwide</p>
+              <p className="mt-1 text-xs text-muted-foreground">Learn from anywhere</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-2xl border bg-card/90 p-4 shadow-xl backdrop-blur">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-500/10">
+              <Star className="h-5 w-5 fill-amber-500 text-amber-500" aria-hidden />
+            </div>
+            <div>
+              <p className="text-sm font-semibold leading-none">Top-rated teachers</p>
+              <p className="mt-1 text-xs text-muted-foreground">Thousands of reviews</p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

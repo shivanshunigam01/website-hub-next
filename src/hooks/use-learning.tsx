@@ -86,10 +86,6 @@ export function LearningProvider({ children }: { children: ReactNode }) {
     qc.invalidateQueries({ queryKey: ["course-reviews"] });
     qc.invalidateQueries({ queryKey: ["tutor-reviews"] });
     qc.invalidateQueries({ queryKey: ["review-summary"] });
-    qc.invalidateQueries({ queryKey: ["courses"] });
-    qc.invalidateQueries({ queryKey: ["course"] });
-    qc.invalidateQueries({ queryKey: ["tutors"] });
-    qc.invalidateQueries({ queryKey: ["tutor"] });
   }, [qc]);
 
   const enroll = useCallback(

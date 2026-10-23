@@ -1,5 +1,4 @@
 import type { UserLocation } from "@/lib/geolocation";
-import { debugGtLog, gtDomSnapshot } from "@/lib/debug-gt-log";
 
 export type GTLanguage = {
   code: string; // Google Translate code, e.g. "hi", "zh-CN", "ar"

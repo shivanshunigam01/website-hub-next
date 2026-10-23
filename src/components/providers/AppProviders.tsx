@@ -88,7 +88,7 @@ function DeferredWidgets({
           {!chatOpen && <ScrollToTop />}
         </>
       )}
-      {isHome && engageReady && <RegionalAdPopup />}
+      {isHome && idleReady && <RegionalAdPopup />}
       {idleReady && <GoogleTranslate />}
       {idleReady && <VisitorTracker />}
     </>
