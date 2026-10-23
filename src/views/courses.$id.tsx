@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { CourseCard } from "@/components/cards/CourseCard";
 import { useApp } from "@/hooks/use-app";
-import { totalLessonCount, type LessonType } from "@/hooks/use-lms-store";
+import { totalLessonCount, type LessonType } from "@/lib/curriculum-utils";
 import { useCourse, useCourses } from "@/hooks/use-catalog";
 import { useCourseLearning, useSubmitReview } from "@/hooks/use-learning";
 import { formatApiErrorMessage } from "@/lib/api";
@@ -47,7 +47,7 @@ function CourseDetail() {
   const { id } = useParams();
   const courseId = typeof id === "string" ? id : Array.isArray(id) ? id[0] : undefined;
   const { formatLocalizedPrice } = useCurrency();
-  const { data: courseDetail, isLoading, error } = useCourse(courseId);
+  const { data: courseDetail, isLoading, isFetching, error } = useCourse(courseId);
   const c = courseDetail?.course;
   const curriculum =
     courseDetail?.curriculum ?? { courseId: courseId ?? "", modules: [] };
@@ -76,10 +76,12 @@ function CourseDetail() {
     setWishlisted(isCourseInWishlist(c.id));
   }, [c?.id]);
 
-  if (isLoading) {
+  const waitingForFirstLoad = isLoading && !courseDetail;
+
+  if (waitingForFirstLoad) {
     return (
       <div className="container flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-busy={isFetching} />
       </div>
     );
   }

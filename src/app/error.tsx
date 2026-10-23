@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { debugGtLog, gtDomSnapshot } from "@/lib/debug-gt-log";
-import { isGoogleTranslateActive } from "@/lib/google-translate";
-
 export default function GlobalError({
   error,
   reset,
@@ -17,15 +14,7 @@ export default function GlobalError({
 
   useEffect(() => {
     console.error(error);
-    debugGtLog("A", "error.tsx:GlobalError", "react error boundary caught", {
-      errorName: error.name,
-      errorMessage: error.message,
-      isDomSyncError,
-      gtActive: isGoogleTranslateActive(),
-      ...gtDomSnapshot(),
-      stack: error.stack?.slice(0, 300),
-    });
-  }, [error, isDomSyncError]);
+  }, [error]);
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center bg-background px-4">

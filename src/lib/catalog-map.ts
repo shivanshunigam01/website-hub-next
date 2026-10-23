@@ -141,8 +141,11 @@ function toLessonTypeForApi(t: LessonType): string {
 
 export function mapApiCourse(c: ApiCourse, index = 0): Course {
   const price = Number(c.price ?? 0);
+  const id =
+    c.id ||
+    String((c as ApiCourse & { _id?: string })._id ?? "").trim();
   return {
-    id: c.id,
+    id,
     title: c.title ?? "Untitled course",
     instructor: c.instructorName ?? "Instructor",
     instructorId: c.instructorId,

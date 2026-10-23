@@ -39,21 +39,32 @@ export type CourseDetailData = {
 };
 
 /** Single request for course detail + curriculum (avoids duplicate /courses/:id calls). */
+const courseDetailInflight = new Map<string, Promise<CourseDetailData>>();
+
 export function useCourse(courseId: string | undefined) {
   return useQuery({
     queryKey: ["course", courseId],
     enabled: !!courseId,
     queryFn: async () => {
-      const raw = await api<ApiCourse>(`/courses/${courseId}`);
-      return {
-        course: mapApiCourse(raw),
-        curriculum: mapCurriculumFromApi(courseId!, raw.curriculum ?? []),
-      };
+      const id = courseId!;
+      let pending = courseDetailInflight.get(id);
+      if (!pending) {
+        pending = api<ApiCourse>(`/courses/${id}`).then((raw) => ({
+          course: mapApiCourse(raw),
+          curriculum: mapCurriculumFromApi(id, raw.curriculum ?? []),
+        }));
+        courseDetailInflight.set(id, pending);
+        pending.finally(() => {
+          courseDetailInflight.delete(id);
+        });
+      }
+      return pending;
     },
     staleTime: 5 * 60_000,
     gcTime: 10 * 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: (failureCount, error) => {
       if (error instanceof ApiRequestError && error.status >= 400 && error.status < 500) {
         return false;

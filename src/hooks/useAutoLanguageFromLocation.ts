@@ -9,7 +9,6 @@ import {
   resolveAutoLanguageForLocation,
 } from "@/lib/google-translate";
 import { syncDocumentLanguage } from "@/lib/document-language";
-import { debugGtLog, gtDomSnapshot } from "@/lib/debug-gt-log";
 import { deferUntilIdle } from "@/lib/defer-until-idle";
 
 /**
@@ -21,66 +20,38 @@ export function useAutoLanguageFromLocation(location: UserLocation | null | unde
     if (location === undefined || !location?.countryCode) return;
 
     deferUntilIdle(() => {
-    const { shouldApplyGt, targetLang, countryCode, i18nLang, respectManualChoice } =
-      resolveAutoLanguageForLocation(location);
+      const { shouldApplyGt, targetLang, countryCode, i18nLang, respectManualChoice } =
+        resolveAutoLanguageForLocation(location);
 
-    const gtActive = isGoogleTranslateActive();
+      const gtActive = isGoogleTranslateActive();
 
-    // #region agent log
-    debugGtLog("B", "useAutoLanguageFromLocation.ts", "auto-language effect", {
-      branch: shouldApplyGt && !respectManualChoice ? "applyGeo" : respectManualChoice ? "manual" : gtActive ? "gt-skip" : "i18n-sync",
-      gtActive,
-      shouldApplyGt,
-      respectManualChoice,
-      targetLang,
-      i18nLang,
-      i18nCurrent: i18n.language,
-      countryCode,
-      ...gtDomSnapshot(),
-    });
-    // #endregion
-
-    if (shouldApplyGt && !respectManualChoice) {
-      applyGeoLanguage(targetLang, countryCode, (lng) => {
-        void i18n.changeLanguage(lng);
-        syncDocumentLanguage(lng);
-      });
-      return;
-    }
-
-    if (respectManualChoice) {
-      if (gtActive) return;
-      if (i18n.language !== i18nLang) {
-        // #region agent log
-        debugGtLog("B", "useAutoLanguageFromLocation.ts", "calling i18n.changeLanguage (manual)", {
-          from: i18n.language,
-          to: i18nLang,
-          ...gtDomSnapshot(),
+      if (shouldApplyGt && !respectManualChoice) {
+        applyGeoLanguage(targetLang, countryCode, (lng) => {
+          void i18n.changeLanguage(lng);
+          syncDocumentLanguage(lng);
         });
-        // #endregion
-        void i18n.changeLanguage(i18nLang);
-        syncDocumentLanguage(i18nLang);
+        return;
       }
-      return;
-    }
 
-    if (gtActive) return;
+      if (respectManualChoice) {
+        if (gtActive) return;
+        if (i18n.language !== i18nLang) {
+          void i18n.changeLanguage(i18nLang);
+          syncDocumentLanguage(i18nLang);
+        }
+        return;
+      }
 
-    if (i18n.language !== i18nLang) {
-      // #region agent log
-      debugGtLog("B", "useAutoLanguageFromLocation.ts", "calling i18n.changeLanguage (geo)", {
-        from: i18n.language,
-        to: i18nLang,
-        ...gtDomSnapshot(),
-      });
-      // #endregion
-      void i18n.changeLanguage(i18nLang);
-    }
-    syncDocumentLanguage(i18nLang);
+      if (gtActive) return;
 
-    localStorage.setItem(LS_KEYS.prompted, "1");
-    localStorage.setItem(LS_KEYS.geoCountry, countryCode);
-    persistLanguageChoice(targetLang, countryCode);
+      if (i18n.language !== i18nLang) {
+        void i18n.changeLanguage(i18nLang);
+      }
+      syncDocumentLanguage(i18nLang);
+
+      localStorage.setItem(LS_KEYS.prompted, "1");
+      localStorage.setItem(LS_KEYS.geoCountry, countryCode);
+      persistLanguageChoice(targetLang, countryCode);
     }, 8000);
   }, [location?.countryCode, location?.city, location?.country]);
 }
