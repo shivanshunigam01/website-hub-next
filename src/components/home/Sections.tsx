@@ -19,7 +19,7 @@ import {
   CATEGORIES, SKILLS, TESTIMONIALS, FAQS,
   COMPANIES, HOW_IT_WORKS, LEARNING_TIMELINE, COMPARISON,
 } from "@/data/mock";
-import { useCourses } from "@/hooks/use-catalog";
+import { useCourses, useTutors } from "@/hooks/use-catalog";
 import { useAdminStore } from "@/hooks/use-admin-store";
 import { useTranslation } from "react-i18next";
 import careerBanner from "@/assets/career-banner.jpg";
@@ -129,8 +129,9 @@ export function TrendingCourses() {
 }
 
 export function LearnAI() {
-  const { courses: COURSES } = useAdminStore();
+  const { data: COURSES = [] } = useCourses({ status: "published", limit: 24 });
   const { t } = useTranslation("common");
+  const preview = COURSES.slice(0, 4);
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
       <div className="relative grid gap-8 overflow-hidden rounded-2xl border bg-primary p-8 text-primary-foreground md:grid-cols-2 md:p-12">
@@ -144,7 +145,7 @@ export function LearnAI() {
           </div>
         </div>
         <div className="relative grid grid-cols-2 gap-3">
-          {COURSES.slice(0, 4).map((c) => (
+          {preview.map((c) => (
             <div key={c.id} className="bg-white/10 backdrop-blur rounded-2xl p-3 hover:bg-white/20 transition overflow-hidden">
               <div className="h-24 rounded-lg mb-3 overflow-hidden relative" style={{ background: c.gradient }}>
                 <AppImage src={courseImage(c.id)} alt={c.title} fill sizes="160px" />
@@ -160,7 +161,7 @@ export function LearnAI() {
 }
 
 export function FeaturedTutors() {
-  const { tutors: TUTORS } = useAdminStore();
+  const { data: TUTORS = [], isLoading } = useTutors(8);
   const { t } = useTranslation("common");
   return (
     <section className="container mx-auto px-4 py-12 md:py-16">
@@ -170,8 +171,12 @@ export function FeaturedTutors() {
         subtitle={t("featured.subtitle")}
         action={<Button asChild variant="ghost" size="sm" className="hidden md:inline-flex"><Link to="/tutors">{t("featured.allTutors")} <ArrowRight className="h-4 w-4 ml-1" /></Link></Button>}
       />
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {TUTORS.slice(0, 8).map((t) => <TutorCard key={t.id} tutor={t} />)}
+      <div className="grid min-h-[200px] gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {isLoading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-48 animate-pulse rounded-2xl border bg-muted/40" aria-hidden />
+            ))
+          : TUTORS.slice(0, 8).map((tutor) => <TutorCard key={tutor.id} tutor={tutor} />)}
       </div>
     </section>
   );
@@ -210,14 +215,15 @@ export function CareerBanner() {
 }
 
 export function IndustryExperts() {
-  const { courses: COURSES } = useAdminStore();
+  const { data: COURSES = [] } = useCourses({ status: "published", limit: 24 });
   const { t } = useTranslation("common");
+  const featured = COURSES.slice(2, 5);
   return (
     <section className="bg-purple-soft/40 dark:bg-purple-soft/20 py-16 md:py-20">
       <div className="container mx-auto px-4">
         <SectionHeading eyebrow={t("industry.eyebrow")} title={t("industry.title")} subtitle={t("industry.subtitle")} />
-        <div className="grid md:grid-cols-3 gap-5">
-          {COURSES.slice(2, 5).map((c) => (
+        <div className="grid gap-5 md:grid-cols-3">
+          {featured.map((c, idx) => (
             <article key={c.id} className="bg-card border rounded-2xl overflow-hidden hover:shadow-card transition">
               <div className="aspect-[16/10] relative overflow-hidden" style={{ background: c.gradient }}>
                 <AppImage src={courseImage(c.id)} alt={c.title} fill sizes="(max-width: 768px) 100vw, 33vw" />
@@ -229,7 +235,7 @@ export function IndustryExperts() {
                 <div className="mt-4 flex items-center gap-3 pt-4 border-t">
                   <div className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-primary">
                     <AppImage
-                      src={tutorImage("t" + ((parseInt(c.id.slice(1)) % 12) + 1))}
+                      src={tutorImage("t" + ((idx % 12) + 1))}
                       alt={c.instructor}
                       fill
                       sizes="36px"

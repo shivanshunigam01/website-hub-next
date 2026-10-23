@@ -1,56 +1,20 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { GeoContentStrip } from "@/components/home/GeoContentStrip";
 import { QuickLinks } from "@/components/home/QuickLinks";
-import {
-  CtaLoader,
-  FaqLoader,
-  GeoStripLoader,
-  LevelUpLoader,
-  PopularSubjectsLoader,
-  TopTutorsLoader,
-  TrendingLoader,
-  TrustStatsLoader,
-} from "@/components/home/home-section-loaders";
-
-const GeoContentStrip = dynamic(
-  () => import("@/components/home/GeoContentStrip").then((m) => m.GeoContentStrip),
-  { loading: () => <GeoStripLoader dual /> },
-);
-
-const LevelUpSection = dynamic(
-  () => import("@/components/home/LevelUpSection").then((m) => m.LevelUpSection),
-  { loading: () => <LevelUpLoader /> },
-);
-
-const TrustStats = dynamic(
-  () => import("@/components/home/Sections").then((m) => m.TrustStats),
-  { loading: () => <TrustStatsLoader /> },
-);
+import { LevelUpSection } from "@/components/home/LevelUpSection";
+import { TrustStats, FAQSection, CTABand } from "@/components/home/Sections";
+import { PopularSubjectsSeo } from "@/components/seo/PopularSubjectsSeo";
 
 const TrendingCourses = dynamic(
   () => import("@/components/home/Sections").then((m) => m.TrendingCourses),
-  { loading: () => <TrendingLoader /> },
+  { loading: () => <div className="min-h-[680px] w-full" aria-hidden /> },
 );
 
 const TopTutors = dynamic(
   () => import("@/components/home/TopTutors").then((m) => m.TopTutors),
-  { loading: () => <TopTutorsLoader /> },
-);
-
-const PopularSubjectsSeo = dynamic(
-  () => import("@/components/seo/PopularSubjectsSeo").then((m) => m.PopularSubjectsSeo),
-  { loading: () => <PopularSubjectsLoader /> },
-);
-
-const FAQSection = dynamic(
-  () => import("@/components/home/Sections").then((m) => m.FAQSection),
-  { loading: () => <FaqLoader /> },
-);
-
-const CTABand = dynamic(
-  () => import("@/components/home/Sections").then((m) => m.CTABand),
-  { loading: () => <CtaLoader /> },
+  { loading: () => <div className="min-h-[640px] w-full" aria-hidden /> },
 );
 
 function HomePage() {
