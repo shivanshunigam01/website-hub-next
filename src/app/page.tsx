@@ -1,18 +1,19 @@
-import HomePagePage from "@/views/index";
+import dynamic from "next/dynamic";
 import { createStaticPageMetadata } from "@/lib/page-metadata";
-import { HomeHeroServer } from "@/components/home/HomeHeroServer";
-import { HeroVideoLayer } from "@/components/home/HeroVideoLayer";
-import { HeroInteractive } from "@/components/home/HeroInteractive";
+import { HomeHeroClient } from "@/components/home/HomeHeroClient";
+import { HomeBelowFoldPlaceholders } from "@/components/home/HomeBelowFoldPlaceholders";
 import { HomeBelowFoldShell } from "@/components/home/HomeBelowFoldShell";
+
+const HomePagePage = dynamic(() => import("@/views/index"), {
+  loading: () => <HomeBelowFoldPlaceholders />,
+});
 
 export const generateMetadata = createStaticPageMetadata("/");
 
 export default function Page() {
   return (
     <>
-      <HomeHeroServer videoSlot={<HeroVideoLayer />}>
-        <HeroInteractive />
-      </HomeHeroServer>
+      <HomeHeroClient />
       <HomeBelowFoldShell>
         <HomePagePage />
       </HomeBelowFoldShell>

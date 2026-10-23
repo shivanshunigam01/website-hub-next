@@ -81,7 +81,7 @@ export function TrendingCourses() {
   const COURSES = apiCourses;
   const { t } = useTranslation("common");
   return (
-    <section className="container mx-auto px-4 py-12 md:py-16">
+    <section className="container mx-auto min-h-[680px] px-4 py-12 md:py-16">
       <SectionHeading
         eyebrow={t("trending.eyebrow")}
         title={t("trending.title")}
@@ -89,13 +89,13 @@ export function TrendingCourses() {
         action={<Button asChild variant="ghost" size="sm" className="hidden md:inline-flex"><Link to="/courses">{t("trending.viewAll")} <ArrowRight className="h-4 w-4 ml-1" /></Link></Button>}
       />
       {isLoading ? (
-        <div className="grid min-h-[560px] gap-5 sm:grid-cols-2 lg:grid-cols-4" aria-hidden>
+        <div className="grid min-h-[520px] gap-5 sm:grid-cols-2 lg:grid-cols-4" aria-hidden>
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-[260px] animate-pulse rounded-2xl border bg-muted/40" />
           ))}
         </div>
       ) : (
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs defaultValue="all" className="w-full min-h-[520px]">
           <TabsList className="mb-6 flex h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
             {CATEGORIES.map((c) => (
               <TabsTrigger

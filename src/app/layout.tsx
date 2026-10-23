@@ -77,6 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href={API_ORIGIN} crossOrigin="anonymous" />
         <link rel="dns-prefetch" href={API_ORIGIN} />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <ThemeScript />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>

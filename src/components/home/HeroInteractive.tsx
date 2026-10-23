@@ -43,17 +43,12 @@ export function HeroInteractive() {
   const [mountSearch, setMountSearch] = useState(false);
 
   useEffect(() => {
-    const narrow = window.matchMedia("(max-width: 1023px)").matches;
-    if (!narrow) {
-      setMountSearch(true);
-      return;
-    }
     const run = () => setMountSearch(true);
     if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(run, { timeout: 4500 });
+      const id = window.requestIdleCallback(run, { timeout: 3500 });
       return () => window.cancelIdleCallback(id);
     }
-    const timer = window.setTimeout(run, 2000);
+    const timer = window.setTimeout(run, 800);
     return () => window.clearTimeout(timer);
   }, []);
 
