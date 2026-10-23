@@ -1,5 +1,21 @@
 # TeacherPoint — final performance verification (Oct 23, 2026)
 
+**GTmetrix Grade A** requires a fresh run on **https://www.teacherpoint.org/** after deploy. Prior lab report: Performance **47%**, CLS **0.71**, TBT **~494ms**, Structure **96%**.
+
+## Latest homepage pass (GTmetrix-oriented)
+
+| Change | Why |
+|--------|-----|
+| Removed `HomeBelowFoldMount` placeholder → full-page swap | Eliminates below-fold layout shift when real sections replace skeletons |
+| `page.tsx` renders `HomePage` inside `HomeBelowFoldShell` | Stable `min-h-[3200px]` + per-section `dynamic()` loaders |
+| `views/index.tsx` code-splits geo, trending, tutors, FAQ, CTA | Lowers main-thread work during first seconds (TBT) |
+| `HomeHeroServer` SSR CTAs + trust row (no client chunk) | Hero paints without waiting for `HeroSearchLazy` |
+| `HeroSearchLazy` only loads `TutorSearchPanel` after idle (~5s cap) | Smaller hero client bundle |
+| Home geo detect delayed **5.5s** | Defers IP/geo + regional ads work during GTmetrix window |
+| `RegionalAdPopup` on home waits for **idle** (not scroll) | Avoids popup JS on synthetic scroll |
+
+**Do not claim Grade A until post-deploy GTmetrix shows Performance ≥90%, CLS ≤0.1, TBT &lt;200ms (typical A band).**
+
 **Do not deploy without authorization.** Targets (mobile/desktop performance ≥90, LCP ≤2.5s) are **not met in PageSpeed Insights** with this commit alone; production re-measurement is required after deploy.
 
 ## PSI baseline (contractual “before” — user-supplied)

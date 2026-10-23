@@ -1,7 +1,7 @@
 import { createStaticPageMetadata } from "@/lib/page-metadata";
 import { HomeHeroClient } from "@/components/home/HomeHeroClient";
-import { HomeBelowFoldMount } from "@/components/home/HomeBelowFoldMount";
 import { HomeBelowFoldShell } from "@/components/home/HomeBelowFoldShell";
+import HomePage from "@/views/index";
 
 export const generateMetadata = createStaticPageMetadata("/");
 
@@ -10,7 +10,7 @@ export default function Page() {
     <>
       <HomeHeroClient />
       <HomeBelowFoldShell>
-        <HomeBelowFoldMount />
+        <HomePage />
       </HomeBelowFoldShell>
     </>
   );
