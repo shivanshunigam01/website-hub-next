@@ -15,3 +15,14 @@
 Commands: `npm run build && npm run start` then `node scripts/lighthouse-batch.mjs http://localhost:3000 3 desktop|mobile`.
 
 **GTmetrix grade A:** Requires production deploy + CDN; not verified in this sprint.
+
+## SEO / AEO / GEO (measured)
+
+| Check | Live production (Oct 23) | Repo after this sprint |
+|-------|--------------------------|-------------------------|
+| PSI SEO | 100 | Expanded `seo:validate` PASS locally |
+| llms.txt | FAIL agentic — `docs/production-readiness` link, weak markdown links | Fixed content + `/llms.txt` rewrite → `/llms` route |
+| Breadcrumb JSON-LD | Missing on profiles | Added on `/courses/[id]`, `/tutors/[id]` |
+| hreflang | canonical only | `en` + `x-default` |
+
+**Deploy required** for live llms.txt and performance fixes to affect teacherpoint.org.

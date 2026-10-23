@@ -30,7 +30,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 const notoArabic = Noto_Sans_Arabic({
   subsets: ["arabic"],
   variable: "--font-arabic-app",
-  display: "swap",
+  display: "optional",
   preload: false,
 });
 

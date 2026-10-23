@@ -4,6 +4,9 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: false },
   compress: true,
+  async rewrites() {
+    return [{ source: "/llms.txt", destination: "/llms" }];
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts", "date-fns", "framer-motion"],
   },

@@ -240,7 +240,13 @@ export function buildMetadata({
     description,
     keywords: keywordList,
     metadataBase: new URL(SITE_URL),
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      languages: {
+        en: url,
+        "x-default": url,
+      },
+    },
     category: "education",
     authors: [{ name: SITE_NAME, url: SITE_URL }],
     creator: SITE_NAME,

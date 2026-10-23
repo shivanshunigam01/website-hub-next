@@ -38,14 +38,14 @@ export function HomeHeroServer({
           </span>
         </div>
         <h1
-          className="hero-headline mx-auto mt-6 max-w-4xl text-center font-display text-4xl font-extrabold tracking-tight drop-shadow-sm sm:text-5xl lg:text-6xl"
+          className="hero-headline mx-auto mt-6 min-h-[5.5rem] max-w-4xl text-center font-display text-4xl font-extrabold tracking-tight drop-shadow-sm sm:min-h-[6.5rem] sm:text-5xl lg:min-h-[7.5rem] lg:text-6xl"
           suppressHydrationWarning
         >
-          <span className="hero-title-lead block">Find expert tutors and courses that fit</span>
-          <span className="hero-title-accent mt-1 block">your goals</span>
+          <span className="hero-title-lead block min-h-[1.2em]">Find expert tutors and courses that fit</span>
+          <span className="hero-title-accent mt-1 block min-h-[1.2em]">your goals</span>
         </h1>
         <p
-          className="mx-auto mt-5 max-w-2xl text-center text-base leading-relaxed text-foreground/80 sm:text-lg"
+          className="mx-auto mt-5 min-h-[4.5rem] max-w-2xl text-center text-base leading-relaxed text-foreground/80 sm:min-h-[3.5rem] sm:text-lg"
           suppressHydrationWarning
         >
           Book live sessions with verified teachers, learn at your own pace, and earn certificates you can share

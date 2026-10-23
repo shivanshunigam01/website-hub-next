@@ -51,7 +51,7 @@ function CourseDetail() {
   const c = courseDetail?.course;
   const curriculum =
     courseDetail?.curriculum ?? { courseId: courseId ?? "", modules: [] };
-  const { data: allCourses = [] } = useCourses();
+  const { data: allCourses = [] } = useCourses({ limit: 24 });
   const { user } = useApp();
   const {
     enrollment,

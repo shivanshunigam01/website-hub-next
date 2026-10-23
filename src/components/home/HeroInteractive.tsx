@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@/lib/navigation";
 import {
   Users,
@@ -28,10 +29,33 @@ const TutorSearchPanel = dynamic(
   },
 );
 
+const searchPlaceholder = (
+  <div
+    className="mx-auto min-h-[168px] max-w-3xl animate-pulse rounded-2xl border bg-background/60 backdrop-blur md:min-h-[200px]"
+    aria-hidden
+  />
+);
+
 /** Client-only hero actions (search, CTAs). Headline/poster are server-rendered in HomeHeroServer. */
 export function HeroInteractive() {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
+  const [mountSearch, setMountSearch] = useState(false);
+
+  useEffect(() => {
+    const narrow = window.matchMedia("(max-width: 1023px)").matches;
+    if (!narrow) {
+      setMountSearch(true);
+      return;
+    }
+    const run = () => setMountSearch(true);
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(run, { timeout: 4500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = window.setTimeout(run, 2000);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const goToTutorSearch = (filters: TutorSearchFilters) => {
     navigate({ to: "/tutors", search: tutorSearchToUrl(filters) });
@@ -40,7 +64,11 @@ export function HeroInteractive() {
   return (
     <>
       <div className="mt-9">
-        <TutorSearchPanel variant="hero" showResults={false} onSearch={goToTutorSearch} />
+        {mountSearch ? (
+          <TutorSearchPanel variant="hero" showResults={false} onSearch={goToTutorSearch} />
+        ) : (
+          searchPlaceholder
+        )}
       </div>
 
       <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">

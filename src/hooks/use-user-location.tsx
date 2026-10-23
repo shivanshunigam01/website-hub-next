@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import {
   detectUserLocation,
   type GeoapifyReverseResponse,
@@ -32,7 +33,15 @@ type LocationContextValue = {
 
 const LocationCtx = createContext<LocationContextValue | null>(null);
 
+function geoDetectDelayMs(pathname: string): number {
+  if (pathname === "/" || pathname.startsWith("/tutors") || pathname.startsWith("/accommodation")) {
+    return 0;
+  }
+  return 4500;
+}
+
 export function LocationProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname() || "/";
   const [location, setLocation] = useState<UserLocation | null>(null);
   const [geoapify, setGeoapify] = useState<GeoapifyReverseResponse | null>(null);
   const [permission, setPermission] = useState<LocationPermission | "loading">("loading");
@@ -94,19 +103,29 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(() => start(), { timeout: 3000 });
-      return () => {
-        cancelled = true;
-        window.cancelIdleCallback(idleId);
-      };
-    }
+    const routeDelay = geoDetectDelayMs(pathname);
+    const schedule = () => {
+      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+        const idleId = window.requestIdleCallback(() => start(), { timeout: routeDelay > 0 ? 8000 : 3000 });
+        return () => window.cancelIdleCallback(idleId);
+      }
+      const timer = setTimeout(start, routeDelay > 0 ? routeDelay : 2000);
+      return () => clearTimeout(timer);
+    };
 
-    const timer = setTimeout(start, 2000);
+    const routeTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      cancelDetect = schedule();
+    }, routeDelay);
+
+    let cancelDetect: (() => void) | undefined;
     return () => {
       cancelled = true;
-      clearTimeout(timer);
+      window.clearTimeout(routeTimer);
+      cancelDetect?.();
     };
+    // pathname read for first-paint route delay only; do not re-detect on client navigations
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- geoDetectDelayMs(pathname)
   }, [attempt, runDetect]);
 
   const retryLocation = useCallback(() => {

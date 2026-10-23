@@ -1,16 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { GeoContentStrip } from "@/components/home/GeoContentStrip";
+import { QuickLinks } from "@/components/home/QuickLinks";
 
-const sectionShell = (minH: string) => () => <div className={minH} aria-hidden />;
-
-const GeoContentStrip = dynamic(
-  () => import("@/components/home/GeoContentStrip").then((m) => m.GeoContentStrip),
-  { loading: sectionShell("min-h-[min(42vw,320px)] md:min-h-[280px]") },
-);
-const QuickLinks = dynamic(
-  () => import("@/components/home/QuickLinks").then((m) => m.QuickLinks),
-  { loading: sectionShell("min-h-[220px]") },
+const sectionShell = (minH: string) => () => (
+  <div className={`${minH} [content-visibility:auto]`} aria-hidden />
 );
 const LevelUpSection = dynamic(
   () => import("@/components/home/LevelUpSection").then((m) => m.LevelUpSection),

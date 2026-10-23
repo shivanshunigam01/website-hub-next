@@ -42,20 +42,27 @@ const VisitorTracker = dynamic(
   { ssr: false },
 );
 
-function DeferredWidgets({ hideSupportWidgets }: { hideSupportWidgets: boolean }) {
-  const [ready, setReady] = useState(false);
+function DeferredWidgets({
+  hideSupportWidgets,
+  pathname,
+}: {
+  hideSupportWidgets: boolean;
+  pathname: string;
+}) {
+  const [engageReady, setEngageReady] = useState(false);
+  const [idleReady, setIdleReady] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const isHome = pathname === "/";
 
   useEffect(() => {
-    const markReady = () => setReady(true);
-    const onEngage = () => markReady();
+    const onEngage = () => setEngageReady(true);
     window.addEventListener("scroll", onEngage, { once: true, passive: true });
     window.addEventListener("pointerdown", onEngage, { once: true, passive: true });
     let idleId: number | undefined;
     if (typeof window.requestIdleCallback === "function") {
-      idleId = window.requestIdleCallback(markReady, { timeout: 6000 });
+      idleId = window.requestIdleCallback(() => setIdleReady(true), { timeout: 12000 });
     } else {
-      idleId = window.setTimeout(markReady, 4000) as unknown as number;
+      idleId = window.setTimeout(() => setIdleReady(true), 8000) as unknown as number;
     }
     return () => {
       window.removeEventListener("scroll", onEngage);
@@ -68,18 +75,22 @@ function DeferredWidgets({ hideSupportWidgets }: { hideSupportWidgets: boolean }
     };
   }, []);
 
-  if (!ready || hideSupportWidgets) {
+  if (hideSupportWidgets) {
     return null;
   }
 
   return (
     <>
-      <ChatWidget open={chatOpen} onOpenChange={setChatOpen} />
-      {!chatOpen && <WhatsAppButton />}
-      <RegionalAdPopup />
-      <GoogleTranslate />
-      <VisitorTracker />
-      {!chatOpen && <ScrollToTop />}
+      {engageReady && (
+        <>
+          <ChatWidget open={chatOpen} onOpenChange={setChatOpen} />
+          {!chatOpen && <WhatsAppButton />}
+          {!chatOpen && <ScrollToTop />}
+        </>
+      )}
+      {isHome && engageReady && <RegionalAdPopup />}
+      {idleReady && <GoogleTranslate />}
+      {idleReady && <VisitorTracker />}
     </>
   );
 }
@@ -118,7 +129,7 @@ function SiteChrome({ children }: { children: ReactNode }) {
       </main>
       {showMarketingChrome && <Footer />}
       {showMarketingChrome && <MobileNav />}
-      <DeferredWidgets hideSupportWidgets={hideSupportWidgets} />
+      <DeferredWidgets hideSupportWidgets={hideSupportWidgets} pathname={pathname} />
       <Toaster />
     </div>
   );
