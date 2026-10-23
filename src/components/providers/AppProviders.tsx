@@ -6,11 +6,6 @@ import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AppProvider, useApp } from "@/hooks/use-app";
 import { GoogleAuthProvider } from "@/components/auth/GoogleAuthProvider";
-import { AdminStoreProvider } from "@/hooks/use-admin-store";
-import { LmsStoreProvider } from "@/hooks/use-lms-store";
-import { LearningProvider } from "@/hooks/use-learning";
-import { PlatformStoreProvider } from "@/hooks/use-platform-store";
-import { MarketplaceProvider } from "@/hooks/use-marketplace";
 import { LocationProvider } from "@/hooks/use-user-location";
 import { CurrencyProvider } from "@/hooks/use-currency";
 import { I18nProvider } from "@/components/I18nProvider";
@@ -25,6 +20,7 @@ import {
   shouldHideSupportWidgets,
   shouldShowMarketingChrome,
 } from "@/lib/site-chrome";
+import { cn } from "@/lib/utils";
 
 const ChatWidget = dynamic(() => import("@/components/chat/ChatWidget").then((m) => m.ChatWidget), {
   ssr: false,
@@ -46,33 +42,55 @@ const VisitorTracker = dynamic(
   { ssr: false },
 );
 
-function DeferredWidgets({ hideSupportWidgets }: { hideSupportWidgets: boolean }) {
-  const [ready, setReady] = useState(false);
+function DeferredWidgets({
+  hideSupportWidgets,
+  pathname,
+}: {
+  hideSupportWidgets: boolean;
+  pathname: string;
+}) {
+  const [engageReady, setEngageReady] = useState(false);
+  const [idleReady, setIdleReady] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const isHome = pathname === "/";
 
   useEffect(() => {
-    const t = window.setTimeout(() => setReady(true), 2500);
-    return () => window.clearTimeout(t);
+    const onEngage = () => setEngageReady(true);
+    window.addEventListener("scroll", onEngage, { once: true, passive: true });
+    window.addEventListener("pointerdown", onEngage, { once: true, passive: true });
+    let idleId: number | undefined;
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(() => setIdleReady(true), { timeout: 12000 });
+    } else {
+      idleId = window.setTimeout(() => setIdleReady(true), 8000) as unknown as number;
+    }
+    return () => {
+      window.removeEventListener("scroll", onEngage);
+      window.removeEventListener("pointerdown", onEngage);
+      if (typeof window.cancelIdleCallback === "function" && idleId != null) {
+        window.cancelIdleCallback(idleId);
+      } else if (idleId != null) {
+        window.clearTimeout(idleId);
+      }
+    };
   }, []);
 
-  if (!ready || hideSupportWidgets) {
-    return (
-      <>
-        <RegionalAdPopup />
-        <GoogleTranslate />
-        <VisitorTracker />
-      </>
-    );
+  if (hideSupportWidgets) {
+    return null;
   }
 
   return (
     <>
-      <ChatWidget open={chatOpen} onOpenChange={setChatOpen} />
-      {!chatOpen && <WhatsAppButton />}
-      <RegionalAdPopup />
-      <GoogleTranslate />
-      <VisitorTracker />
-      {!chatOpen && <ScrollToTop />}
+      {engageReady && (
+        <>
+          <ChatWidget open={chatOpen} onOpenChange={setChatOpen} />
+          {!chatOpen && <WhatsAppButton />}
+          {!chatOpen && <ScrollToTop />}
+        </>
+      )}
+      {isHome && engageReady && <RegionalAdPopup />}
+      {idleReady && <GoogleTranslate />}
+      {idleReady && <VisitorTracker />}
     </>
   );
 }
@@ -100,23 +118,37 @@ function SiteChrome({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh w-full max-w-full flex-col bg-background text-foreground">
       {showSiteHeader && <Header />}
-      <main className="flex-1">
+      <main
+        className={cn(
+          "flex-1",
+          showMarketingChrome &&
+            "max-lg:pb-[calc(3.5rem+max(1rem,env(safe-area-inset-bottom)))]",
+        )}
+      >
         <Suspense fallback={null}>{children}</Suspense>
       </main>
-      {showMarketingChrome && (
-        <div className="pb-[calc(3.5rem+max(1rem,env(safe-area-inset-bottom)))] lg:pb-0">
-          <Footer />
-        </div>
-      )}
+      {showMarketingChrome && <Footer />}
       {showMarketingChrome && <MobileNav />}
-      <DeferredWidgets hideSupportWidgets={hideSupportWidgets} />
+      <DeferredWidgets hideSupportWidgets={hideSupportWidgets} pathname={pathname} />
       <Toaster />
     </div>
   );
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60_000,
+            gcTime: 5 * 60_000,
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      }),
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -125,17 +157,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <I18nProvider>
             <GoogleAuthProvider>
               <AppProvider>
-                <LearningProvider>
-                  <AdminStoreProvider>
-                    <LmsStoreProvider>
-                      <PlatformStoreProvider>
-                        <MarketplaceProvider>
-                          <SiteChrome>{children}</SiteChrome>
-                        </MarketplaceProvider>
-                      </PlatformStoreProvider>
-                    </LmsStoreProvider>
-                  </AdminStoreProvider>
-                </LearningProvider>
+                <SiteChrome>{children}</SiteChrome>
               </AppProvider>
             </GoogleAuthProvider>
           </I18nProvider>

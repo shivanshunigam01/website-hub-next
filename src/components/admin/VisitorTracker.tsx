@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { useRouterState } from "@/lib/navigation";
-import { useAdminStore } from "@/hooks/use-admin-store";
 import { useTranslation } from "react-i18next";
 import { detectUserLocationByIp } from "@/lib/geolocation";
+import { recordVisitorSession } from "@/lib/visitor-analytics";
 
 const SESSION_KEY = "tp_visitor_logged_v1";
 
@@ -13,7 +13,6 @@ const SESSION_KEY = "tp_visitor_logged_v1";
  * not shown in the public UI when GPS is denied.
  */
 export function VisitorTracker() {
-  const { recordVisitor } = useAdminStore();
   const { i18n } = useTranslation();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const logged = useRef(false);
@@ -42,7 +41,7 @@ export function VisitorTracker() {
         /* ignore */
       }
 
-      recordVisitor({
+      recordVisitorSession({
         ip,
         country,
         countryCode,
@@ -55,7 +54,7 @@ export function VisitorTracker() {
 
       sessionStorage.setItem(SESSION_KEY, "1");
     })();
-  }, [recordVisitor, i18n.language, path]);
+  }, [i18n.language, path]);
 
   return null;
 }

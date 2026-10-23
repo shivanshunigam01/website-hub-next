@@ -363,6 +363,8 @@
   "coursesPage.withCertificate": "Avec certificat",
   "coursesPage.searchPlaceholder": "Rechercher des cours…",
   "coursesPage.loading": "Chargement des cours…",
+  "coursesPage.applyingFilters": "Mise à jour des résultats…",
+  "coursesPage.clearFilters": "Effacer les filtres",
   "coursesPage.empty": "Aucun cours ne correspond à vos filtres.",
   "coursesHero.title": "Rencontrez votre prochain mentor",
   "coursesHero.subtitle": "Découvrez comment des milliers d'apprenants atteignent leurs objectifs avec TeacherPoint.",

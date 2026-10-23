@@ -1,6 +1,15 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { api } from "@/lib/api";
 import { mapApiCategory, type ApiCategory } from "@/lib/catalog-map";
 import { fetchCourseCurriculum, saveCourseCurriculum } from "@/services/lms-api";
@@ -132,6 +141,10 @@ const Ctx = createContext<Store | null>(null);
 
 export function LmsStoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>(initialState);
+  const curriculumLoadRef = useRef<Set<string>>(new Set());
+  const curriculumInflightRef = useRef<Set<string>>(new Set());
+  const curriculaRef = useRef(state.curricula);
+  curriculaRef.current = state.curricula;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -191,7 +204,16 @@ export function LmsStoreProvider({ children }: { children: ReactNode }) {
   }, [loadCategories]);
 
   const loadCurriculum = useCallback(async (courseId: string) => {
+    if (curriculumInflightRef.current.has(courseId)) {
+      return curriculaRef.current[courseId] ?? emptyCurriculum(courseId);
+    }
+    if (curriculumLoadRef.current.has(courseId)) {
+      return curriculaRef.current[courseId] ?? emptyCurriculum(courseId);
+    }
+    curriculumInflightRef.current.add(courseId);
+    try {
     const { course, curriculum } = await fetchCourseCurriculum(courseId);
+    curriculumLoadRef.current.add(courseId);
     setState((s) => {
       const next = {
         ...s,
@@ -219,6 +241,9 @@ export function LmsStoreProvider({ children }: { children: ReactNode }) {
       return next;
     });
     return curriculum;
+    } finally {
+      curriculumInflightRef.current.delete(courseId);
+    }
   }, []);
 
   const value: Store = useMemo(() => {

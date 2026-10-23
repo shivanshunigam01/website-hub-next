@@ -1,4 +1,4 @@
-import { FAQS } from "@/data/mock";
+import { SEO_FAQ_ITEMS } from "@/lib/seo-faq";
 import { POPULAR_SUBJECT_LINKS } from "@/lib/seo-keywords";
 import {
   CONTACT_EMAIL,
@@ -19,7 +19,8 @@ export function buildGlobalJsonLd() {
         name: SITE_NAME,
         url: SITE_URL,
         logo: { "@type": "ImageObject", url: SITE_OG_IMAGE, width: 512, height: 512 },
-        description: "Global edtech platform connecting students with verified tutors and online teachers.",
+        description:
+          "TeacherPoint connects students and parents with tutors, online courses, teaching jobs, and student services.",
         email: CONTACT_EMAIL,
         sameAs: Object.values(SOCIAL_LINKS),
         contactPoint: {
@@ -56,15 +57,6 @@ export function buildGlobalJsonLd() {
         },
       },
       {
-        "@type": "FAQPage",
-        "@id": `${SITE_URL}/#faq`,
-        mainEntity: FAQS.map((faq) => ({
-          "@type": "Question",
-          name: faq.q,
-          acceptedAnswer: { "@type": "Answer", text: faq.a },
-        })),
-      },
-      {
         "@type": "ItemList",
         "@id": `${SITE_URL}/#popular-subjects`,
         name: "Popular tutoring subjects",
@@ -76,5 +68,80 @@ export function buildGlobalJsonLd() {
         })),
       },
     ],
+  };
+}
+
+export function buildFaqPageJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${SITE_URL}/faq#faq`,
+    mainEntity: SEO_FAQ_ITEMS.map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: { "@type": "Answer", text: faq.a },
+    })),
+  };
+}
+
+export function buildBreadcrumbJsonLd(items: { name: string; path: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: `${SITE_URL}${item.path.startsWith("/") ? item.path : `/${item.path}`}`,
+    })),
+  };
+}
+
+export function buildTutorProfileJsonLd(tutor: {
+  id: string;
+  name: string;
+  description?: string;
+  url: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "@id": tutor.url,
+    mainEntity: {
+      "@type": "Person",
+      name: tutor.name,
+      description: tutor.description,
+      url: tutor.url,
+    },
+  };
+}
+
+export function buildCourseJsonLd(course: {
+  id: string;
+  title: string;
+  description?: string;
+  url: string;
+  price?: number;
+  currency?: string;
+}) {
+  const offer =
+    course.price && course.price > 0
+      ? {
+          "@type": "Offer",
+          price: course.price,
+          priceCurrency: course.currency || "INR",
+          availability: "https://schema.org/InStock",
+          url: course.url,
+        }
+      : undefined;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "@id": course.url,
+    name: course.title,
+    description: course.description,
+    url: course.url,
+    provider: { "@id": `${SITE_URL}/#organization` },
+    ...(offer ? { offers: offer } : { isAccessibleForFree: true }),
   };
 }

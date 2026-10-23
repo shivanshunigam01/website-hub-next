@@ -76,7 +76,9 @@ function BuilderPanel() {
   useEffect(() => {
     if (!courseId) return;
     lms.loadCurriculum(courseId).catch(() => {});
-  }, [courseId, lms]);
+    // loadCurriculum is stable; omit `lms` — store identity changes when curriculum saves and would re-fetch in a loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- courseId only
+  }, [courseId]);
 
   const course = courses.find((c) => c.id === courseId);
   const curriculum = lms.getCurriculum(courseId);

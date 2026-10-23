@@ -40,3 +40,24 @@ export function serializeTutorFilters(filters: TutorSearchFilters): string {
     sortBy: f.sortBy ?? "rating",
   });
 }
+
+export function tutorSearchToUrl(search: TutorSearchFilters): Record<string, string | undefined> {
+  return {
+    q: search.q || search.subject || undefined,
+    subject: search.subject || undefined,
+    location: search.location || undefined,
+    country: search.country || undefined,
+    city: search.city || undefined,
+    mode: search.mode && search.mode !== "all" ? search.mode : undefined,
+    online:
+      search.mode === "online" ? "true" : search.mode === "in-person" ? "false" : undefined,
+    homeTuition: search.homeTuition ? "true" : undefined,
+    minExperience:
+      search.minExperience && search.minExperience > 0 ? String(search.minExperience) : undefined,
+    verified: search.verified ? "true" : undefined,
+    minRating: search.minRating && search.minRating > 0 ? String(search.minRating) : undefined,
+    minPrice: search.minPrice && search.minPrice > 0 ? String(search.minPrice) : undefined,
+    maxPrice: search.maxPrice != null && search.maxPrice < 100 ? String(search.maxPrice) : undefined,
+    sortBy: search.sortBy !== "rating" ? search.sortBy : undefined,
+  };
+}

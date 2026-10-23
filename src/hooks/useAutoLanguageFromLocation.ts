@@ -10,6 +10,7 @@ import {
 } from "@/lib/google-translate";
 import { syncDocumentLanguage } from "@/lib/document-language";
 import { debugGtLog, gtDomSnapshot } from "@/lib/debug-gt-log";
+import { deferUntilIdle } from "@/lib/defer-until-idle";
 
 /**
  * Sync language from detected country. Never calls i18n.changeLanguage while Google
@@ -19,6 +20,7 @@ export function useAutoLanguageFromLocation(location: UserLocation | null | unde
   useEffect(() => {
     if (location === undefined || !location?.countryCode) return;
 
+    deferUntilIdle(() => {
     const { shouldApplyGt, targetLang, countryCode, i18nLang, respectManualChoice } =
       resolveAutoLanguageForLocation(location);
 
@@ -79,5 +81,6 @@ export function useAutoLanguageFromLocation(location: UserLocation | null | unde
     localStorage.setItem(LS_KEYS.prompted, "1");
     localStorage.setItem(LS_KEYS.geoCountry, countryCode);
     persistLanguageChoice(targetLang, countryCode);
+    }, 8000);
   }, [location?.countryCode, location?.city, location?.country]);
 }

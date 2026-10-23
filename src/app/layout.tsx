@@ -16,21 +16,21 @@ import "../styles.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap",
+  display: "optional",
   preload: true,
 });
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-display-app",
-  display: "swap",
+  display: "optional",
   preload: true,
 });
 
 const notoArabic = Noto_Sans_Arabic({
   subsets: ["arabic"],
   variable: "--font-arabic-app",
-  display: "swap",
+  display: "optional",
   preload: false,
 });
 
@@ -77,6 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href={API_ORIGIN} crossOrigin="anonymous" />
         <link rel="dns-prefetch" href={API_ORIGIN} />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <ThemeScript />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>

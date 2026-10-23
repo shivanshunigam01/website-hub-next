@@ -4,6 +4,9 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: false },
   compress: true,
+  async rewrites() {
+    return [{ source: "/llms.txt", destination: "/llms" }];
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts", "date-fns", "framer-motion"],
   },
@@ -23,8 +26,21 @@ const nextConfig = {
   },
   headers: async () => [
     {
+      source: "/llms.txt",
+      headers: [{ key: "Content-Type", value: "text/plain; charset=utf-8" }],
+    },
+    {
       source: "/:path*\\.(mp4|webm|jpg|jpeg|png|webp|avif|gif|svg|ico|woff2)",
       headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+    },
+    {
+      source: "/:path*",
+      headers: [
+        { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
+      ],
     },
   ],
 };

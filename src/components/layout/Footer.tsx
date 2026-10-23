@@ -67,12 +67,12 @@ export function Footer() {
   };
 
   return (
-    <footer className="mt-16 bg-[#0b1220] text-slate-300">
+    <footer className="mt-16 min-h-[28rem] bg-[#0b1220] text-slate-300 [contain:layout]">
       <div className="container mx-auto px-4 py-12 sm:px-6 sm:py-16">
         <div className="mb-12">
           <h3 className="text-white font-display text-lg mb-4">{t("footer.popularSkills")}</h3>
           <div className="flex flex-wrap gap-2">
-            {POPULAR_SUBJECT_LINKS.slice(0, 24).map(({ label, subject }) => (
+            {POPULAR_SUBJECT_LINKS.slice(0, 12).map(({ label, subject }) => (
               <Link
                 key={subject}
                 to="/tutors"

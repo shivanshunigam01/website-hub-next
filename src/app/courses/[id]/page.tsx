@@ -1,14 +1,29 @@
 import { Suspense } from "react";
 import CourseDetailPage from "@/views/courses.$id";
-import { createDynamicPageMetadata } from "@/lib/page-metadata";
+import { CourseJsonLd } from "@/components/seo/CourseJsonLd";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
+import { metadataForCourseId } from "@/lib/seo-metadata-dynamic";
 
-export const generateMetadata = createDynamicPageMetadata("/courses");
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return metadataForCourseId(id);
+}
 
-
-export default function Page() {
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return (
-    <Suspense fallback={null}>
-      <CourseDetailPage />
-    </Suspense>
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Courses", path: "/courses" },
+          { name: "Course", path: `/courses/${id}` },
+        ]}
+      />
+      <CourseJsonLd id={id} />
+      <Suspense fallback={null}>
+        <CourseDetailPage />
+      </Suspense>
+    </>
   );
 }

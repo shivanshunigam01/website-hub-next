@@ -76,12 +76,28 @@ function clearSession() {
   localStorage.removeItem(USER_KEY);
 }
 
+function readStoredSession(): { role: AuthRole | null; user: AuthUser | null } {
+  if (typeof window === "undefined") return { role: null, user: null };
+  const token = localStorage.getItem(ACCESS_KEY);
+  const storedUser = localStorage.getItem(USER_KEY);
+  if (!token || !storedUser) return { role: null, user: null };
+  try {
+    const u = JSON.parse(storedUser) as AuthUser;
+    return { role: u.role, user: u };
+  } catch {
+    return { role: null, user: null };
+  }
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<AuthRole | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const initialSession = readStoredSession();
+  const [role, setRole] = useState<AuthRole | null>(initialSession.role);
+  const [user, setUser] = useState<AuthUser | null>(initialSession.user);
   const [profileComplete, setProfileComplete] = useState(true);
   const [theme, setTheme] = useState<Theme>("light");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() =>
+    typeof window !== "undefined" ? Boolean(localStorage.getItem(ACCESS_KEY)) : false,
+  );
 
   const applyUser = useCallback((u: AuthUser) => {
     setUser(u);
@@ -137,9 +153,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch {
         localStorage.removeItem(USER_KEY);
       }
+      refreshUser().finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-
-    refreshUser().finally(() => setLoading(false));
   }, [refreshUser, applyUser]);
 
   useEffect(() => {

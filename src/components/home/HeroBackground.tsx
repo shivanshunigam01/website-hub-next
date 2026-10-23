@@ -8,14 +8,18 @@ import { DeferredBackgroundVideo } from "@/components/DeferredBackgroundVideo";
  */
 export function HeroBackground() {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 [&_*]:pointer-events-none">
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 overflow-hidden [contain:paint] [&_*]:pointer-events-none"
+    >
       <DeferredBackgroundVideo
         src="/hero-video.mp4?v=2"
         poster={heroPoster}
         posterClassName="opacity-90 dark:opacity-75"
         className="opacity-85 dark:opacity-70"
-        desktopDelayMs={2000}
-        mobileDelayMs={5000}
+        requireMediaQuery="(min-width: 769px)"
+        desktopDelayMs={4500}
+        mobileDelayMs={8000}
       />
       <div className="pointer-events-none absolute inset-0 bg-background/30 dark:bg-background/50" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/25 via-background/15 to-background/60" />

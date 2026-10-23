@@ -69,6 +69,7 @@ export const ROUTE_METADATA: Record<string, RouteMetaEntry> = {
   "/forgot-password": {
     title: "Forgot password · TeacherPoint",
     description: "Reset your TeacherPoint student, tutor, or parent account password.",
+    noIndex: true,
   },
   "/home-teaching": {
     title: "Home Teaching Jobs · TeacherPoint",
@@ -81,18 +82,22 @@ export const ROUTE_METADATA: Record<string, RouteMetaEntry> = {
   "/login": {
     title: "Log in · TeacherPoint",
     description: "Log in to your TeacherPoint account.",
+    noIndex: true,
   },
   "/login/student": {
     title: "Student log in · TeacherPoint",
     description: "Student login for courses, tutors, and your learning dashboard.",
+    noIndex: true,
   },
   "/login/teacher": {
     title: "Tutor log in · TeacherPoint",
     description: "Tutor login for jobs, connections, and your teaching profile.",
+    noIndex: true,
   },
   "/login/parent": {
     title: "Parent log in · TeacherPoint",
     description: "Parent login to manage requirements and follow your child's tutors.",
+    noIndex: true,
   },
   "/staff-console": {
     title: "Staff console · TeacherPoint",
@@ -102,6 +107,7 @@ export const ROUTE_METADATA: Record<string, RouteMetaEntry> = {
   "/marketing": {
     title: "Marketing & Partners · TeacherPoint",
     description: "Backlinks, partner network and SEO assets for TeacherPoint.",
+    noIndex: true,
     openGraph: {
       title: "Marketing & Partners · TeacherPoint",
       description: "Our partner network and SEO marketing kit.",
@@ -151,7 +157,7 @@ export const ROUTE_METADATA: Record<string, RouteMetaEntry> = {
       description: "Read our privacy policy before using TeacherPoint.",
     },
   },
-  "/profile": { title: "Complete your profile · TeacherPoint" },
+  "/profile": { title: "Complete your profile · TeacherPoint", noIndex: true },
   "/refund": {
     title: "Refund & Cancellation Policy · TeacherPoint",
     description: "Refund and cancellation rules for courses, tutor sessions, and subscriptions on TeacherPoint.",
@@ -163,17 +169,22 @@ export const ROUTE_METADATA: Record<string, RouteMetaEntry> = {
   "/register": {
     title: "Create account · TeacherPoint",
     description: "Sign up free for TeacherPoint.",
+    noIndex: true,
   },
   "/reset-password": {
     title: "Reset password · TeacherPoint",
     description: "Choose a new TeacherPoint account password.",
+    noIndex: true,
   },
   "/reviews": { title: "Reviews · TeacherPoint" },
   "/role-select": { title: "Sign up · TeacherPoint" },
   "/student": { title: "Student Dashboard · TeacherPoint", noIndex: true },
   "/support": { title: "Support · TeacherPoint" },
   "/teacher": { title: "Teacher Dashboard · TeacherPoint", noIndex: true },
-  "/teacher/onboarding/profile": { title: "Complete tutor profile · TeacherPoint" },
+  "/teacher/onboarding/profile": {
+    title: "Complete tutor profile · TeacherPoint",
+    noIndex: true,
+  },
   "/teaching-jobs": {
     title: "Teaching Jobs · TeacherPoint",
     description: "Browse verified teaching jobs near you — online, home and institutional roles across every subject.",
@@ -229,7 +240,13 @@ export function buildMetadata({
     description,
     keywords: keywordList,
     metadataBase: new URL(SITE_URL),
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      languages: {
+        en: url,
+        "x-default": url,
+      },
+    },
     category: "education",
     authors: [{ name: SITE_NAME, url: SITE_URL }],
     creator: SITE_NAME,

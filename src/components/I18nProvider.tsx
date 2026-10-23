@@ -7,6 +7,7 @@ import { useAutoLanguageFromLocation } from "@/hooks/useAutoLanguageFromLocation
 import { useLocationContext } from "@/hooks/use-user-location";
 import { syncDocumentLanguage } from "@/lib/document-language";
 import { LtrLayoutGuard } from "@/components/LtrLayoutGuard";
+import { deferUntilIdle } from "@/lib/defer-until-idle";
 
 const LANGUAGE_KEY = "selectedLanguage";
 
@@ -23,14 +24,17 @@ function AutoLanguageFromGeo() {
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    const storedLanguage = getStoredLanguage();
-    if (storedLanguage && i18n.language !== storedLanguage) {
-      void i18n.changeLanguage(storedLanguage);
-    }
-
-    syncDocumentLanguage(i18n.language);
     const onChange = (lng: string) => syncDocumentLanguage(lng);
     i18n.on("languageChanged", onChange);
+
+    deferUntilIdle(() => {
+      const storedLanguage = getStoredLanguage();
+      if (storedLanguage && storedLanguage !== "en" && i18n.language !== storedLanguage) {
+        void i18n.changeLanguage(storedLanguage);
+      }
+      syncDocumentLanguage(i18n.language);
+    }, 6000);
+
     return () => {
       i18n.off("languageChanged", onChange);
     };

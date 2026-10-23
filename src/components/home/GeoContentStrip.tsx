@@ -89,26 +89,58 @@ export function GeoContentStrip({
   withHeading = true,
   className,
 }: Props) {
-  const { location, isLoading, hasLocationAccess } = useLocationContext();
-  const { regionalAds } = useRegionalAds();
+  const { location, isLoading, hasLocationAccess, status } = useLocationContext();
+  const { regionalAds, loading: adsLoading } = useRegionalAds();
   const { t, i18n } = useTranslation("common");
+
+  const gridClass = `grid gap-4 ${limit > 1 ? "md:grid-cols-2" : ""}`;
+  const shellClass = `container mx-auto px-4 py-6 sm:py-8 ${className ?? ""}`;
 
   const ads = useMemo(
     () =>
-      isLoading || !hasLocationAccess
+      isLoading || adsLoading || !hasLocationAccess
         ? []
         : filterRegionalAds(regionalAds, location, { placement, language: i18n.language }),
-    [regionalAds, location, isLoading, hasLocationAccess, placement, i18n.language],
+    [regionalAds, location, isLoading, adsLoading, hasLocationAccess, placement, i18n.language],
   );
 
-  if (!hasLocationAccess || isLoading) return null;
-  if (!ads.length) return null;
+  const geoPending = status === "idle" || isLoading;
+
+  const emptyShell = (
+    <div className={shellClass} aria-hidden>
+      {withHeading ? <div className="mb-4 min-h-7" /> : null}
+      <div className={gridClass}>
+        {Array.from({ length: limit }).map((_, i) => (
+          <div key={i} className="aspect-[16/7] w-full rounded-2xl border border-transparent" />
+        ))}
+      </div>
+    </div>
+  );
+
+  /** Keep height stable vs index.tsx dynamic `loading` shell — never collapse to null after mount. */
+  const geoUnavailable = status === "error" && !hasLocationAccess;
+  if (geoUnavailable) return emptyShell;
+
+  if (geoPending || adsLoading) {
+    return (
+      <div className={shellClass} aria-hidden>
+        {withHeading ? <div className="mb-4 min-h-7" /> : null}
+        <div className={gridClass}>
+          {Array.from({ length: limit }).map((_, i) => (
+            <div key={i} className="aspect-[16/7] w-full animate-pulse rounded-2xl border bg-muted/40" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!ads.length) return emptyShell;
   const shown = ads.slice(0, limit);
 
   return (
     <section className={`container mx-auto px-4 py-6 sm:py-8 ${className ?? ""}`}>
       {withHeading && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-4 flex min-h-7 flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Globe2 className="h-4 w-4 text-primary" />
             <span className="font-semibold text-foreground">{t("geo.featuredForYou")}</span>

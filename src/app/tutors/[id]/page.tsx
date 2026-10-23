@@ -1,14 +1,29 @@
 import { Suspense } from "react";
 import TutorDetailPage from "@/views/tutors.$id";
-import { createDynamicPageMetadata } from "@/lib/page-metadata";
+import { TutorJsonLd } from "@/components/seo/TutorJsonLd";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
+import { metadataForTutorId } from "@/lib/seo-metadata-dynamic";
 
-export const generateMetadata = createDynamicPageMetadata("/tutors");
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return metadataForTutorId(id);
+}
 
-
-export default function Page() {
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return (
-    <Suspense fallback={null}>
-      <TutorDetailPage />
-    </Suspense>
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Tutors", path: "/tutors" },
+          { name: "Tutor profile", path: `/tutors/${id}` },
+        ]}
+      />
+      <TutorJsonLd id={id} />
+      <Suspense fallback={null}>
+        <TutorDetailPage />
+      </Suspense>
+    </>
   );
 }
