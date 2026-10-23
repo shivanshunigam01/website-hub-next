@@ -14,6 +14,7 @@ import { AppImage } from "@/components/AppImage";
 import { DeferredBackgroundVideo } from "@/components/DeferredBackgroundVideo";
 import geoBannerFallback from "@/assets/career-banner.jpg";
 import geoStudentsFallback from "@/assets/hero-illustration.jpg";
+import { geoAdGridClass, geoAdItemClass } from "@/components/home/geo-content-grid";
 
 function resolveAdImage(ad: RegionalAd) {
   return ad.approvedImageUrl || ad.imageUrl || undefined;
@@ -47,10 +48,12 @@ function Media({ ad }: { ad: RegionalAd }) {
   );
 }
 
-function AdCard({ ad }: { ad: RegionalAd }) {
+function AdCard({ ad, className }: { ad: RegionalAd; className?: string }) {
   const { t } = useTranslation("common");
   return (
-    <article className="group relative isolate overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:shadow-lg">
+    <article
+      className={`group relative isolate overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:shadow-lg ${className ?? ""}`}
+    >
       <div className="relative aspect-[16/7] w-full">
         <Media ad={ad} />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/65 to-slate-900/15 dark:from-slate-950/95 dark:via-slate-900/70" />
@@ -76,12 +79,37 @@ function AdCard({ ad }: { ad: RegionalAd }) {
 
 type Props = {
   placement?: RegionalAdPlacement;
-  /** Max ads to render. */
   limit?: number;
-  /** Show a small heading row above the strip. */
   withHeading?: boolean;
   className?: string;
 };
+
+function GeoStripSkeleton({
+  limit,
+  withHeading,
+  shellClass,
+  pulse,
+}: {
+  limit: number;
+  withHeading: boolean;
+  shellClass: string;
+  pulse?: boolean;
+}) {
+  const gridClass = geoAdGridClass(limit);
+  return (
+    <div className={shellClass} aria-hidden>
+      {withHeading ? <div className="mb-4 min-h-7" /> : null}
+      <div className={gridClass}>
+        {Array.from({ length: limit }).map((_, i) => (
+          <div
+            key={i}
+            className={`aspect-[16/7] w-full rounded-2xl border ${pulse ? "animate-pulse bg-muted/40" : "border-transparent"}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function GeoContentStrip({
   placement = "hero-strip",
@@ -93,8 +121,8 @@ export function GeoContentStrip({
   const { regionalAds, loading: adsLoading } = useRegionalAds();
   const { t, i18n } = useTranslation("common");
 
-  const gridClass = `grid gap-4 ${limit > 1 ? "md:grid-cols-2" : ""}`;
   const shellClass = `container mx-auto px-4 py-6 sm:py-8 ${className ?? ""}`;
+  const gridClass = geoAdGridClass(limit);
 
   const ads = useMemo(
     () =>
@@ -105,40 +133,25 @@ export function GeoContentStrip({
   );
 
   const geoPending = status === "idle" || isLoading;
-
-  const emptyShell = (
-    <div className={shellClass} aria-hidden>
-      {withHeading ? <div className="mb-4 min-h-7" /> : null}
-      <div className={gridClass}>
-        {Array.from({ length: limit }).map((_, i) => (
-          <div key={i} className="aspect-[16/7] w-full rounded-2xl border border-transparent" />
-        ))}
-      </div>
-    </div>
-  );
-
-  /** Keep height stable vs index.tsx dynamic `loading` shell — never collapse to null after mount. */
   const geoUnavailable = status === "error" && !hasLocationAccess;
-  if (geoUnavailable) return emptyShell;
 
-  if (geoPending || adsLoading) {
-    return (
-      <div className={shellClass} aria-hidden>
-        {withHeading ? <div className="mb-4 min-h-7" /> : null}
-        <div className={gridClass}>
-          {Array.from({ length: limit }).map((_, i) => (
-            <div key={i} className="aspect-[16/7] w-full animate-pulse rounded-2xl border bg-muted/40" />
-          ))}
-        </div>
-      </div>
-    );
+  if (geoUnavailable) {
+    return null;
   }
 
-  if (!ads.length) return emptyShell;
+  if (geoPending || adsLoading) {
+    return <GeoStripSkeleton limit={limit} withHeading={withHeading} shellClass={shellClass} pulse />;
+  }
+
   const shown = ads.slice(0, limit);
+  if (!shown.length) {
+    return null;
+  }
+
+  const itemSpan = geoAdItemClass(limit, shown.length);
 
   return (
-    <section className={`container mx-auto px-4 py-6 sm:py-8 ${className ?? ""}`}>
+    <section className={shellClass}>
       {withHeading && (
         <div className="mb-4 flex min-h-7 flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -146,13 +159,14 @@ export function GeoContentStrip({
             <span className="font-semibold text-foreground">{t("geo.featuredForYou")}</span>
           </div>
           <span className="text-xs text-muted-foreground">
-            {t("geo.language")} <span className="font-medium uppercase text-foreground">{i18n.language}</span>
+            {t("geo.language")}{" "}
+            <span className="font-medium uppercase text-foreground">{i18n.language}</span>
           </span>
         </div>
       )}
-      <div className={`grid gap-4 ${shown.length > 1 ? "md:grid-cols-2" : ""}`}>
+      <div className={gridClass}>
         {shown.map((ad) => (
-          <AdCard key={ad.id} ad={ad} />
+          <AdCard key={ad.id} ad={ad} className={itemSpan} />
         ))}
       </div>
     </section>

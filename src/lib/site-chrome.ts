@@ -35,6 +35,23 @@ export function shouldHideSupportWidgets(pathname: string): boolean {
   return HIDE_SUPPORT_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
 }
 
+/** Routes that mount Google OAuth (avoids loading @react-oauth/google on every public page). */
+export function needsGoogleOAuth(pathname: string): boolean {
+  const path = pathname || "/";
+  if (
+    path.startsWith("/login") ||
+    path.startsWith("/staff-console") ||
+    path === "/register" ||
+    path.startsWith("/forgot-password") ||
+    path.startsWith("/reset-password") ||
+    path === "/role-select" ||
+    path.startsWith("/verify-email")
+  ) {
+    return true;
+  }
+  return isDashboardPath(path);
+}
+
 /** Dashboard-style chrome (no marketing footer / mobile nav). */
 export function isDashboardPath(pathname: string): boolean {
   const path = pathname || "/";

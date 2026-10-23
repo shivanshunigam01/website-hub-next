@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 const VIEWPORTS = [
+  { width: 390, height: 844, label: "mobile" },
   { width: 1280, height: 800, label: "1280" },
   { width: 1440, height: 900, label: "1440" },
   { width: 1920, height: 1080, label: "1920" },
@@ -27,7 +28,7 @@ test.describe("Homepage layout stability", () => {
           setTimeout(() => {
             observer.disconnect();
             resolve(sum);
-          }, 4000);
+          }, 6500);
         });
       });
 

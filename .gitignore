@@ -34,6 +34,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# environment (never commit secrets — use .env.example as template)
+.env
+.env.*
+!.env.example
+
 
 
 # vercel

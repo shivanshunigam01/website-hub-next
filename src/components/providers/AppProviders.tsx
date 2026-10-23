@@ -17,6 +17,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { buildEarlyLanguageCookieScript } from "@/lib/google-translate";
 import {
   isDashboardPath,
+  needsGoogleOAuth,
   shouldHideSupportWidgets,
   shouldShowMarketingChrome,
 } from "@/lib/site-chrome";
@@ -90,9 +91,17 @@ function DeferredWidgets({
       )}
       {isHome && idleReady && <RegionalAdPopup />}
       {idleReady && <GoogleTranslate />}
-      {idleReady && <VisitorTracker />}
+      {idleReady && !isDashboardPath(pathname) && <VisitorTracker />}
     </>
   );
+}
+
+function ScopedGoogleAuth({ children }: { children: ReactNode }) {
+  const pathname = usePathname() || "/";
+  if (!needsGoogleOAuth(pathname)) {
+    return children;
+  }
+  return <GoogleAuthProvider>{children}</GoogleAuthProvider>;
 }
 
 function SiteChrome({ children }: { children: ReactNode }) {
@@ -155,11 +164,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <LocationProvider>
         <CurrencyProvider>
           <I18nProvider>
-            <GoogleAuthProvider>
+            <ScopedGoogleAuth>
               <AppProvider>
                 <SiteChrome>{children}</SiteChrome>
               </AppProvider>
-            </GoogleAuthProvider>
+            </ScopedGoogleAuth>
           </I18nProvider>
         </CurrencyProvider>
       </LocationProvider>
