@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { CourseCard } from "@/components/cards/CourseCard";
 import { useApp } from "@/hooks/use-app";
-import { useLmsStore, totalLessonCount, type LessonType } from "@/hooks/use-lms-store";
+import { totalLessonCount, type LessonType } from "@/hooks/use-lms-store";
 import { useCourse, useCourses } from "@/hooks/use-catalog";
 import { useCourseLearning, useSubmitReview } from "@/hooks/use-learning";
 import { formatApiErrorMessage } from "@/lib/api";
@@ -45,23 +45,14 @@ const LEARN_KEYS = [
 function CourseDetail() {
   const { t } = useTranslation("common");
   const { id } = useParams();
+  const courseId = typeof id === "string" ? id : Array.isArray(id) ? id[0] : undefined;
   const { formatLocalizedPrice } = useCurrency();
-  const { data: c, isLoading, error } = useCourse(id);
+  const { data: courseDetail, isLoading, error } = useCourse(courseId);
+  const c = courseDetail?.course;
+  const curriculum =
+    courseDetail?.curriculum ?? { courseId: courseId ?? "", modules: [] };
   const { data: allCourses = [] } = useCourses();
   const { user } = useApp();
-  const lms = useLmsStore();
-  const [curriculumReady, setCurriculumReady] = useState(false);
-
-  useEffect(() => {
-    if (!id) return;
-    setCurriculumReady(false);
-    lms
-      .loadCurriculum(id)
-      .then(() => setCurriculumReady(true))
-      .catch(() => setCurriculumReady(true));
-  }, [id, lms]);
-
-  const curriculum = lms.getCurriculum(id);
   const {
     enrollment,
     certificate: cert,
@@ -71,8 +62,10 @@ function CourseDetail() {
     enroll,
     reviews,
     summary: avg,
-  } = useCourseLearning(id);
-  const related = allCourses.filter((x) => x.id !== id && x.category === c?.category).slice(0, 4);
+  } = useCourseLearning(courseId ?? "");
+  const related = allCourses
+    .filter((x) => x.id !== courseId && x.category === c?.category)
+    .slice(0, 4);
   const [wishlisted, setWishlisted] = useState(false);
 
   useEffect(() => {
@@ -80,7 +73,7 @@ function CourseDetail() {
     setWishlisted(isCourseInWishlist(c.id));
   }, [c?.id]);
 
-  if (isLoading || !curriculumReady) {
+  if (isLoading) {
     return (
       <div className="container flex min-h-[40vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

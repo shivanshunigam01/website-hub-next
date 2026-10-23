@@ -41,7 +41,7 @@ export function DeferredBackgroundVideo({
   const [videoPlaying, setVideoPlaying] = useState(false);
 
   const shellClass = fill ? "pointer-events-none absolute inset-0" : "pointer-events-none relative";
-  const showPoster = Boolean(poster) && !videoPlaying;
+  const showPoster = Boolean(poster);
 
   return (
     <div ref={containerRef} aria-hidden className={cn(shellClass, "[&_*]:pointer-events-none")}>
@@ -80,7 +80,11 @@ export function DeferredBackgroundVideo({
           preload="none"
           onPlaying={() => setVideoPlaying(true)}
           onError={() => setVideoPlaying(false)}
-          className={cn("absolute inset-0 h-full w-full object-cover", className)}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover transition-opacity duration-700",
+            videoPlaying ? "opacity-100" : "opacity-0",
+            className,
+          )}
         />
       ) : null}
     </div>

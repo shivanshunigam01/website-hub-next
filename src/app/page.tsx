@@ -1,14 +1,18 @@
 import { Suspense } from "react";
 import HomePagePage from "@/views/index";
 import { createStaticPageMetadata } from "@/lib/page-metadata";
-import heroPoster from "@/assets/hero-illustration.jpg";
+import { HomeHeroServer } from "@/components/home/HomeHeroServer";
+import { HeroVideoLayer } from "@/components/home/HeroVideoLayer";
+import { HeroInteractive } from "@/components/home/HeroInteractive";
 
 export const generateMetadata = createStaticPageMetadata("/");
 
 export default function Page() {
   return (
     <>
-      <link rel="preload" as="image" href={heroPoster.src} fetchPriority="high" />
+      <HomeHeroServer videoSlot={<HeroVideoLayer />}>
+        <HeroInteractive />
+      </HomeHeroServer>
       <Suspense fallback={null}>
         <HomePagePage />
       </Suspense>

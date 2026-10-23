@@ -16,7 +16,7 @@ import "../styles.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap",
+  display: "optional",
   preload: true,
 });
 

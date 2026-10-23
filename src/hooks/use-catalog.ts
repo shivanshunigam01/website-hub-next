@@ -31,14 +31,24 @@ export function useCourses(options: { status?: string; limit?: number } = {}) {
   });
 }
 
+export type CourseDetailData = {
+  course: Course;
+  curriculum: Curriculum;
+};
+
+/** Single request for course detail + curriculum (avoids duplicate /courses/:id calls). */
 export function useCourse(courseId: string | undefined) {
   return useQuery({
     queryKey: ["course", courseId],
     enabled: !!courseId,
     queryFn: async () => {
       const raw = await api<ApiCourse>(`/courses/${courseId}`);
-      return mapApiCourse(raw);
+      return {
+        course: mapApiCourse(raw),
+        curriculum: mapCurriculumFromApi(courseId!, raw.curriculum ?? []),
+      };
     },
+    staleTime: 60_000,
   });
 }
 

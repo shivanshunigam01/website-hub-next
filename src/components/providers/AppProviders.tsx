@@ -111,7 +111,7 @@ function SiteChrome({ children }: { children: ReactNode }) {
         className={cn(
           "flex-1",
           showMarketingChrome &&
-            "pb-[calc(3.5rem+max(1rem,env(safe-area-inset-bottom)))] lg:pb-0",
+            "max-lg:pb-[calc(3.5rem+max(1rem,env(safe-area-inset-bottom)))]",
         )}
       >
         <Suspense fallback={null}>{children}</Suspense>

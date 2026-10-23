@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Hero } from "@/components/home/Hero";
 
 const sectionShell = (minH: string) => () => <div className={minH} aria-hidden />;
 
@@ -45,7 +44,6 @@ const CTABand = dynamic(
 function HomePage() {
   return (
     <>
-      <Hero />
       <GeoContentStrip placement="hero-strip" limit={2} />
       <QuickLinks />
       <LevelUpSection />
