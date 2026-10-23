@@ -363,6 +363,8 @@
   "coursesPage.withCertificate": "प्रमाणपत्र के साथ",
   "coursesPage.searchPlaceholder": "पाठ्यक्रम खोजें…",
   "coursesPage.loading": "पाठ्यक्रम लोड हो रहे हैं…",
+  "coursesPage.applyingFilters": "परिणाम अपडेट हो रहे हैं…",
+  "coursesPage.clearFilters": "फ़िल्टर साफ़ करें",
   "coursesPage.empty": "कोई पाठ्यक्रम आपके फ़िल्टर से मेल नहीं खाता।",
   "coursesHero.title": "अपने अगले मेंटर से मिलें",
   "coursesHero.subtitle": "देखें कैसे हज़ारों शिक्षार्थी TeacherPoint के साथ अपने लक्ष्य हासिल करते हैं।",

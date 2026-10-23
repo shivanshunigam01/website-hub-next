@@ -363,6 +363,8 @@
   "coursesPage.withCertificate": "مع شهادة",
   "coursesPage.searchPlaceholder": "ابحث عن دورات…",
   "coursesPage.loading": "جارٍ تحميل الدورات…",
+  "coursesPage.applyingFilters": "جارٍ تحديث النتائج…",
+  "coursesPage.clearFilters": "مسح الفلاتر",
   "coursesPage.empty": "لا توجد دورات تطابق فلاترك.",
   "coursesHero.title": "تعرّف على مرشدك التالي",
   "coursesHero.subtitle": "شاهد كيف حقّق آلاف المتعلمين أهدافهم مع TeacherPoint.",
