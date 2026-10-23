@@ -1,5 +1,7 @@
 # TeacherPoint — final performance verification (Oct 23, 2026)
 
+**Note:** Reverted `b05fada` (regressed GTmetrix / web.dev). Home uses deferred `dynamic(views/index)` without placeholder swap; only trending/tutors sections are lazy-loaded.
+
 **Do not deploy without authorization.** Targets (mobile/desktop performance ≥90, LCP ≤2.5s) are **not met in PageSpeed Insights** with this commit alone; production re-measurement is required after deploy.
 
 ## PSI baseline (contractual “before” — user-supplied)

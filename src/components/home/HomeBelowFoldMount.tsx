@@ -1,23 +1,28 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import HomePage from "@/views/index";
-import { HomeBelowFoldPlaceholders } from "@/components/home/HomeBelowFoldPlaceholders";
 import { deferUntilIdle } from "@/lib/defer-until-idle";
 
+/** Home sections in a separate chunk — not parsed until after first paint (lower TBT). */
+const HomePage = dynamic(() => import("@/views/index"), {
+  ssr: false,
+  loading: () => null,
+});
+
 /**
- * One swap below the hero (placeholders → real sections) inside a fixed min-height shell
- * so GTmetrix/Lighthouse do not see footer + main layout shifts.
+ * Below-fold home mounts after idle inside `HomeBelowFoldShell` min-height.
+ * No placeholder→content swap (that mismatch caused CLS regressions on GTmetrix / web.dev).
  */
 export function HomeBelowFoldMount() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    deferUntilIdle(() => setReady(true), 2000);
+    deferUntilIdle(() => setReady(true), 2200);
   }, []);
 
   if (!ready) {
-    return <HomeBelowFoldPlaceholders />;
+    return null;
   }
 
   return <HomePage />;
