@@ -1,5 +1,7 @@
 # TeacherPoint — Bugs, Resolutions & SEO / AEO / GEO Delivery Summary
 
+**PDF export:** `docs/client/TeacherPoint_Client_Delivery_Bugs_SEO_AEO_GEO.pdf` (regenerate: `npm run export:client-pdf`)
+
 **Prepared for:** Client share (development agreement alignment)  
 **Product:** [TeacherPoint](https://www.teacherpoint.org/) — public website + API  
 **Repositories:**
