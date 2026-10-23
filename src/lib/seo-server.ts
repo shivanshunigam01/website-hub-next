@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { API_BASE } from "@/lib/site-config";
 
 type ApiList<T> = { items?: T[] };
@@ -46,13 +47,13 @@ export async function fetchTutorForSeo(id: string): Promise<TutorSeo | null> {
   return { ...data, id: tid };
 }
 
-export async function fetchCourseForSeo(id: string): Promise<CourseSeo | null> {
+export const fetchCourseForSeo = cache(async (id: string): Promise<CourseSeo | null> => {
   const data = await serverGet<CourseSeo>(`/courses/${id}`);
   if (!data) return null;
   const cid = data.id || String((data as { _id?: string })._id);
   if (!cid || data.status !== "published") return null;
   return { ...data, id: cid };
-}
+});
 
 export async function fetchSitemapTutorIds(limit = 250): Promise<string[]> {
   const data = await serverGet<ApiList<{ id?: string }>>(`/tutors?limit=${Math.min(limit, 50)}&page=1`, 7200);

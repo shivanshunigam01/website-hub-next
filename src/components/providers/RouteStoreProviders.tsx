@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AdminStoreProvider } from "@/hooks/use-admin-store";
 import { LmsStoreProvider } from "@/hooks/use-lms-store";
 import { LearningProvider } from "@/hooks/use-learning";
+// LmsStoreProvider only on /lms routes — not on public course detail (prevents /courses/:id fetch loops).
 import { PlatformStoreProvider } from "@/hooks/use-platform-store";
 import { MarketplaceProvider } from "@/hooks/use-marketplace";
 
@@ -39,11 +40,7 @@ export function AccommodationRouteProviders({ children }: { children: ReactNode 
   return <AdminStoreProvider>{children}</AdminStoreProvider>;
 }
 
-/** Course detail: enrollment/reviews + LMS lesson UI. */
+/** Course detail: enrollment/reviews only (curriculum comes from useCourse — no LMS store / loadCurriculum). */
 export function CourseDetailRouteProviders({ children }: { children: ReactNode }) {
-  return (
-    <LmsStoreProvider>
-      <LearningProvider>{children}</LearningProvider>
-    </LmsStoreProvider>
-  );
+  return <LearningProvider>{children}</LearningProvider>;
 }

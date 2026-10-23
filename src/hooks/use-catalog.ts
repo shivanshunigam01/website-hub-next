@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, ApiRequestError } from "@/lib/api";
 import { fetchTutorById } from "@/services/tutor-search-api";
 import {
   mapApiCourse,
@@ -18,11 +18,13 @@ import type { Curriculum } from "@/hooks/use-lms-store";
 
 type Paginated<T> = { items: T[]; pagination?: { total: number } };
 
-export function useCourses(options: { status?: string; limit?: number } = {}) {
+export function useCourses(options: { status?: string; limit?: number; enabled?: boolean } = {}) {
   const status = options.status ?? "published";
   const limit = options.limit ?? 100;
+  const enabled = options.enabled ?? true;
   return useQuery({
     queryKey: ["courses", status, limit],
+    enabled,
     queryFn: async () => {
       const data = await api<Paginated<ApiCourse>>(`/courses?status=${status}&limit=${limit}`);
       return (data.items ?? []).map((c, i) => mapApiCourse(c, i));
@@ -48,7 +50,16 @@ export function useCourse(courseId: string | undefined) {
         curriculum: mapCurriculumFromApi(courseId!, raw.curriculum ?? []),
       };
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) => {
+      if (error instanceof ApiRequestError && error.status >= 400 && error.status < 500) {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
 }
 
