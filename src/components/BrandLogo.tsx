@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import logoLight from "@/assets/teacherspoints-logo.png";
-import logoDark from "@/assets/teacherspoints-logo-dark.webp";
+import logoDark from "@/assets/teacherspoints-logo-dark.png";
 import { cn } from "@/lib/utils";
 
 const sizeClass = {
@@ -21,7 +21,7 @@ const sizePx = {
 
 /**
  * Light mode → teacherspoints-logo.png
- * Dark mode  → teacherspoints-logo-dark.webp (white text / dark-background variant)
+ * Dark mode  → teacherspoints-logo-dark.png
  */
 export function BrandLogo({
   size = "header",

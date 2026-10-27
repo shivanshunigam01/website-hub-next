@@ -115,8 +115,8 @@ export function TrendingCourses() {
             return (
               <TabsContent key={c.id} value={c.id}>
                 <div className="grid min-h-[260px] gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                  {(items.length ? items : COURSES.slice(0, 4)).map((course) => (
-                    <CourseCard key={course.id} course={course} />
+                  {(items.length ? items : COURSES.slice(0, 4)).map((course, i) => (
+                    <CourseCard key={course.id} course={course} priorityImage={i < 4} />
                   ))}
                 </div>
               </TabsContent>

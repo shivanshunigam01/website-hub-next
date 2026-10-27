@@ -24,6 +24,7 @@ interface AppState {
     expectedRole?: "student" | "teacher" | "parent",
   ) => Promise<AuthSession>;
   setWhatsappSession: (data: AuthSession) => Promise<AuthSession>;
+  setEmailOtpSession: (data: AuthSession) => Promise<AuthSession>;
   registerWithPassword: (data: {
     name: string;
     email: string;
@@ -271,6 +272,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return session;
   };
 
+  const setEmailOtpSession = async (data: AuthSession) => {
+    const session: AuthSession = {
+      user: { ...data.user, provider: data.user.provider ?? "local", isVerified: true },
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      profileComplete: data.profileComplete ?? false,
+      requiresEmailVerification: false,
+      welcomeEmailSent: data.welcomeEmailSent,
+    };
+    setSession(session);
+    return session;
+  };
+
   const registerWithPassword = async (payload: {
     name: string;
     email: string;
@@ -410,6 +424,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         loginWithPassword,
         loginWithGoogle,
         setWhatsappSession,
+        setEmailOtpSession,
         registerWithPassword,
         requestPasswordReset,
         resetPassword,

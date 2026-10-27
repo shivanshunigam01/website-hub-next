@@ -2,20 +2,21 @@
 
 import dynamic from "next/dynamic";
 import { HomeHeroServer } from "@/components/home/HomeHeroServer";
+import { HeroVideoLayer } from "@/components/home/HeroVideoLayer";
 
 const HeroSearchLazy = dynamic(
   () => import("@/components/home/HeroSearchLazy").then((m) => m.HeroSearchLazy),
   {
     loading: () => (
-      <div className="mt-9 min-h-[168px] max-w-3xl md:min-h-[200px]" aria-hidden />
+      <div className="min-h-[168px] max-w-3xl md:min-h-[200px]" aria-hidden />
     ),
   },
 );
 
-/** Homepage hero — poster + SSR copy only (no background MP4; saves ~500KB and TBT on GTmetrix). */
+/** Homepage hero — Unsplash HD poster + deferred desktop background video. */
 export function HomeHeroClient() {
   return (
-    <HomeHeroServer>
+    <HomeHeroServer videoSlot={<HeroVideoLayer />}>
       <HeroSearchLazy />
     </HomeHeroServer>
   );

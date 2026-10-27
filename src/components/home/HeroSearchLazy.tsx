@@ -35,12 +35,7 @@ export function HeroSearchLazy() {
   const [mountSearch, setMountSearch] = useState(false);
 
   useEffect(() => {
-    const run = () => setMountSearch(true);
-    if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(run, { timeout: 4500 });
-      return () => window.cancelIdleCallback(id);
-    }
-    const timer = window.setTimeout(run, 1200);
+    const timer = window.setTimeout(() => setMountSearch(true), 150);
     return () => window.clearTimeout(timer);
   }, []);
 
