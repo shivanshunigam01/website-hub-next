@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import heroPoster from "@/assets/hero-illustration.jpg";
+import { HOME_HERO_POSTER_URL } from "@/data/hero-media";
 
 /**
  * SSR hero — mobile LCP is typically the priority poster `Image` or the static H1 below.
@@ -15,20 +15,21 @@ export function HomeHeroServer({
 }) {
   return (
     <section className="relative overflow-hidden border-b bg-gradient-hero">
-      {videoSlot}
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden [contain:paint]">
         <Image
-          src={heroPoster}
+          src={HOME_HERO_POSTER_URL}
           alt=""
           fill
           priority
           fetchPriority="high"
           sizes="100vw"
-          placeholder="blur"
-          className="object-cover opacity-90 dark:opacity-75"
+          className="object-cover opacity-95 dark:opacity-90"
         />
-        <div className="absolute inset-0 bg-background/30 dark:bg-background/50" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/25 via-background/15 to-background/60" />
+        {videoSlot ? (
+          <div className="absolute inset-0 z-[1] [&_video]:saturate-[1.05]">{videoSlot}</div>
+        ) : null}
+        <div className="absolute inset-0 z-[2] bg-background/20 dark:bg-background/35" />
+        <div className="absolute inset-0 z-[2] bg-gradient-to-b from-background/20 via-background/10 to-background/55" />
       </div>
 
       <div className="container relative z-[1] mx-auto px-4 py-16 sm:px-6 md:py-24 lg:py-28">
