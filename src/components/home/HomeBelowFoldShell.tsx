@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Below-fold wrapper — no artificial min-height; sections own their layout shells. */
+/** Below-fold wrapper — mobile reserves height; desktop relies on section shells. */
 export function HomeBelowFoldShell({ children }: { children: ReactNode }) {
   return (
     <div

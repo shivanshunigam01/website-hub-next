@@ -10,7 +10,10 @@ const HomePage = dynamic(() => import("@/views/index"), {
   loading: () => null,
 });
 
-/** Defers home sections on mobile; desktop mounts immediately to limit TBT/CLS tradeoff. */
+/**
+ * Home sections in a separate chunk. Desktop mounts immediately; mobile defers with
+ * placeholders to limit CLS (no full-page swap on large viewports).
+ */
 export function HomeBelowFoldMount() {
   const [ready, setReady] = useState(false);
 
@@ -19,7 +22,7 @@ export function HomeBelowFoldMount() {
       setReady(true);
       return;
     }
-    deferUntilIdle(() => setReady(true), 1800);
+    deferUntilIdle(() => setReady(true), 2000);
   }, []);
 
   if (!ready) {

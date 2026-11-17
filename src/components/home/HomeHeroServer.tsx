@@ -52,7 +52,7 @@ export function HomeHeroServer({
           Book live sessions with teachers, learn at your pace, and earn shareable course certificates when
           offered on a program.
         </p>
-        <div className="mt-8 min-h-[168px] md:min-h-[200px]">{children}</div>
+        <div className="mt-8 min-h-[168px] md:min-h-[280px]">{children}</div>
       </div>
     </section>
   );
