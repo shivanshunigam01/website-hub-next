@@ -47,7 +47,7 @@ function Contact() {
           <li className="flex items-center gap-3">
             <MessageCircle className="h-5 w-5 text-[#25D366]" />
             <a
-              href={whatsappLinkWithMessage("Hi TeacherPoint! I have a question.")}
+              href={whatsappLinkWithMessage()}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:underline"

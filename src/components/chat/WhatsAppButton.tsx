@@ -5,7 +5,7 @@ import { WHATSAPP_NUMBER_DISPLAY, whatsappLinkWithMessage } from "@/lib/contact-
 export function WhatsAppButton() {
   return (
     <a
-      href={whatsappLinkWithMessage("Hi TeacherPoint! I have a question.")}
+      href={whatsappLinkWithMessage()}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Chat with us on WhatsApp at ${WHATSAPP_NUMBER_DISPLAY}`}
