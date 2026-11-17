@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { HomeHeroServer } from "@/components/home/HomeHeroServer";
+import { HeroVideoLayer } from "@/components/home/HeroVideoLayer";
 
 const HeroSearchLazy = dynamic(
   () => import("@/components/home/HeroSearchLazy").then((m) => m.HeroSearchLazy),
@@ -12,10 +13,10 @@ const HeroSearchLazy = dynamic(
   },
 );
 
-/** Homepage hero — poster + SSR copy only (no background MP4). */
+/** Homepage hero — Unsplash HD poster + deferred desktop background video. */
 export function HomeHeroClient() {
   return (
-    <HomeHeroServer>
+    <HomeHeroServer videoSlot={<HeroVideoLayer />}>
       <HeroSearchLazy />
     </HomeHeroServer>
   );

@@ -26,8 +26,8 @@ function Media({ ad }: { ad: RegionalAd }) {
       <DeferredBackgroundVideo
         src={ad.videoUrl}
         poster={resolveAdImage(ad) || geoBannerFallback}
-        desktopDelayMs={1200}
-        mobileDelayMs={3500}
+        desktopDelayMs={4000}
+        mobileDelayMs={8000}
       />
     );
   }

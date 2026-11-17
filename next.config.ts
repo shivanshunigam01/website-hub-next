@@ -20,6 +20,7 @@ const nextConfig = {
       { protocol: "https", hostname: "api.teacherpoint.org" },
       { protocol: "https", hostname: "api.teacherpoint.in" },
       { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "videos.pexels.com" },
       { protocol: "http", hostname: "localhost", pathname: "/**" },
       { protocol: "http", hostname: "127.0.0.1", pathname: "/**" },
     ],

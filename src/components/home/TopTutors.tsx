@@ -41,8 +41,8 @@ export function TopTutors() {
         </p>
       ) : (
         <div className="grid min-h-[600px] gap-5 sm:grid-cols-2 lg:grid-cols-4 content-start">
-          {top.map((t) => (
-            <TutorCard key={t.id} tutor={t} />
+          {top.map((t, i) => (
+            <TutorCard key={t.id} tutor={t} priorityImage={i < 4} />
           ))}
         </div>
       )}

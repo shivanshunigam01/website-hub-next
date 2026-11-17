@@ -1,7 +1,7 @@
 "use client";
 
-import heroPoster from "@/assets/hero-illustration.jpg";
 import { DeferredBackgroundVideo } from "@/components/DeferredBackgroundVideo";
+import { HOME_HERO_POSTER_URL, HOME_HERO_VIDEO_URL } from "@/data/hero-media";
 
 /**
  * LCP-friendly hero: poster image loads first (priority), video deferred.
@@ -13,12 +13,12 @@ export function HeroBackground() {
       className="pointer-events-none absolute inset-0 overflow-hidden [contain:paint] [&_*]:pointer-events-none"
     >
       <DeferredBackgroundVideo
-        src="/hero-video.mp4?v=2"
-        poster={heroPoster}
-        posterClassName="opacity-90 dark:opacity-75"
-        className="opacity-85 dark:opacity-70"
+        src={HOME_HERO_VIDEO_URL}
+        poster={HOME_HERO_POSTER_URL}
+        posterClassName="opacity-95 dark:opacity-90"
+        className="opacity-95 dark:opacity-90"
         requireMediaQuery="(min-width: 769px)"
-        desktopDelayMs={4500}
+        desktopDelayMs={3500}
         mobileDelayMs={8000}
       />
       <div className="pointer-events-none absolute inset-0 bg-background/30 dark:bg-background/50" />

@@ -8,7 +8,7 @@ import type { Course } from "@/types/catalog";
 import { courseImage } from "@/data/images";
 import { AppImage } from "@/components/AppImage";
 
-export function CourseCard({ course }: { course: Course }) {
+export function CourseCard({ course, priorityImage }: { course: Course; priorityImage?: boolean }) {
   const { formatLocalizedPrice } = useCurrency();
   const img = (course as any).image || courseImage(course.id);
   return (
@@ -23,6 +23,9 @@ export function CourseCard({ course }: { course: Course }) {
             alt={course.title}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            priority={priorityImage}
+            fetchPriority={priorityImage ? "high" : undefined}
+            loading={priorityImage ? "eager" : "lazy"}
             className="group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
